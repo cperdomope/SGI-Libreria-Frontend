@@ -16,9 +16,8 @@ const crearVenta = async (req, res) => {
         await connection.beginTransaction(); // INICIO DE LA TRANSACCIÓN
 
         // 1. Insertar la cabecera de la venta
-        // Asumo que tienes un campo usuario_id o vendedor_id, si no, lo puedes omitir o pasar null
         const [resultadoVenta] = await connection.query(
-            'INSERT INTO ventas (cliente_id, total, fecha_venta) VALUES (?, ?, NOW())',
+            'INSERT INTO ventas (cliente_id, usuario_id, total_venta, fecha_venta) VALUES (?, 1, ?, NOW())',
             [cliente_id || null, total]
         );
         
@@ -34,7 +33,7 @@ const crearVenta = async (req, res) => {
 
             // B. Descontar del inventario (Tabla libros)
             await connection.query(
-                'UPDATE libros SET stock = stock - ? WHERE id = ?',
+                'UPDATE libros SET stock_actual = stock_actual - ? WHERE id = ?',
                 [item.cantidad, item.libro_id]
             );
         }
@@ -60,7 +59,7 @@ const obtenerVentas = async (req, res) => {
     try {
         // Hacemos JOIN para traer el nombre del cliente
         const sql = `
-            SELECT v.id, v.fecha_venta, v.total, c.nombre_completo as cliente
+            SELECT v.id, v.fecha_venta, v.total_venta as total, c.nombre_completo as cliente
             FROM ventas v
             LEFT JOIN clientes c ON v.cliente_id = c.id
             ORDER BY v.fecha_venta DESC
@@ -73,7 +72,50 @@ const obtenerVentas = async (req, res) => {
     }
 };
 
+// Obtener detalle de una venta específica
+const obtenerDetalleVenta = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Obtener datos de la venta
+        const sqlVenta = `
+            SELECT v.id, v.fecha_venta, v.total_venta as total,
+                   c.nombre_completo as cliente, c.documento, c.email, c.telefono
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_id = c.id
+            WHERE v.id = ?
+        `;
+        const [venta] = await pool.query(sqlVenta, [id]);
+
+        if (venta.length === 0) {
+            return res.status(404).json({ error: 'Venta no encontrada' });
+        }
+
+        // 2. Obtener items de la venta
+        const sqlItems = `
+            SELECT dv.id, dv.cantidad, dv.precio_unitario,
+                   l.titulo, l.isbn, a.nombre as autor
+            FROM detalle_ventas dv
+            INNER JOIN libros l ON dv.libro_id = l.id
+            LEFT JOIN autores a ON l.autor_id = a.id
+            WHERE dv.venta_id = ?
+        `;
+        const [items] = await pool.query(sqlItems, [id]);
+
+        // 3. Combinar datos
+        res.json({
+            venta: venta[0],
+            items: items
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener detalle de venta' });
+    }
+};
+
 module.exports = {
     crearVenta,
-    obtenerVentas
+    obtenerVentas,
+    obtenerDetalleVenta
 };

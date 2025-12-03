@@ -5,7 +5,9 @@ import Inicio from './paginas/Inicio';
 import Inventario from './paginas/Inventario';
 import Movimientos from './paginas/Movimientos';
 import PaginaClientes from './paginas/PaginaClientes';
-import PaginaVentas from './paginas/PaginaVentas'; // <--- NUEVA IMPORTACIÓN
+import PaginaVentas from './paginas/PaginaVentas';
+import HistorialVentas from './paginas/HistorialVentas';
+import PaginaProveedores from './paginas/PaginaProveedores';
 import Acceso from './paginas/Acceso';
 import { AuthProvider, useAuth } from './contexto/AuthContext';
 
@@ -76,7 +78,21 @@ function App() {
               <LayoutPrincipal><PaginaVentas /></LayoutPrincipal>
             </RutaProtegida>
           } />
-          
+
+          {/* --- RUTA DE HISTORIAL DE VENTAS --- */}
+          <Route path="/historial-ventas" element={
+            <RutaProtegida>
+              <LayoutPrincipal><HistorialVentas /></LayoutPrincipal>
+            </RutaProtegida>
+          } />
+
+          {/* --- RUTA DE PROVEEDORES --- */}
+          <Route path="/proveedores" element={
+            <RutaProtegida>
+              <LayoutPrincipal><PaginaProveedores /></LayoutPrincipal>
+            </RutaProtegida>
+          } />
+
           {/* Cualquier ruta desconocida redirige al inicio */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

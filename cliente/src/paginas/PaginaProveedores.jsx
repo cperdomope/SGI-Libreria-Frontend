@@ -1,0 +1,320 @@
+import React, { useState, useEffect } from 'react';
+import api from '../servicios/api';
+
+// --- ICONOS SVG INLINE ---
+const IconoPlus = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+  </svg>
+);
+
+const IconoEditar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+  </svg>
+);
+
+const IconoEliminar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+    <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+  </svg>
+);
+
+const PaginaProveedores = () => {
+  const [proveedores, setProveedores] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
+
+  const [formDatos, setFormDatos] = useState({
+    id: null,
+    nombre_empresa: '',
+    nit: '',
+    nombre_contacto: '',
+    email: '',
+    telefono: '',
+    direccion: ''
+  });
+
+  useEffect(() => {
+    cargarProveedores();
+  }, []);
+
+  const cargarProveedores = async () => {
+    try {
+      setCargando(true);
+      const respuesta = await api.get('/proveedores');
+      setProveedores(respuesta.data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar proveedores');
+      console.error(err);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const manejarCambioInput = (e) => {
+    const { name, value } = e.target;
+    setFormDatos({ ...formDatos, [name]: value });
+  };
+
+  const abrirModalCrear = () => {
+    setFormDatos({
+      id: null,
+      nombre_empresa: '',
+      nit: '',
+      nombre_contacto: '',
+      email: '',
+      telefono: '',
+      direccion: ''
+    });
+    setError(null);
+    setMostrarModal(true);
+  };
+
+  const abrirModalEditar = (proveedor) => {
+    setFormDatos(proveedor);
+    setError(null);
+    setMostrarModal(true);
+  };
+
+  const cerrarModal = () => {
+    setMostrarModal(false);
+    setError(null);
+  };
+
+  const manejarGuardar = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!formDatos.nombre_empresa) {
+      setError('El nombre de la empresa es obligatorio');
+      return;
+    }
+
+    try {
+      if (formDatos.id) {
+        await api.put(`/proveedores/${formDatos.id}`, formDatos);
+      } else {
+        await api.post('/proveedores', formDatos);
+      }
+
+      await cargarProveedores();
+      cerrarModal();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al guardar proveedor');
+    }
+  };
+
+  const manejarEliminar = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este proveedor?')) return;
+
+    try {
+      await api.delete(`/proveedores/${id}`);
+      setProveedores(proveedores.filter(p => p.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al eliminar proveedor');
+    }
+  };
+
+  if (cargando) {
+    return (
+      <div className="container mt-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container-fluid py-4">
+      <div className="card shadow-sm">
+        <div className="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h4 className="mb-0">Gestión de Proveedores</h4>
+          <button className="btn btn-light btn-sm" onClick={abrirModalCrear}>
+            <IconoPlus /> Nuevo Proveedor
+          </button>
+        </div>
+
+        <div className="card-body">
+          {error && !mostrarModal && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="table-responsive">
+            <table className="table table-hover table-striped align-middle">
+              <thead className="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Empresa</th>
+                  <th>NIT</th>
+                  <th>Contacto</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proveedores.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center text-muted py-4">
+                      No hay proveedores registrados
+                    </td>
+                  </tr>
+                ) : (
+                  proveedores.map((proveedor) => (
+                    <tr key={proveedor.id}>
+                      <td>{proveedor.id}</td>
+                      <td className="fw-bold">{proveedor.nombre_empresa}</td>
+                      <td>{proveedor.nit || '-'}</td>
+                      <td>{proveedor.nombre_contacto || '-'}</td>
+                      <td>{proveedor.email || '-'}</td>
+                      <td>{proveedor.telefono || '-'}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-primary me-2"
+                          onClick={() => abrirModalEditar(proveedor)}
+                          title="Editar"
+                        >
+                          <IconoEditar />
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => manejarEliminar(proveedor.id)}
+                          title="Eliminar"
+                        >
+                          <IconoEliminar />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Crear/Editar */}
+      {mostrarModal && (
+        <>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <div className="modal-header bg-success text-white">
+                  <h5 className="modal-title">
+                    {formDatos.id ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close btn-close-white"
+                    onClick={cerrarModal}
+                  ></button>
+                </div>
+
+                <form onSubmit={manejarGuardar}>
+                  <div className="modal-body">
+                    {error && (
+                      <div className="alert alert-danger" role="alert">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Nombre de Empresa <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="nombre_empresa"
+                        value={formDatos.nombre_empresa}
+                        onChange={manejarCambioInput}
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">NIT</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="nit"
+                        value={formDatos.nit}
+                        onChange={manejarCambioInput}
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">Persona de Contacto</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="nombre_contacto"
+                        value={formDatos.nombre_contacto}
+                        onChange={manejarCambioInput}
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">Email</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        name="email"
+                        value={formDatos.email}
+                        onChange={manejarCambioInput}
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">Teléfono</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="telefono"
+                        value={formDatos.telefono}
+                        onChange={manejarCambioInput}
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">Dirección</label>
+                      <textarea
+                        className="form-control"
+                        name="direccion"
+                        rows="2"
+                        value={formDatos.direccion}
+                        onChange={manejarCambioInput}
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={cerrarModal}
+                    >
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-success">
+                      {formDatos.id ? 'Actualizar' : 'Guardar'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default PaginaProveedores;
