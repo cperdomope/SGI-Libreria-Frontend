@@ -1,0 +1,317 @@
+import React, { useState, useEffect } from 'react';
+
+// --- ICONOS SVG INLINE (Para evitar dependencias externas) ---
+const IconoPlus = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16">
+    <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+  </svg>
+);
+
+const IconoEditar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+  </svg>
+);
+
+const IconoEliminar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+    <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+  </svg>
+);
+
+const PaginaClientes = () => {
+  // Estados para datos y control de interfaz
+  const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  
+  // Estado para el formulario (Crear/Editar)
+  const [formDatos, setFormDatos] = useState({
+    id: null,
+    nombre_completo: '',
+    documento: '',
+    email: '',
+    telefono: '',
+    direccion: ''
+  });
+
+  // URL base de la API (Ajustar puerto si es necesario, asumimos proxy o CORS configurado)
+  const API_URL = 'http://localhost:3000/api/clientes';
+
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    cargarClientes();
+  }, []);
+
+  const cargarClientes = async () => {
+    try {
+      setCargando(true);
+      const respuesta = await fetch(API_URL);
+      if (!respuesta.ok) throw new Error('Error al cargar clientes');
+      const datos = await respuesta.json();
+      setClientes(datos);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Manejar cambios en los inputs del formulario
+  const manejarCambioInput = (e) => {
+    const { name, value } = e.target;
+    setFormDatos({ ...formDatos, [name]: value });
+  };
+
+  // Abrir modal para crear
+  const abrirModalCrear = () => {
+    setFormDatos({
+      id: null,
+      nombre_completo: '',
+      documento: '',
+      email: '',
+      telefono: '',
+      direccion: ''
+    });
+    setError(null);
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar
+  const abrirModalEditar = (cliente) => {
+    setFormDatos(cliente); // Carga los datos del cliente seleccionado
+    setError(null);
+    setMostrarModal(true);
+  };
+
+  const cerrarModal = () => {
+    setMostrarModal(false);
+    setError(null);
+  };
+
+  // Enviar formulario (Crear o Actualizar)
+  const manejarGuardar = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validaciones básicas de Frontend
+    if (!formDatos.nombre_completo || !formDatos.documento) {
+      setError("El nombre y el documento son obligatorios.");
+      return;
+    }
+
+    try {
+      const metodo = formDatos.id ? 'PUT' : 'POST';
+      const url = formDatos.id ? `${API_URL}/${formDatos.id}` : API_URL;
+
+      const respuesta = await fetch(url, {
+        method: metodo,
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${token}` // Descomentar si usas token JWT
+        },
+        body: JSON.stringify(formDatos)
+      });
+
+      const resultado = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(resultado.mensaje || 'Error al guardar');
+      }
+
+      // Recargar tabla y cerrar modal
+      await cargarClientes();
+      cerrarModal();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Eliminar cliente
+  const manejarEliminar = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) return;
+
+    try {
+      const respuesta = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+        // headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!respuesta.ok) {
+        const resultado = await respuesta.json();
+        throw new Error(resultado.mensaje || 'Error al eliminar');
+      }
+
+      // Actualizar estado local eliminando el item (optimista o recarga)
+      setClientes(clientes.filter(c => c.id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  return (
+    <div className="container-fluid p-4">
+      {/* Encabezado */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="text-primary fw-bold">Gestión de Clientes</h2>
+        <button className="btn btn-success d-flex align-items-center gap-2" onClick={abrirModalCrear}>
+          <IconoPlus /> Nuevo Cliente
+        </button>
+      </div>
+
+      {/* Mensaje de Error General */}
+      {error && !mostrarModal && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
+
+      {/* Tabla de Clientes */}
+      <div className="card shadow-sm border-0">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-light text-secondary">
+                <tr>
+                  <th className="ps-4">Documento</th>
+                  <th>Nombre Completo</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th className="text-end pe-4">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cargando ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-4">Cargando datos...</td>
+                  </tr>
+                ) : clientes.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-4 text-muted">No hay clientes registrados.</td>
+                  </tr>
+                ) : (
+                  clientes.map((cliente) => (
+                    <tr key={cliente.id}>
+                      <td className="ps-4 fw-medium">{cliente.documento}</td>
+                      <td>{cliente.nombre_completo}</td>
+                      <td>{cliente.email || <span className="text-muted small">N/A</span>}</td>
+                      <td>{cliente.telefono || <span className="text-muted small">N/A</span>}</td>
+                      <td className="text-end pe-4">
+                        <button 
+                          className="btn btn-outline-primary btn-sm me-2"
+                          onClick={() => abrirModalEditar(cliente)}
+                          title="Editar"
+                        >
+                          <IconoEditar />
+                        </button>
+                        <button 
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => manejarEliminar(cliente.id)}
+                          title="Eliminar"
+                        >
+                          <IconoEliminar />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Personalizado (Usando clases Bootstrap sin JS externo) */}
+      {mostrarModal && (
+        <>
+          <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content shadow">
+                <div className="modal-header bg-primary text-white">
+                  <h5 className="modal-title">
+                    {formDatos.id ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}
+                  </h5>
+                  <button type="button" className="btn-close btn-close-white" onClick={cerrarModal}></button>
+                </div>
+                <form onSubmit={manejarGuardar}>
+                  <div className="modal-body">
+                    {error && <div className="alert alert-danger py-2">{error}</div>}
+                    
+                    <div className="mb-3">
+                      <label className="form-label small text-muted text-uppercase fw-bold">Documento *</label>
+                      <input 
+                        type="text" 
+                        name="documento"
+                        className="form-control" 
+                        value={formDatos.documento} 
+                        onChange={manejarCambioInput}
+                        required 
+                        autoFocus
+                      />
+                    </div>
+                    
+                    <div className="mb-3">
+                      <label className="form-label small text-muted text-uppercase fw-bold">Nombre Completo *</label>
+                      <input 
+                        type="text" 
+                        name="nombre_completo"
+                        className="form-control" 
+                        value={formDatos.nombre_completo} 
+                        onChange={manejarCambioInput}
+                        required 
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label small text-muted text-uppercase fw-bold">Email</label>
+                        <input 
+                          type="email" 
+                          name="email"
+                          className="form-control" 
+                          value={formDatos.email} 
+                          onChange={manejarCambioInput}
+                        />
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label small text-muted text-uppercase fw-bold">Teléfono</label>
+                        <input 
+                          type="tel" 
+                          name="telefono"
+                          className="form-control" 
+                          value={formDatos.telefono} 
+                          onChange={manejarCambioInput}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label small text-muted text-uppercase fw-bold">Dirección</label>
+                      <input 
+                        type="text" 
+                        name="direccion"
+                        className="form-control" 
+                        value={formDatos.direccion} 
+                        onChange={manejarCambioInput}
+                      />
+                    </div>
+                  </div>
+                  <div className="modal-footer bg-light">
+                    <button type="button" className="btn btn-secondary" onClick={cerrarModal}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary">
+                      {formDatos.id ? 'Actualizar Datos' : 'Guardar Cliente'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default PaginaClientes;

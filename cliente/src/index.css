@@ -1,0 +1,62 @@
+/* Fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --bg-body: #f3f4f6;
+  --text-dark: #1f2937;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-body);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* --- ESTILOS DEL LOGIN (Centrado Perfecto) --- */
+.login-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;     /* Centrar Verticalmente */
+  justify-content: center; /* Centrar Horizontalmente */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 15px; /* Margen para celulares */
+}
+
+.login-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px; /* ¡ESTO EVITA QUE SE ESTIRE! */
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  padding: 15px;
+  background: #e0e7ff;
+  border-radius: 50%;
+  color: var(--primary);
+}
+
+/* --- Animaciones --- */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
