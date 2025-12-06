@@ -58,7 +58,7 @@ const IconoSalir = () => (
 );
 
 const BarraNavegacion = () => {
-  const { usuario, cerrarSesion } = useAuth(); // Contexto de Autenticación
+  const { usuario, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -69,16 +69,30 @@ const BarraNavegacion = () => {
     }
   };
 
-  // Función auxiliar mejorada para resaltar la ruta activa con estilo "Pill"
-  const activo = (ruta) => {
-    const base = "nav-link d-flex align-items-center gap-2 px-3 mx-1 transition-all";
-    return location.pathname === ruta 
-      ? `${base} text-white bg-white bg-opacity-25 rounded-pill fw-bold shadow-sm` 
-      : `${base} text-white text-opacity-75 hover-opacity-100`;
+  // Función para determinar si un link está activo
+  const esRutaActiva = (ruta) => location.pathname === ruta;
+
+  // Función para determinar si un dropdown contiene la ruta activa
+  const dropdownActivo = (rutas) => rutas.includes(location.pathname);
+
+  // Clases para links normales
+  const claseLink = (ruta) => {
+    const base = "nav-link d-flex align-items-center gap-2 px-3 mx-1";
+    return esRutaActiva(ruta)
+      ? `${base} text-white bg-white bg-opacity-25 rounded-pill fw-bold shadow-sm`
+      : `${base} text-white text-opacity-75`;
+  };
+
+  // Clases para dropdown toggle
+  const claseDropdown = (rutas) => {
+    const base = "nav-link dropdown-toggle d-flex align-items-center gap-2 px-3 mx-1";
+    return dropdownActivo(rutas)
+      ? `${base} text-white bg-white bg-opacity-25 rounded-pill fw-bold shadow-sm`
+      : `${base} text-white text-opacity-75`;
   };
 
   return (
-    <nav 
+    <nav
       className="navbar navbar-expand-lg navbar-dark shadow"
       style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)' }}
     >
@@ -92,13 +106,13 @@ const BarraNavegacion = () => {
         </Link>
 
         {/* Botón hamburguesa para móvil */}
-        <button 
-          className="navbar-toggler border-0" 
-          type="button" 
-          data-bs-toggle="collapse" 
-          data-bs-target="#menuNavegacion" 
-          aria-controls="menuNavegacion" 
-          aria-expanded="false" 
+        <button
+          className="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#menuNavegacion"
+          aria-controls="menuNavegacion"
+          aria-expanded="false"
           aria-label="Alternar navegación"
         >
           <span className="navbar-toggler-icon"></span>
@@ -107,45 +121,73 @@ const BarraNavegacion = () => {
         {/* Contenido colapsable */}
         <div className="collapse navbar-collapse py-2 py-lg-0" id="menuNavegacion">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+            {/* Dashboard - Link Simple */}
             <li className="nav-item">
-              <Link className={activo('/')} to="/">
+              <Link className={claseLink('/')} to="/">
                 Dashboard
               </Link>
             </li>
-            
-            {/* --- VENTAS / POS (NUEVO) --- */}
-            <li className="nav-item">
-              <Link className={activo('/ventas')} to="/ventas">
-                <IconoVentas /> POS / Ventas
-              </Link>
+
+            {/* DROPDOWN: Gestión Comercial */}
+            <li className="nav-item dropdown">
+              <a
+                className={claseDropdown(['/ventas', '/historial-ventas', '/clientes'])}
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Gestión Comercial
+              </a>
+              <ul className="dropdown-menu shadow-sm border-0">
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/ventas">
+                    <IconoVentas /> POS / Ventas
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/historial-ventas">
+                    <IconoHistorial /> Historial
+                  </Link>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/clientes">
+                    <IconoClientes /> Clientes
+                  </Link>
+                </li>
+              </ul>
             </li>
 
-            {/* --- HISTORIAL DE VENTAS --- */}
-            <li className="nav-item">
-              <Link className={activo('/historial-ventas')} to="/historial-ventas">
-                <IconoHistorial /> Historial
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link className={activo('/inventario')} to="/inventario">
-                <IconoInventario /> Inventario
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={activo('/movimientos')} to="/movimientos">
-                <IconoMovimientos /> Movimientos
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={activo('/clientes')} to="/clientes">
-                <IconoClientes /> Clientes
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={activo('/proveedores')} to="/proveedores">
-                <IconoProveedores /> Proveedores
-              </Link>
+            {/* DROPDOWN: Logística */}
+            <li className="nav-item dropdown">
+              <a
+                className={claseDropdown(['/inventario', '/movimientos', '/proveedores'])}
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Logística
+              </a>
+              <ul className="dropdown-menu shadow-sm border-0">
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/inventario">
+                    <IconoInventario /> Inventario
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/movimientos">
+                    <IconoMovimientos /> Movimientos
+                  </Link>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/proveedores">
+                    <IconoProveedores /> Proveedores
+                  </Link>
+                </li>
+              </ul>
             </li>
           </ul>
 
@@ -155,7 +197,7 @@ const BarraNavegacion = () => {
               <div className="small text-white-50">Bienvenido</div>
               <div className="fw-bold">{usuario?.nombre || 'Administrador'}</div>
             </div>
-            <button 
+            <button
               className="btn btn-light bg-white bg-opacity-10 border-0 text-white rounded-circle p-2 d-flex align-items-center justify-content-center hover-bg-opacity-25"
               style={{ width: 40, height: 40 }}
               onClick={manejarSalida}
