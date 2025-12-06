@@ -6,7 +6,7 @@
 **Actividad:** GA7-220501096-AA5-EV01 Diseño y Desarrollo de Servicios Web
 **Aprendiz:** Carlos Ivan Perdomo
 **Institución:** SENA
-**Programa:** Grado 11 - Análisis y Desarrollo de Sistemas de Información
+**Programa:** Grado 11 - Análisis y Desarrollo de Software
 
 ---
 
@@ -377,4 +377,4 @@ El sistema está listo para ser integrado con el frontend y ampliado con funcion
 ---
 
 **Fecha de Entrega:** Diciembre 2025
-**Proyecto SENA - Análisis y Desarrollo de Sistemas de Información**
+**Proyecto SENA - Análisis y Desarrollo de Software**
