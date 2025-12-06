@@ -37,8 +37,8 @@ const Inventario = () => {
         isbn: libro.isbn,
         titulo: libro.titulo,
         autor_id: '1', // En un sistema real vendría de la BD
-        categoria_id: '1', 
-        precio_venta: libro.precio_venta,
+        categoria_id: '1',
+        precio_venta: libro.precio || libro.precio_venta || 0,
         stock_minimo: libro.stock_minimo || 5
     });
   };
@@ -111,8 +111,8 @@ const Inventario = () => {
                   <td className="fw-bold">{libro.titulo}</td>
                   <td>{libro.autor || 'N/A'}</td>
                   <td><span className="badge bg-secondary">{libro.categoria || 'Gral'}</span></td>
-                  <td>${new Intl.NumberFormat('es-CO').format(libro.precio_venta)}</td>
-                  <td><span className={`badge ${libro.stock_actual <= libro.stock_minimo ? 'bg-danger' : 'bg-success'}`}>{libro.stock_actual}</span></td>
+                  <td>${new Intl.NumberFormat('es-CO').format(libro.precio || libro.precio_venta || 0)}</td>
+                  <td><span className={`badge ${libro.stock <= libro.stock_minimo ? 'bg-danger' : 'bg-success'}`}>{libro.stock || libro.stock_actual}</span></td>
                   <td>
                     {/* ¡AQUÍ ESTÁ EL BOTÓN QUE FALTABA! */}
                     <button 

@@ -1,15 +1,20 @@
-const db = require('../configuracion/db');
+const db = require('../configuracion/db'); // Asegúrate que esta ruta sea correcta en tu proyecto
 
-// Obtener libros
+// Obtener libros (Optimizado para POS)
 exports.obtenerLibros = async (req, res) => {
     try {
         const [filas] = await db.query(`
             SELECT 
-                l.id, l.isbn, l.titulo, l.precio_venta, l.stock_actual, l.stock_minimo,
-                a.nombre AS autor,
-                c.nombre AS categoria
-            FROM libros l
-            LEFT JOIN autores a ON l.autor_id = a.id
+                l.id, 
+                l.isbn, 
+                l.titulo, 
+                CAST(l.precio_venta AS DECIMAL(10,2)) AS precio, 
+                CAST(l.stock_actual AS UNSIGNED) AS stock, 
+                l.stock_minimo, 
+                a.nombre AS autor, 
+                c.nombre AS categoria 
+            FROM libros l 
+            LEFT JOIN autores a ON l.autor_id = a.id 
             LEFT JOIN categorias c ON l.categoria_id = c.id
         `);
         res.json(filas);
@@ -35,7 +40,7 @@ exports.crearLibro = async (req, res) => {
     }
 };
 
-// Actualizar libro (La función que daba error 404)
+// Actualizar libro
 exports.actualizarLibro = async (req, res) => {
     const { id } = req.params;
     const { isbn, titulo, autor_id, categoria_id, precio_venta, stock_minimo } = req.body;

@@ -1,121 +1,113 @@
-const pool = require('../configuracion/db');
+const db = require('../configuracion/db'); 
 
-// Crear una nueva venta (Transacción Completa)
-const crearVenta = async (req, res) => {
-    const { cliente_id, items, total } = req.body; 
-    // items es un array: [{ libro_id, cantidad, precio_unitario }, ...]
+// 1. POST: Registrar venta (AJUSTADO A TUS IMÁGENES)
+exports.crearVenta = async (req, res) => {
+    const { cliente_id, total, items } = req.body;
     
     // Validación básica
-    if (!items || items.length === 0) {
-        return res.status(400).json({ mensaje: 'No hay productos en la venta' });
+    if (!cliente_id || !items || items.length === 0) {
+        return res.status(400).json({ mensaje: "Faltan datos para procesar la venta." });
     }
 
-    const connection = await pool.getConnection(); // Necesitamos una conexión exclusiva para la transacción
-
+    let connection;
     try {
-        await connection.beginTransaction(); // INICIO DE LA TRANSACCIÓN
+        connection = await db.getConnection();
+        await connection.beginTransaction(); // --- INICIO DE LA TRANSACCIÓN ---
 
-        // 1. Insertar la cabecera de la venta
-        const [resultadoVenta] = await connection.query(
-            'INSERT INTO ventas (cliente_id, usuario_id, total_venta, fecha_venta) VALUES (?, 1, ?, NOW())',
-            [cliente_id || null, total]
-        );
+        // =================================================================================
+        // PASO A: Insertar en la tabla 'ventas' (Según tu imagen 2)
+        // Campos: cliente_id, usuario_id, total_venta, metodo_pago, fecha_venta
+        // =================================================================================
+        const queryVenta = `
+            INSERT INTO ventas (cliente_id, usuario_id, total_venta, metodo_pago, fecha_venta) 
+            VALUES (?, ?, ?, ?, NOW())
+        `;
         
-        const ventaId = resultadoVenta.insertId;
+        // Asumimos usuario_id = 1 y metodo_pago = 'Efectivo' (como en tu ejemplo)
+        const [ventaResult] = await connection.query(queryVenta, [cliente_id, 1, total, 'Efectivo']);
+        const ventaId = ventaResult.insertId;
 
-        // 2. Procesar cada item del carrito
+        // =================================================================================
+        // PASO B: Insertar Detalles y Actualizar Stock (Según tu imagen 1)
+        // Campos nuevos: Se agrega 'subtotal'
+        // =================================================================================
         for (const item of items) {
-            // A. Insertar en detalle_ventas
+            // 1. Calcular subtotal en el backend por seguridad
+            const subtotalCalculado = item.cantidad * item.precio_unitario;
+
+            // 2. Insertar en 'detalle_ventas' incluyendo la columna 'subtotal'
             await connection.query(
-                'INSERT INTO detalle_ventas (venta_id, libro_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
-                [ventaId, item.libro_id, item.cantidad, item.precio_unitario]
+                `INSERT INTO detalle_ventas (venta_id, libro_id, cantidad, precio_unitario, subtotal) 
+                 VALUES (?, ?, ?, ?, ?)`,
+                [ventaId, item.libro_id, item.cantidad, item.precio_unitario, subtotalCalculado]
             );
 
-            // B. Descontar del inventario (Tabla libros)
+            // 3. Descontar stock del libro
             await connection.query(
-                'UPDATE libros SET stock_actual = stock_actual - ? WHERE id = ?',
+                `UPDATE libros SET stock_actual = stock_actual - ? WHERE id = ?`,
                 [item.cantidad, item.libro_id]
             );
         }
 
-        await connection.commit(); // CONFIRMAR CAMBIOS (Todo salió bien)
+        await connection.commit(); // --- CONFIRMAR TRANSACCIÓN ---
+        console.log(`Venta #${ventaId} registrada correctamente.`);
         
         res.status(201).json({ 
-            mensaje: 'Venta registrada con éxito', 
+            mensaje: "Venta registrada exitosamente", 
             ventaId: ventaId 
         });
 
     } catch (error) {
-        await connection.rollback(); // REVERTIR CAMBIOS (Algo salió mal)
-        console.error('Error en transacción de venta:', error);
-        res.status(500).json({ mensaje: 'Error al procesar la venta, inventario no descontado.' });
+        if (connection) await connection.rollback(); // --- DESHACER SI FALLA ---
+        console.error("Error en transacción:", error);
+        res.status(500).json({ mensaje: "Error al procesar la venta", error: error.message });
     } finally {
-        connection.release(); // Liberar la conexión al pool
+        if (connection) connection.release();
     }
 };
 
-// Obtener historial de ventas (Para reportes o listados)
-const obtenerVentas = async (req, res) => {
+// 2. GET: Listar ventas (Ajustado para mostrar lo que tienes en la BD)
+exports.obtenerVentas = async (req, res) => {
     try {
-        // Hacemos JOIN para traer el nombre del cliente
         const sql = `
-            SELECT v.id, v.fecha_venta, v.total_venta as total, c.nombre_completo as cliente
+            SELECT 
+                v.id, 
+                v.fecha_venta, 
+                v.total_venta as total, 
+                v.metodo_pago,
+                c.nombre_completo as cliente, 
+                c.documento
             FROM ventas v
-            LEFT JOIN clientes c ON v.cliente_id = c.id
+            JOIN clientes c ON v.cliente_id = c.id
             ORDER BY v.fecha_venta DESC
         `;
-        const [filas] = await pool.query(sql);
-        res.json(filas);
+        const [rows] = await db.query(sql);
+        res.json(rows);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener ventas' });
+        res.status(500).json({ mensaje: "Error al obtener ventas" });
     }
 };
 
-// Obtener detalle de una venta específica
-const obtenerDetalleVenta = async (req, res) => {
+// 3. GET: Obtener detalle (Ajustado para devolver también el subtotal)
+exports.obtenerDetalleVenta = async (req, res) => {
     const { id } = req.params;
-
     try {
-        // 1. Obtener datos de la venta
-        const sqlVenta = `
-            SELECT v.id, v.fecha_venta, v.total_venta as total,
-                   c.nombre_completo as cliente, c.documento, c.email, c.telefono
-            FROM ventas v
-            LEFT JOIN clientes c ON v.cliente_id = c.id
-            WHERE v.id = ?
+        const sql = `
+            SELECT d.cantidad, d.precio_unitario, d.subtotal, l.titulo, l.isbn
+            FROM detalle_ventas d
+            JOIN libros l ON d.libro_id = l.id
+            WHERE d.venta_id = ?
         `;
-        const [venta] = await pool.query(sqlVenta, [id]);
-
-        if (venta.length === 0) {
-            return res.status(404).json({ error: 'Venta no encontrada' });
+        const [rows] = await db.query(sql, [id]);
+        
+        if (rows.length === 0) {
+            return res.status(404).json({ mensaje: "Venta no encontrada" });
         }
 
-        // 2. Obtener items de la venta
-        const sqlItems = `
-            SELECT dv.id, dv.cantidad, dv.precio_unitario,
-                   l.titulo, l.isbn, a.nombre as autor
-            FROM detalle_ventas dv
-            INNER JOIN libros l ON dv.libro_id = l.id
-            LEFT JOIN autores a ON l.autor_id = a.id
-            WHERE dv.venta_id = ?
-        `;
-        const [items] = await pool.query(sqlItems, [id]);
-
-        // 3. Combinar datos
-        res.json({
-            venta: venta[0],
-            items: items
-        });
-
+        res.json(rows);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Error al obtener detalle de venta' });
+        res.status(500).json({ mensaje: "Error al obtener detalle" });
     }
-};
-
-module.exports = {
-    crearVenta,
-    obtenerVentas,
-    obtenerDetalleVenta
 };
