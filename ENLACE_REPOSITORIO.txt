@@ -1,0 +1,17 @@
+REPOSITORIO GITHUB - SISTEMA DE GESTIÓN DE INVENTARIO
+Proyecto SENA - Análisis y Desarrollo de Software
+Aprendiz: Carlos Ivan Perdomo
+
+Evidencia: GA7-220501096-AA5-EV02 API Testing
+
+URL del Repositorio:
+https://github.com/cperdomope/SGI-Libreria-Frontend
+
+El repositorio contiene:
+- Código fuente completo del backend (Node.js + Express)
+- Script SQL de creación de base de datos
+- Documentación de endpoints de la API
+- Guías de pruebas con Postman
+- Historial de commits con control de versiones
+
+Fecha: Diciembre 2025
