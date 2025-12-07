@@ -216,14 +216,14 @@ const PaginaClientes = () => {
                     {error && <div className="alert alert-danger py-2">{error}</div>}
                     
                     <div className="mb-3">
-                      <label className="form-label small text-muted text-uppercase fw-bold">Documento *</label>
-                      <input 
-                        type="text" 
+                      <label className="form-label small text-muted fw-bold">Documento *</label>
+                      <input
+                        type="text"
                         name="documento"
-                        className="form-control" 
-                        value={formDatos.documento} 
+                        className="form-control"
+                        value={formDatos.documento}
                         onChange={manejarCambioInput}
-                        required 
+                        required
                         autoFocus
                       />
                     </div>

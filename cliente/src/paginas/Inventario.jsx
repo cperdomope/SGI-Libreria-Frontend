@@ -3,19 +3,28 @@ import api from '../servicios/api';
 
 const Inventario = () => {
   const [libros, setLibros] = useState([]);
+  const [autores, setAutores] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
-  
+
   // Estado del formulario (Sirve para crear Y para editar)
   const [datosLibro, setDatosLibro] = useState({
     id: null, // Si tiene ID, es edición. Si es null, es nuevo.
-    isbn: '', titulo: '', autor_id: '1', categoria_id: '1', precio_venta: '', stock_minimo: 5
+    isbn: '', titulo: '', autor_id: '', categoria_id: '', precio_venta: '', stock_minimo: 5
   });
 
-  // Cargar libros
-  const cargarLibros = async () => {
+  // Cargar datos
+  const cargarDatos = async () => {
     try {
-      const res = await api.get('/libros');
-      if (Array.isArray(res.data)) setLibros(res.data);
+      const [resLibros, resAutores, resCategorias] = await Promise.all([
+        api.get('/libros'),
+        api.get('/autores'),
+        api.get('/categorias')
+      ]);
+
+      if (Array.isArray(resLibros.data)) setLibros(resLibros.data);
+      if (Array.isArray(resAutores.data)) setAutores(resAutores.data);
+      if (Array.isArray(resCategorias.data)) setCategorias(resCategorias.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -23,11 +32,19 @@ const Inventario = () => {
     }
   };
 
-  useEffect(() => { cargarLibros(); }, []);
+  useEffect(() => { cargarDatos(); }, []);
 
   // Abrir Modal para CREAR
   const abrirModalNuevo = () => {
-    setDatosLibro({ id: null, isbn: '', titulo: '', autor_id: '1', categoria_id: '1', precio_venta: '', stock_minimo: 5 });
+    setDatosLibro({
+      id: null,
+      isbn: '',
+      titulo: '',
+      autor_id: autores[0]?.id || '',
+      categoria_id: categorias[0]?.id || '',
+      precio_venta: '',
+      stock_minimo: 5
+    });
   };
 
   // Abrir Modal para EDITAR (Carga los datos del libro en el formulario)
@@ -36,8 +53,8 @@ const Inventario = () => {
         id: libro.id,
         isbn: libro.isbn,
         titulo: libro.titulo,
-        autor_id: libro.autor_id || '1',
-        categoria_id: libro.categoria_id || '1',
+        autor_id: libro.autor_id || '',
+        categoria_id: libro.categoria_id || '',
         precio_venta: libro.precio_venta || 0,
         stock_minimo: libro.stock_minimo || 5
     });
@@ -57,7 +74,7 @@ const Inventario = () => {
         alert("✅ Libro creado con éxito");
       }
       
-      cargarLibros(); // Recargar la tabla
+      cargarDatos(); // Recargar la tabla
       document.getElementById('cerrarModalBtn').click(); // Cerrar modal
       
     } catch (error) {
@@ -73,7 +90,7 @@ const Inventario = () => {
     if (window.confirm(`¿Borrar "${titulo}"?`)) {
       try {
         await api.delete(`/libros/${id}`);
-        cargarLibros();
+        cargarDatos();
       } catch (error) {
         alert(error.response?.data?.error || "Error al eliminar");
       }
@@ -160,19 +177,22 @@ const Inventario = () => {
                       <input type="number" className="form-control" name="stock_minimo" value={datosLibro.stock_minimo} onChange={handleChange} />
                    </div>
                 </div>
-                {/* Selectores simplificados */}
                 <div className="mb-3">
                     <label>Autor:</label>
-                    <select className="form-select" name="autor_id" value={datosLibro.autor_id} onChange={handleChange}>
-                        <option value="1">Gabriel García Márquez (ID: 1)</option>
-                        <option value="2">Robert C. Martin (ID: 2)</option>
+                    <select className="form-select" name="autor_id" value={datosLibro.autor_id} onChange={handleChange} required>
+                        <option value="">Seleccione un autor</option>
+                        {autores.map(autor => (
+                            <option key={autor.id} value={autor.id}>{autor.nombre}</option>
+                        ))}
                     </select>
                 </div>
                 <div className="mb-3">
                     <label>Categoría:</label>
-                    <select className="form-select" name="categoria_id" value={datosLibro.categoria_id} onChange={handleChange}>
-                        <option value="1">Tecnología (ID: 1)</option>
-                        <option value="2">Ficción (ID: 2)</option>
+                    <select className="form-select" name="categoria_id" value={datosLibro.categoria_id} onChange={handleChange} required>
+                        <option value="">Seleccione una categoría</option>
+                        {categorias.map(categoria => (
+                            <option key={categoria.id} value={categoria.id}>{categoria.nombre}</option>
+                        ))}
                     </select>
                 </div>
 

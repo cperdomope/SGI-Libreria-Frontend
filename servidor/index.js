@@ -13,6 +13,8 @@ const rutasAuth = require('./rutas/rutasAuth');
 const rutasClientes = require('./rutas/clienteRutas');
 const rutasVentas = require('./rutas/ventaRutas');
 const rutasProveedores = require('./rutas/proveedorRutas');
+const rutasAutores = require('./rutas/autorRutas');
+const rutasCategorias = require('./rutas/categoriaRutas');
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use('/api/dashboard', rutasDashboard);
 app.use('/api/auth', rutasAuth);
 app.use('/api/clientes', rutasClientes);
 app.use('/api/proveedores', rutasProveedores);
+app.use('/api/autores', rutasAutores);
+app.use('/api/categorias', rutasCategorias);
 
 app.get('/', (req, res) => {
     res.send('API del Sistema de Inventario Funcionando 🚀');
