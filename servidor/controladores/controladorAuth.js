@@ -11,6 +11,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // =====================================================
+// VALIDACIÓN CRÍTICA: JWT_SECRET DEBE EXISTIR
+// =====================================================
+if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL: JWT_SECRET no está definido en las variables de entorno (.env)');
+}
+
+// =====================================================
 // SISTEMA DE CONTROL DE INTENTOS FALLIDOS
 // =====================================================
 // Estructura en memoria para trackear intentos de login
@@ -232,7 +239,7 @@ exports.login = async (req, res) => {
                 nombre: usuario.nombre_completo,
                 email: usuario.email
             },
-            process.env.JWT_SECRET || 'SECRETO_SENA_PROYECTO', // Clave secreta (debe estar en .env)
+            process.env.JWT_SECRET, // Clave secreta (validada al inicio del módulo)
             { expiresIn: '8h' } // El token expira en 8 horas
         );
 

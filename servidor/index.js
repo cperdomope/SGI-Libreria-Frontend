@@ -16,9 +16,18 @@ const rutasProveedores = require('./rutas/proveedorRutas');
 
 const app = express();
 
-// --- CORRECCIÓN CRÍTICA: MIDDLEWARES AL PRINCIPIO ---
-app.use(cors());
-app.use(express.json()); 
+// --- CONFIGURACIÓN DE CORS SEGURA ---
+// Solo permite requests desde el origen especificado en .env
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: true, // Permite envío de cookies y headers de autenticación
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
 // ---------------------------------------------------
 
 // Usar Rutas (Ahora sí funcionarán porque ya se configuró JSON)

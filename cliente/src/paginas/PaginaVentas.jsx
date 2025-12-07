@@ -176,10 +176,6 @@ const PaginaVentas = () => {
   // --- RENDERIZADO ---
   const totalVenta = calcularTotal();
 
-  // Debug: ver valores en consola
-  console.log('Carrito:', carrito);
-  console.log('Total calculado:', totalVenta);
-
   return (
     <div className="container-fluid h-100 bg-light p-4">
       <div className="row">
