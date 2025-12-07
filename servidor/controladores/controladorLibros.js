@@ -4,17 +4,18 @@ const db = require('../configuracion/db'); // Asegúrate que esta ruta sea corre
 exports.obtenerLibros = async (req, res) => {
     try {
         const [filas] = await db.query(`
-            SELECT 
-                l.id, 
-                l.isbn, 
-                l.titulo, 
-                CAST(l.precio_venta AS DECIMAL(10,2)) AS precio, 
-                CAST(l.stock_actual AS UNSIGNED) AS stock, 
-                l.stock_minimo, 
-                a.nombre AS autor, 
-                c.nombre AS categoria 
-            FROM libros l 
-            LEFT JOIN autores a ON l.autor_id = a.id 
+            SELECT
+                l.id,
+                l.isbn,
+                l.titulo,
+                l.autor_id,
+                CAST(l.precio_venta AS DECIMAL(10,2)) AS precio_venta,
+                CAST(l.stock_actual AS UNSIGNED) AS stock_actual,
+                l.stock_minimo,
+                a.nombre AS autor,
+                c.nombre AS categoria
+            FROM libros l
+            LEFT JOIN autores a ON l.autor_id = a.id
             LEFT JOIN categorias c ON l.categoria_id = c.id
         `);
         res.json(filas);

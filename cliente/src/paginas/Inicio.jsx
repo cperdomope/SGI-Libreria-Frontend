@@ -73,11 +73,28 @@ const Inicio = () => {
     );
   }
 
-  if (error || !estadisticas) {
+  if (error) {
     return (
       <div className="container mt-4">
         <div className="alert alert-danger">
-          {error || 'No se pudieron cargar las estadísticas'}
+          <h5>Error al cargar el dashboard</h5>
+          <p>{error}</p>
+          <button onClick={cargarEstadisticas} className="btn btn-primary">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!estadisticas) {
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-warning">
+          No hay datos disponibles
+          <button onClick={cargarEstadisticas} className="btn btn-primary ms-3">
+            Cargar datos
+          </button>
         </div>
       </div>
     );

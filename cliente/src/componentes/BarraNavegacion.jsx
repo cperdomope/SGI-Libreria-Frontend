@@ -58,14 +58,13 @@ const IconoSalir = () => (
 );
 
 const BarraNavegacion = () => {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const manejarSalida = () => {
     if(window.confirm('¿Desea cerrar sesión?')) {
-      cerrarSesion();
-      navigate('/acceso');
+      logout();
     }
   };
 

@@ -1,50 +1,52 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import api from '../servicios/api';
 
 /* EVIDENCIA SENA: GA7-220501096-AA4-EV03
-  AUTOR: Carlos Alberto Reyes
+  AUTOR: Carlos Ivan Perdomo
   MÓDULO: Punto de Venta (POS) - Frontend
   DESCRIPCIÓN: Interfaz para buscar libros, gestionar carrito de compras y registrar ventas.
 */
 
 // --- ICONOS VISUALES (SVG) PARA LA INTERFAZ ---
-// Se usan iconos directos para no depender de librerías externas pesadas.
 const IconoBuscar = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
 const IconoUsuario = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const IconoBasura = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
 
 // --- FUNCIÓN DE UTILIDAD ---
-// Convierte textos a números para evitar errores de cálculo (NaN)
 const parsearNumero = (valor) => {
   const num = Number(valor);
-  return isNaN(num) || num === null || num === undefined ? 0 : num;
+  return isNaN(num) ? 0 : num;
+};
+
+// --- FUNCIÓN PARA CALCULAR SUBTOTAL ---
+const calcularSubtotal = (cantidad, precio) => {
+  return parsearNumero(cantidad) * parsearNumero(precio);
 };
 
 const PaginaVentas = () => {
-  // --- VARIABLES DE ESTADO (Memoria del componente) ---
-  const [libros, setLibros] = useState([]); // Lista completa del inventario
-  const [clientes, setClientes] = useState([]); // Lista de clientes registrados
-  const [busqueda, setBusqueda] = useState(''); // Texto que escribe el usuario para buscar
-  const [carrito, setCarrito] = useState([]); // Productos seleccionados para la venta
-  const [clienteId, setClienteId] = useState(''); // Cliente seleccionado para la factura
-  const [loading, setLoading] = useState(true); // Indicador de carga
-  const [procesando, setProcesando] = useState(false); // Para bloquear el botón mientras guarda
+  // --- VARIABLES DE ESTADO ---
+  const [libros, setLibros] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [busqueda, setBusqueda] = useState('');
+  const [carrito, setCarrito] = useState([]);
+  const [clienteId, setClienteId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [procesando, setProcesando] = useState(false);
 
   // --- CARGA INICIAL DE DATOS ---
-  // Se ejecuta automáticamente al abrir la página
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        // Peticiones simultáneas al servidor para traer libros y clientes
         const [resLibros, resClientes] = await Promise.all([
-          axios.get('http://localhost:3000/api/libros'),
-          axios.get('http://localhost:3000/api/clientes')
+          api.get('/libros'),
+          api.get('/clientes')
         ]);
         setLibros(resLibros.data);
         setClientes(resClientes.data);
       } catch (error) {
-        alert('Error conectando con el servidor.');
+        console.error('Error cargando datos:', error);
+        alert('Error conectando con el servidor. Verifica que estés autenticado.');
       } finally {
         setLoading(false);
       }
@@ -52,108 +54,146 @@ const PaginaVentas = () => {
     cargarDatos();
   }, []);
 
+  // --- CALCULAR TOTAL DINÁMICAMENTE ---
+  // Se calcula cada vez que se renderiza, garantizando valores correctos
+  const calcularTotal = () => {
+    return carrito.reduce((total, item) => {
+      return total + calcularSubtotal(item.cantidad, item.precio);
+    }, 0);
+  };
+
   // --- LÓGICA DEL CARRITO DE COMPRAS ---
-  
-  // Función para añadir un libro al carrito
+
   const agregarAlCarrito = (libro) => {
-    const precio = parsearNumero(libro.precio);
-    const stock = parsearNumero(libro.stock);
+    const precio = parsearNumero(libro.precio_venta);
+    const stock = parsearNumero(libro.stock_actual);
 
     setCarrito(prevCarrito => {
-      // Verificamos si el libro ya estaba en el carrito
-      const itemExistente = prevCarrito.find(item => item.id === libro.id);
-      
-      // Validación: No permitir vender más de lo que hay en inventario
-      if (itemExistente && itemExistente.cantidad >= stock) {
-        alert(`Stock insuficiente. Solo hay ${stock} unidades.`);
-        return prevCarrito;
-      }
+      const indice = prevCarrito.findIndex(item => item.id === libro.id);
 
-      if (itemExistente) {
-        // Si ya existe, sumamos 1 a la cantidad
-        return prevCarrito.map(item => 
-          item.id === libro.id 
-          ? { ...item, cantidad: item.cantidad + 1, subtotal: (item.cantidad + 1) * precio }
-          : item
-        );
+      if (indice >= 0) {
+        // Ya existe en el carrito
+        if (prevCarrito[indice].cantidad >= stock) {
+          alert(`Stock insuficiente. Solo hay ${stock} unidades.`);
+          return prevCarrito;
+        }
+        // Crear nuevo array con la cantidad incrementada
+        const nuevoCarrito = [...prevCarrito];
+        nuevoCarrito[indice] = {
+          ...nuevoCarrito[indice],
+          cantidad: nuevoCarrito[indice].cantidad + 1
+        };
+        return nuevoCarrito;
       } else {
-        // Si es nuevo, lo agregamos a la lista
-        return [...prevCarrito, { ...libro, precio, stock, cantidad: 1, subtotal: precio }];
+        // Nuevo item
+        return [...prevCarrito, {
+          id: libro.id,
+          titulo: libro.titulo,
+          precio: precio,
+          stock: stock,
+          cantidad: 1
+        }];
       }
     });
   };
 
-  // Función para quitar un libro de la lista
   const eliminarDelCarrito = (id) => {
     setCarrito(prevCarrito => prevCarrito.filter(item => item.id !== id));
   };
 
-  // --- CÁLCULOS AUTOMÁTICOS ---
-  // Calcula el total a pagar sumando los subtotales del carrito
-  // 'useMemo' optimiza para que no recalcule si el carrito no cambia
-  const totalVenta = useMemo(() => {
-    return carrito.reduce((acc, item) => acc + parsearNumero(item.subtotal), 0);
-  }, [carrito]);
+  const incrementarCantidad = (id) => {
+    setCarrito(prevCarrito => {
+      return prevCarrito.map(item => {
+        if (item.id === id) {
+          if (item.cantidad >= item.stock) {
+            alert(`Stock insuficiente. Solo hay ${item.stock} unidades.`);
+            return item;
+          }
+          return { ...item, cantidad: item.cantidad + 1 };
+        }
+        return item;
+      });
+    });
+  };
+
+  const decrementarCantidad = (id) => {
+    setCarrito(prevCarrito => {
+      return prevCarrito.map(item => {
+        if (item.id === id && item.cantidad > 1) {
+          return { ...item, cantidad: item.cantidad - 1 };
+        }
+        return item;
+      });
+    });
+  };
 
   // --- PROCESO FINAL DE VENTA ---
   const confirmarVenta = async () => {
+    const total = calcularTotal();
+
     if (!clienteId) {
       alert('Por favor selecciona un cliente.');
       return;
     }
 
-    if (!window.confirm(`¿Confirmar venta por $${totalVenta.toLocaleString()}?`)) return;
+    if (carrito.length === 0) {
+      alert('El carrito está vacío.');
+      return;
+    }
+
+    if (!window.confirm(`¿Confirmar venta por $${total.toLocaleString()}?`)) return;
 
     setProcesando(true);
     try {
-      // Preparamos el paquete de datos para enviar al Backend
       const datosVenta = {
         cliente_id: clienteId,
-        total: totalVenta,
-        items: carrito.map(i => ({ 
-            libro_id: i.id, 
-            cantidad: i.cantidad, 
-            precio_unitario: i.precio 
+        total: total,
+        items: carrito.map(item => ({
+          libro_id: item.id,
+          cantidad: item.cantidad,
+          precio_unitario: item.precio
         }))
       };
 
-      // Enviamos los datos para guardar en Base de Datos
-      const respuesta = await axios.post('http://localhost:3000/api/ventas', datosVenta);
-      
-      alert(`Venta registrada exitosamente. ID: ${respuesta.data.ventaId}`);
-      
-      // Limpiamos la pantalla para la siguiente venta
+      const respuesta = await api.post('/ventas', datosVenta);
+
+      alert(`¡Venta registrada exitosamente! ID: ${respuesta.data.ventaId}`);
+
       setCarrito([]);
       setClienteId('');
-      
-      // Recargamos los libros para ver el stock actualizado
-      const resLibros = await axios.get('http://localhost:3000/api/libros');
+
+      const resLibros = await api.get('/libros');
       setLibros(resLibros.data);
 
     } catch (error) {
-      alert('Hubo un error al guardar la venta.');
-      console.error(error);
+      console.error('Error al guardar venta:', error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al guardar la venta.');
     } finally {
       setProcesando(false);
     }
   };
 
-  // --- RENDERIZADO (Lo que ve el usuario) ---
+  // --- RENDERIZADO ---
+  const totalVenta = calcularTotal();
+
+  // Debug: ver valores en consola
+  console.log('Carrito:', carrito);
+  console.log('Total calculado:', totalVenta);
+
   return (
     <div className="container-fluid h-100 bg-light p-4">
       <div className="row">
-        
+
         {/* COLUMNA IZQUIERDA: Catálogo de Libros */}
         <div className="col-md-8">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3>Catálogo de Libros</h3>
-            {/* Buscador */}
             <div className="input-group w-50">
               <span className="input-group-text"><IconoBuscar /></span>
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="Buscar por título..." 
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar por título..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
               />
@@ -161,29 +201,41 @@ const PaginaVentas = () => {
           </div>
 
           <div className="row">
-            {libros
-              .filter(l => l.titulo.toLowerCase().includes(busqueda.toLowerCase()))
-              .map(libro => (
-                <div key={libro.id} className="col-md-4 mb-3">
-                  <div className="card shadow-sm h-100">
-                    <div className="card-body">
-                      <h5 className="card-title text-truncate">{libro.titulo}</h5>
-                      <p className="card-text text-muted small">{libro.autor}</p>
-                      <h6 className="text-primary fw-bold">
-                        ${parsearNumero(libro.precio).toLocaleString()}
-                      </h6>
-                      <small>Disponibles: {parsearNumero(libro.stock)}</small>
-                      <button 
-                        className="btn btn-primary w-100 mt-2 btn-sm"
-                        onClick={() => agregarAlCarrito(libro)}
-                        disabled={parsearNumero(libro.stock) <= 0}
-                      >
-                        {parsearNumero(libro.stock) > 0 ? '+ Agregar' : 'Agotado'}
-                      </button>
+            {loading ? (
+              <div className="col-12 text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Cargando...</span>
+                </div>
+              </div>
+            ) : libros.length === 0 ? (
+              <div className="col-12 text-center">
+                <p className="text-muted">No hay libros disponibles</p>
+              </div>
+            ) : (
+              libros
+                .filter(l => l.titulo.toLowerCase().includes(busqueda.toLowerCase()))
+                .map(libro => (
+                  <div key={libro.id} className="col-md-4 mb-3">
+                    <div className="card shadow-sm h-100">
+                      <div className="card-body">
+                        <h5 className="card-title text-truncate">{libro.titulo}</h5>
+                        <p className="card-text text-muted small">Autor ID: {libro.autor_id || 'N/A'}</p>
+                        <h6 className="text-primary fw-bold">
+                          ${parsearNumero(libro.precio_venta).toLocaleString()}
+                        </h6>
+                        <small>Disponibles: {parsearNumero(libro.stock_actual)}</small>
+                        <button
+                          className="btn btn-primary w-100 mt-2 btn-sm"
+                          onClick={() => agregarAlCarrito(libro)}
+                          disabled={parsearNumero(libro.stock_actual) <= 0}
+                        >
+                          {parsearNumero(libro.stock_actual) > 0 ? '+ Agregar' : 'Agotado'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 
@@ -196,7 +248,7 @@ const PaginaVentas = () => {
             <div className="card-body">
               {/* Selector de Cliente */}
               <label className="form-label">Cliente:</label>
-              <select 
+              <select
                 className="form-select mb-3"
                 value={clienteId}
                 onChange={e => setClienteId(e.target.value)}
@@ -208,30 +260,73 @@ const PaginaVentas = () => {
               </select>
 
               <hr />
-              
+
               {/* Lista de productos agregados */}
               <h6>Productos en Carrito:</h6>
               <ul className="list-group list-group-flush mb-3" style={{maxHeight: '300px', overflowY: 'auto'}}>
                 {carrito.length === 0 && <li className="list-group-item text-muted">Carrito vacío</li>}
-                {carrito.map((item) => (
-                  <li key={item.id} className="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                      <strong>{item.titulo}</strong><br/>
-                      <small>{item.cantidad} x ${item.precio.toLocaleString()}</small>
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                      <span>${item.subtotal.toLocaleString()}</span>
-                      <button className="btn btn-sm btn-danger py-0" onClick={() => eliminarDelCarrito(item.id)}><IconoBasura /></button>
-                    </div>
-                  </li>
-                ))}
+                {carrito.map((item) => {
+                  // Calcular subtotal directamente aquí
+                  const subtotalItem = calcularSubtotal(item.cantidad, item.precio);
+
+                  return (
+                    <li key={item.id} className="list-group-item">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="flex-grow-1">
+                          <strong className="d-block">{item.titulo}</strong>
+                          <small className="text-muted">
+                            Precio unitario: ${parsearNumero(item.precio).toLocaleString()}
+                          </small>
+                        </div>
+                        <button
+                          className="btn btn-sm btn-danger py-0 px-2"
+                          onClick={() => eliminarDelCarrito(item.id)}
+                          title="Eliminar del carrito"
+                        >
+                          <IconoBasura />
+                        </button>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="btn-group btn-group-sm" role="group">
+                          <button
+                            className="btn btn-outline-secondary"
+                            onClick={() => decrementarCantidad(item.id)}
+                            disabled={item.cantidad <= 1}
+                          >
+                            −
+                          </button>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm text-center"
+                            style={{maxWidth: '60px'}}
+                            value={item.cantidad}
+                            readOnly
+                          />
+                          <button
+                            className="btn btn-outline-secondary"
+                            onClick={() => incrementarCantidad(item.id)}
+                            disabled={item.cantidad >= item.stock}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <strong className="text-success" style={{fontSize: '1.1rem'}}>
+                          ${subtotalItem.toLocaleString('es-CO')}
+                        </strong>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* Total y Botón Pagar */}
-              <div className="alert alert-success text-center">
-                <h3>Total: ${totalVenta.toLocaleString()}</h3>
+              <div className="alert alert-success text-center mb-3" style={{backgroundColor: '#d1e7dd'}}>
+                <div className="mb-1 text-muted small">Total a Pagar:</div>
+                <h3 className="mb-0 fw-bold text-success">
+                  ${totalVenta.toLocaleString('es-CO')}
+                </h3>
               </div>
-              <button 
+              <button
                 className="btn btn-success w-100 btn-lg"
                 onClick={confirmarVenta}
                 disabled={carrito.length === 0 || procesando}
