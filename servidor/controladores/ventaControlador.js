@@ -89,23 +89,51 @@ exports.obtenerVentas = async (req, res) => {
     }
 };
 
-// 3. GET: Obtener detalle (Ajustado para devolver también el subtotal)
+// 3. GET: Obtener detalle completo de una venta (información + items)
 exports.obtenerDetalleVenta = async (req, res) => {
     const { id } = req.params;
     try {
-        const sql = `
-            SELECT d.cantidad, d.precio_unitario, d.subtotal, l.titulo, l.isbn
-            FROM detalle_ventas d
-            JOIN libros l ON d.libro_id = l.id
-            WHERE d.venta_id = ?
-        `;
-        const [rows] = await db.query(sql, [id]);
-        
-        if (rows.length === 0) {
+        // Obtener información de la venta
+        const [ventaInfo] = await db.query(`
+            SELECT
+                v.id,
+                v.fecha_venta,
+                v.total_venta as total,
+                v.metodo_pago,
+                c.nombre_completo as cliente,
+                c.documento,
+                c.telefono
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_id = c.id
+            WHERE v.id = ?
+        `, [id]);
+
+        if (ventaInfo.length === 0) {
             return res.status(404).json({ mensaje: "Venta no encontrada" });
         }
 
-        res.json(rows);
+        // Obtener items de la venta
+        const [items] = await db.query(`
+            SELECT
+                d.id,
+                d.cantidad,
+                d.precio_unitario,
+                d.subtotal,
+                l.titulo,
+                l.isbn,
+                a.nombre as autor
+            FROM detalle_ventas d
+            JOIN libros l ON d.libro_id = l.id
+            LEFT JOIN autores a ON l.autor_id = a.id
+            WHERE d.venta_id = ?
+        `, [id]);
+
+        // Devolver en el formato que espera el frontend
+        res.json({
+            venta: ventaInfo[0],
+            items: items
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensaje: "Error al obtener detalle" });

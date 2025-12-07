@@ -11,6 +11,69 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // =====================================================
+// SISTEMA DE CONTROL DE INTENTOS FALLIDOS
+// =====================================================
+// Estructura en memoria para trackear intentos de login
+// Formato: { email: { intentos: number, bloqueadoHasta: Date } }
+const intentosLogin = new Map();
+
+// Configuración de seguridad
+const MAX_INTENTOS = 3;
+const TIEMPO_BLOQUEO_MINUTOS = 15;
+
+// Función para verificar si un usuario está bloqueado
+const verificarBloqueo = (email) => {
+    const registro = intentosLogin.get(email);
+
+    if (!registro) {
+        return { bloqueado: false };
+    }
+
+    // Si está bloqueado, verificar si ya pasó el tiempo de bloqueo
+    if (registro.bloqueadoHasta && new Date() < registro.bloqueadoHasta) {
+        const minutosRestantes = Math.ceil((registro.bloqueadoHasta - new Date()) / 60000);
+        return {
+            bloqueado: true,
+            minutosRestantes
+        };
+    }
+
+    // Si ya pasó el tiempo de bloqueo, limpiar el registro
+    if (registro.bloqueadoHasta && new Date() >= registro.bloqueadoHasta) {
+        intentosLogin.delete(email);
+        return { bloqueado: false };
+    }
+
+    return { bloqueado: false };
+};
+
+// Función para registrar un intento fallido
+const registrarIntentoFallido = (email) => {
+    const registro = intentosLogin.get(email) || { intentos: 0, bloqueadoHasta: null };
+
+    registro.intentos += 1;
+
+    // Si alcanza el máximo de intentos, bloquear
+    if (registro.intentos >= MAX_INTENTOS) {
+        const bloqueadoHasta = new Date();
+        bloqueadoHasta.setMinutes(bloqueadoHasta.getMinutes() + TIEMPO_BLOQUEO_MINUTOS);
+        registro.bloqueadoHasta = bloqueadoHasta;
+    }
+
+    intentosLogin.set(email, registro);
+
+    return {
+        intentosRestantes: Math.max(0, MAX_INTENTOS - registro.intentos),
+        bloqueado: registro.intentos >= MAX_INTENTOS
+    };
+};
+
+// Función para limpiar intentos después de login exitoso
+const limpiarIntentos = (email) => {
+    intentosLogin.delete(email);
+};
+
+// =====================================================
 // FUNCIÓN: REGISTRO DE USUARIO
 // =====================================================
 // Descripción: Registra un nuevo usuario en el sistema
@@ -91,11 +154,23 @@ exports.login = async (req, res) => {
         // 1. VALIDACIÓN: Verificar que email y password estén presentes
         if (!email || !password) {
             return res.status(400).json({
-                error: 'Email y contraseña son obligatorios'
+                error: 'Email y contraseña son obligatorios',
+                exito: false
             });
         }
 
-        // 2. BÚSQUEDA: Buscar el usuario por email en la base de datos
+        // 2. VERIFICAR BLOQUEO: Comprobar si el usuario está bloqueado por intentos fallidos
+        const estadoBloqueo = verificarBloqueo(email);
+        if (estadoBloqueo.bloqueado) {
+            return res.status(429).json({
+                error: `Cuenta bloqueada temporalmente por múltiples intentos fallidos. Intente nuevamente en ${estadoBloqueo.minutosRestantes} minuto(s).`,
+                exito: false,
+                bloqueado: true,
+                minutosRestantes: estadoBloqueo.minutosRestantes
+            });
+        }
+
+        // 3. BÚSQUEDA: Buscar el usuario por email en la base de datos
         const [usuarios] = await db.query(
             'SELECT * FROM usuarios WHERE email = ?',
             [email]
@@ -103,34 +178,51 @@ exports.login = async (req, res) => {
 
         // Verificar si el usuario existe
         if (usuarios.length === 0) {
+            // Registrar intento fallido
+            const resultado = registrarIntentoFallido(email);
+
             return res.status(401).json({
-                error: 'Credenciales incorrectas',
-                exito: false
+                error: 'Email o contraseña incorrectos',
+                exito: false,
+                intentosRestantes: resultado.intentosRestantes,
+                mensaje: resultado.bloqueado
+                    ? `Cuenta bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos debido a múltiples intentos fallidos.`
+                    : `Credenciales incorrectas. Le quedan ${resultado.intentosRestantes} intento(s).`
             });
         }
 
         const usuario = usuarios[0];
 
-        // 3. VERIFICACIÓN: Verificar si el usuario está activo
+        // 4. VERIFICACIÓN: Verificar si el usuario está activo
         if (usuario.estado !== 1) {
             return res.status(403).json({
-                error: 'Usuario inactivo. Contacte al administrador',
+                error: 'Usuario inactivo. Contacte al administrador del sistema.',
                 exito: false
             });
         }
 
-        // 4. COMPARACIÓN: Comparar la contraseña ingresada con el hash almacenado
+        // 5. COMPARACIÓN: Comparar la contraseña ingresada con el hash almacenado
         // bcrypt.compare() desencripta y compara de forma segura
         const passwordEsCorrecta = await bcrypt.compare(password, usuario.password_hash);
 
         if (!passwordEsCorrecta) {
+            // Registrar intento fallido
+            const resultado = registrarIntentoFallido(email);
+
             return res.status(401).json({
-                error: 'Credenciales incorrectas',
-                exito: false
+                error: 'Email o contraseña incorrectos',
+                exito: false,
+                intentosRestantes: resultado.intentosRestantes,
+                mensaje: resultado.bloqueado
+                    ? `Cuenta bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos debido a múltiples intentos fallidos.`
+                    : `Credenciales incorrectas. Le quedan ${resultado.intentosRestantes} intento(s).`
             });
         }
 
-        // 5. GENERACIÓN DE TOKEN: Crear token JWT para la sesión
+        // 6. LOGIN EXITOSO: Limpiar intentos fallidos
+        limpiarIntentos(email);
+
+        // 7. GENERACIÓN DE TOKEN: Crear token JWT para la sesión
         // El token contiene información del usuario (payload)
         // Se firma con una clave secreta y tiene un tiempo de expiración
         const token = jwt.sign(
@@ -144,7 +236,7 @@ exports.login = async (req, res) => {
             { expiresIn: '8h' } // El token expira en 8 horas
         );
 
-        // 6. RESPUESTA EXITOSA: Autenticación satisfactoria
+        // 8. RESPUESTA EXITOSA: Autenticación satisfactoria
         res.json({
             mensaje: 'Autenticación satisfactoria',
             exito: true,
@@ -161,9 +253,9 @@ exports.login = async (req, res) => {
         // Manejo de errores del servidor
         console.error('Error en login:', error);
         res.status(500).json({
-            error: 'Error en la autenticación',
+            error: 'Error interno del servidor. Intente más tarde.',
             exito: false,
-            detalles: error.message
+            detalles: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 };

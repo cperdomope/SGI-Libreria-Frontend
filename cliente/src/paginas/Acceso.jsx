@@ -43,7 +43,10 @@ const Acceso = () => {
   // Estados para errores específicos de cada campo
   const [errores, setErrores] = useState({ email: '', password: '', general: '' });
   const [loading, setLoading] = useState(false);
-  
+  const [intentosRestantes, setIntentosRestantes] = useState(null);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [mensajeDetallado, setMensajeDetallado] = useState('');
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -83,18 +86,36 @@ const Acceso = () => {
     setLoading(true);
 
     try {
-      // Simulamos delay UX
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       const res = await api.post('/auth/login', { email, password });
+
+      // Guardar datos de sesión
       login(res.data.usuario, res.data.token);
-      navigate('/'); 
-      
+
+      // Forzar recarga completa para evitar conflictos con la advertencia del navegador
+      window.location.href = '/';
+
     } catch (err) {
-      // Mostrar error general del servidor (ej: "Credenciales incorrectas")
-      setErrores(prev => ({ 
-        ...prev, 
-        general: err.response?.data?.error || 'No se pudo conectar al servidor. Intente más tarde.' 
+      const errorData = err.response?.data;
+
+      // Verificar si la cuenta está bloqueada
+      if (errorData?.bloqueado) {
+        setBloqueado(true);
+        setIntentosRestantes(0);
+        setMensajeDetallado(errorData.error);
+      } else if (errorData?.intentosRestantes !== undefined) {
+        // Mostrar intentos restantes
+        setIntentosRestantes(errorData.intentosRestantes);
+        setMensajeDetallado(errorData.mensaje || errorData.error);
+        setBloqueado(false);
+      } else {
+        // Error genérico
+        setMensajeDetallado(errorData?.error || 'No se pudo conectar al servidor. Intente más tarde.');
+        setBloqueado(false);
+      }
+
+      setErrores(prev => ({
+        ...prev,
+        general: errorData?.error || 'Error de conexión'
       }));
     } finally {
       setLoading(false);
@@ -112,10 +133,33 @@ const Acceso = () => {
           <p className="text-muted">Sistema de Gestión Bibliotecaria</p>
         </div>
         
-        {/* Alerta de Error General (Servidor) */}
+        {/* Alerta de Error con Intentos Restantes */}
         {errores.general && (
-          <div className="alert alert-danger d-flex align-items-center mb-4" role="alert">
-            <small>{errores.general}</small>
+          <div className={`alert ${bloqueado ? 'alert-danger' : 'alert-warning'} mb-4`} role="alert">
+            <div className="d-flex align-items-start">
+              <div className="flex-grow-1">
+                <strong className="d-block mb-1">
+                  {bloqueado ? '🔒 Cuenta Bloqueada' : '⚠️ Error de Autenticación'}
+                </strong>
+                <p className="mb-2 small">{mensajeDetallado || errores.general}</p>
+                {intentosRestantes !== null && !bloqueado && (
+                  <div className="mt-2">
+                    <div className="progress" style={{ height: '8px' }}>
+                      <div
+                        className={`progress-bar ${
+                          intentosRestantes === 2 ? 'bg-success' :
+                          intentosRestantes === 1 ? 'bg-warning' : 'bg-danger'
+                        }`}
+                        style={{ width: `${(intentosRestantes / 3) * 100}%` }}
+                      ></div>
+                    </div>
+                    <small className="text-muted mt-1 d-block">
+                      Intentos restantes: <strong>{intentosRestantes}</strong> de 3
+                    </small>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -174,8 +218,16 @@ const Acceso = () => {
           </div>
 
           <div className="d-grid gap-2">
-            <button type="submit" className="btn btn-primary py-2 fw-bold" disabled={loading}>
-              {loading ? (
+            <button
+              type="submit"
+              className={`btn ${bloqueado ? 'btn-danger' : 'btn-primary'} py-2 fw-bold`}
+              disabled={loading || bloqueado}
+            >
+              {bloqueado ? (
+                <>
+                  🔒 CUENTA BLOQUEADA
+                </>
+              ) : loading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                   Validando...
