@@ -26,7 +26,7 @@ const intentosLogin = new Map();
 
 // Configuración de seguridad
 const MAX_INTENTOS = 3;
-const TIEMPO_BLOQUEO_MINUTOS = 15;
+const TIEMPO_BLOQUEO_MINUTOS = 3;
 
 // Función para verificar si un usuario está bloqueado
 const verificarBloqueo = (email) => {
@@ -170,7 +170,7 @@ exports.login = async (req, res) => {
         const estadoBloqueo = verificarBloqueo(email);
         if (estadoBloqueo.bloqueado) {
             return res.status(429).json({
-                error: `Cuenta bloqueada temporalmente por múltiples intentos fallidos. Intente nuevamente en ${estadoBloqueo.minutosRestantes} minuto(s).`,
+                error: `Su cuenta ha sido bloqueada temporalmente por seguridad. Por favor, espere ${estadoBloqueo.minutosRestantes} minuto(s) antes de intentar nuevamente.`,
                 exito: false,
                 bloqueado: true,
                 minutosRestantes: estadoBloqueo.minutosRestantes
@@ -189,12 +189,12 @@ exports.login = async (req, res) => {
             const resultado = registrarIntentoFallido(email);
 
             return res.status(401).json({
-                error: 'Email o contraseña incorrectos',
+                error: 'Credenciales incorrectas',
                 exito: false,
                 intentosRestantes: resultado.intentosRestantes,
                 mensaje: resultado.bloqueado
-                    ? `Cuenta bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos debido a múltiples intentos fallidos.`
-                    : `Credenciales incorrectas. Le quedan ${resultado.intentosRestantes} intento(s).`
+                    ? `Su cuenta ha sido bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos por seguridad. Por favor, espere antes de intentar nuevamente.`
+                    : `El correo electrónico o la contraseña son incorrectos. Tiene ${resultado.intentosRestantes} intento(s) restante(s).`
             });
         }
 
@@ -217,12 +217,12 @@ exports.login = async (req, res) => {
             const resultado = registrarIntentoFallido(email);
 
             return res.status(401).json({
-                error: 'Email o contraseña incorrectos',
+                error: 'Credenciales incorrectas',
                 exito: false,
                 intentosRestantes: resultado.intentosRestantes,
                 mensaje: resultado.bloqueado
-                    ? `Cuenta bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos debido a múltiples intentos fallidos.`
-                    : `Credenciales incorrectas. Le quedan ${resultado.intentosRestantes} intento(s).`
+                    ? `Su cuenta ha sido bloqueada por ${TIEMPO_BLOQUEO_MINUTOS} minutos por seguridad. Por favor, espere antes de intentar nuevamente.`
+                    : `El correo electrónico o la contraseña son incorrectos. Tiene ${resultado.intentosRestantes} intento(s) restante(s).`
             });
         }
 

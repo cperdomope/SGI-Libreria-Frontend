@@ -146,36 +146,50 @@ const PaginaProveedores = () => {
             </div>
           )}
 
-          <div className="table-responsive">
-            <table className="table table-hover table-striped align-middle">
-              <thead className="table-dark">
+          <style>{`
+            .tabla-proveedores.table-hover tbody tr:hover td {
+              background-color: #c3f0ca !important;
+              cursor: pointer;
+            }
+            .tabla-proveedores tbody tr:hover {
+              background-color: #c3f0ca !important;
+              box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3) !important;
+              transform: scale(1.01);
+              transition: all 0.2s ease;
+            }
+          `}</style>
+          <div className="table-responsive" style={{ overflowX: 'auto' }}>
+            <table className="table table-hover table-striped align-middle tabla-proveedores" style={{ minWidth: '800px' }}>
+              <thead className="table-dark text-center">
                 <tr>
-                  <th>ID</th>
+                  <th className="d-none d-md-table-cell">ID</th>
                   <th>Empresa</th>
-                  <th>NIT</th>
-                  <th>Contacto</th>
-                  <th>Email</th>
+                  <th translate="no">NIT</th>
+                  <th className="d-none d-lg-table-cell">Contacto</th>
+                  <th className="d-none d-xl-table-cell">Email</th>
                   <th>Teléfono</th>
-                  <th>Acciones</th>
+                  <th className="d-none d-lg-table-cell">Dirección</th>
+                  <th style={{ minWidth: '120px' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {proveedores.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center text-muted py-4">
+                    <td colSpan="8" className="text-center text-muted py-4">
                       No hay proveedores registrados
                     </td>
                   </tr>
                 ) : (
                   proveedores.map((proveedor) => (
                     <tr key={proveedor.id}>
-                      <td>{proveedor.id}</td>
-                      <td className="fw-bold">{proveedor.nombre_empresa}</td>
-                      <td>{proveedor.nit || '-'}</td>
-                      <td>{proveedor.nombre_contacto || '-'}</td>
-                      <td>{proveedor.email || '-'}</td>
-                      <td>{proveedor.telefono || '-'}</td>
-                      <td>
+                      <td className="d-none d-md-table-cell text-center">{proveedor.id}</td>
+                      <td className="fw-bold text-center">{proveedor.nombre_empresa}</td>
+                      <td className="text-center">{proveedor.nit || '-'}</td>
+                      <td className="d-none d-lg-table-cell text-center">{proveedor.nombre_contacto || '-'}</td>
+                      <td className="d-none d-xl-table-cell text-center">{proveedor.email || '-'}</td>
+                      <td className="text-center">{proveedor.telefono || '-'}</td>
+                      <td className="d-none d-lg-table-cell text-center">{proveedor.direccion || '-'}</td>
+                      <td className="text-center" style={{ whiteSpace: 'nowrap' }}>
                         <button
                           className="btn btn-sm btn-primary me-2"
                           onClick={() => abrirModalEditar(proveedor)}
@@ -240,7 +254,7 @@ const PaginaProveedores = () => {
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label">NIT</label>
+                      <label className="form-label" translate="no">NIT</label>
                       <input
                         type="text"
                         className="form-control"

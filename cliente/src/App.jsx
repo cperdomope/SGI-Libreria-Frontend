@@ -8,6 +8,8 @@ import PaginaClientes from './paginas/PaginaClientes';
 import PaginaVentas from './paginas/PaginaVentas';
 import HistorialVentas from './paginas/HistorialVentas';
 import PaginaProveedores from './paginas/PaginaProveedores';
+import PaginaAutores from './paginas/PaginaAutores';
+import PaginaCategorias from './paginas/PaginaCategorias';
 import Acceso from './paginas/Acceso';
 import { AuthProvider, useAuth } from './contexto/AuthContext';
 
@@ -90,6 +92,20 @@ function App() {
           <Route path="/proveedores" element={
             <RutaProtegida>
               <LayoutPrincipal><PaginaProveedores /></LayoutPrincipal>
+            </RutaProtegida>
+          } />
+
+          {/* --- RUTA DE AUTORES --- */}
+          <Route path="/autores" element={
+            <RutaProtegida>
+              <LayoutPrincipal><PaginaAutores /></LayoutPrincipal>
+            </RutaProtegida>
+          } />
+
+          {/* --- RUTA DE CATEGORÍAS --- */}
+          <Route path="/categorias" element={
+            <RutaProtegida>
+              <LayoutPrincipal><PaginaCategorias /></LayoutPrincipal>
             </RutaProtegida>
           } />
 
