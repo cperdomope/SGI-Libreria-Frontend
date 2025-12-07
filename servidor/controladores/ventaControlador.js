@@ -2,11 +2,18 @@ const db = require('../configuracion/db');
 
 // 1. POST: Registrar venta (AJUSTADO A TUS IMÁGENES)
 exports.crearVenta = async (req, res) => {
-    const { cliente_id, total, items } = req.body;
-    
+    const { cliente_id, total, items, metodo_pago } = req.body;
+
     // Validación básica
     if (!cliente_id || !items || items.length === 0) {
         return res.status(400).json({ mensaje: "Faltan datos para procesar la venta." });
+    }
+
+    // Validar método de pago
+    const metodoPagoValido = metodo_pago || 'Efectivo';
+    const metodosPermitidos = ['Efectivo', 'Tarjeta', 'Transferencia'];
+    if (!metodosPermitidos.includes(metodoPagoValido)) {
+        return res.status(400).json({ mensaje: "Método de pago inválido." });
     }
 
     let connection;
@@ -19,12 +26,13 @@ exports.crearVenta = async (req, res) => {
         // Campos: cliente_id, usuario_id, total_venta, metodo_pago, fecha_venta
         // =================================================================================
         const queryVenta = `
-            INSERT INTO ventas (cliente_id, usuario_id, total_venta, metodo_pago, fecha_venta) 
+            INSERT INTO ventas (cliente_id, usuario_id, total_venta, metodo_pago, fecha_venta)
             VALUES (?, ?, ?, ?, NOW())
         `;
-        
-        // Asumimos usuario_id = 1 y metodo_pago = 'Efectivo' (como en tu ejemplo)
-        const [ventaResult] = await connection.query(queryVenta, [cliente_id, 1, total, 'Efectivo']);
+
+        // Usar el ID del usuario autenticado (del token JWT) y el método de pago del request
+        const usuarioId = req.usuario?.id || 1; // Fallback a 1 si no hay usuario autenticado
+        const [ventaResult] = await connection.query(queryVenta, [cliente_id, usuarioId, total, metodoPagoValido]);
         const ventaId = ventaResult.insertId;
 
         // =================================================================================

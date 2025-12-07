@@ -1,0 +1,48 @@
+# =============================================
+# GITIGNORE - Sistema de Gestión de Inventario
+# =============================================
+
+# Variables de entorno (CRÍTICO - NUNCA VERSIONAR)
+servidor/.env
+cliente/.env
+.env
+.env.local
+.env.*.local
+
+# Scripts sensibles
+servidor/scripts/
+
+# Dependencias
+node_modules/
+servidor/node_modules/
+cliente/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Build artifacts
+dist/
+build/
+cliente/dist/
+servidor/dist/
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+*.tmp
+.cache/
+.temp/

@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Configuración de Axios para conectar con el Backend
+// La URL base se obtiene de las variables de entorno (.env)
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
 });
 
 // Interceptor para agregar el token JWT automáticamente a todas las peticiones
