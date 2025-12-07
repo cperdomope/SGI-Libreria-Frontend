@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../servicios/api';
 
 // --- ICONOS SVG INLINE (Para evitar dependencias externas) ---
 const IconoPlus = () => (
@@ -37,9 +38,6 @@ const PaginaClientes = () => {
     direccion: ''
   });
 
-  // URL base de la API (Ajustar puerto si es necesario, asumimos proxy o CORS configurado)
-  const API_URL = 'http://localhost:3000/api/clientes';
-
   // Cargar clientes al montar el componente
   useEffect(() => {
     cargarClientes();
@@ -48,10 +46,8 @@ const PaginaClientes = () => {
   const cargarClientes = async () => {
     try {
       setCargando(true);
-      const respuesta = await fetch(API_URL);
-      if (!respuesta.ok) throw new Error('Error al cargar clientes');
-      const datos = await respuesta.json();
-      setClientes(datos);
+      const respuesta = await api.get('/clientes');
+      setClientes(respuesta.data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -103,29 +99,19 @@ const PaginaClientes = () => {
     }
 
     try {
-      const metodo = formDatos.id ? 'PUT' : 'POST';
-      const url = formDatos.id ? `${API_URL}/${formDatos.id}` : API_URL;
-
-      const respuesta = await fetch(url, {
-        method: metodo,
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}` // Descomentar si usas token JWT
-        },
-        body: JSON.stringify(formDatos)
-      });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || 'Error al guardar');
+      if (formDatos.id) {
+        // Actualizar cliente existente
+        await api.put(`/clientes/${formDatos.id}`, formDatos);
+      } else {
+        // Crear nuevo cliente
+        await api.post('/clientes', formDatos);
       }
 
       // Recargar tabla y cerrar modal
       await cargarClientes();
       cerrarModal();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.mensaje || err.message);
     }
   };
 
@@ -134,20 +120,10 @@ const PaginaClientes = () => {
     if (!window.confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) return;
 
     try {
-      const respuesta = await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE',
-        // headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!respuesta.ok) {
-        const resultado = await respuesta.json();
-        throw new Error(resultado.mensaje || 'Error al eliminar');
-      }
-
-      // Actualizar estado local eliminando el item (optimista o recarga)
-      setClientes(clientes.filter(c => c.id !== id));
+      await api.delete(`/clientes/${id}`);
+      await cargarClientes();
     } catch (err) {
-      alert(err.message);
+      setError(err.response?.data?.mensaje || err.message);
     }
   };
 
