@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../servicios/api';
+import { useAuth } from '../contexto/AuthContext';
 
 // --- ICONOS SVG INLINE (Para evitar dependencias externas) ---
 const IconoPlus = () => (
@@ -22,6 +23,9 @@ const IconoEliminar = () => (
 );
 
 const PaginaClientes = () => {
+  // Hook de autenticación y permisos
+  const { tienePermiso } = useAuth();
+
   // Estados para datos y control de interfaz
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -132,9 +136,11 @@ const PaginaClientes = () => {
       {/* Encabezado */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-primary fw-bold">Gestión de Clientes</h2>
-        <button className="btn btn-success d-flex align-items-center gap-2" onClick={abrirModalCrear}>
-          <IconoPlus /> Nuevo Cliente
-        </button>
+        {tienePermiso('crearCliente') && (
+          <button className="btn btn-success d-flex align-items-center gap-2" onClick={abrirModalCrear}>
+            <IconoPlus /> Nuevo Cliente
+          </button>
+        )}
       </div>
 
       {/* Mensaje de Error General */}
@@ -175,20 +181,27 @@ const PaginaClientes = () => {
                       <td>{cliente.email || <span className="text-muted small">N/A</span>}</td>
                       <td>{cliente.telefono || <span className="text-muted small">N/A</span>}</td>
                       <td className="text-end pe-4">
-                        <button 
-                          className="btn btn-outline-primary btn-sm me-2"
-                          onClick={() => abrirModalEditar(cliente)}
-                          title="Editar"
-                        >
-                          <IconoEditar />
-                        </button>
-                        <button 
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => manejarEliminar(cliente.id)}
-                          title="Eliminar"
-                        >
-                          <IconoEliminar />
-                        </button>
+                        {tienePermiso('editarCliente') && (
+                          <button
+                            className="btn btn-outline-primary btn-sm me-2"
+                            onClick={() => abrirModalEditar(cliente)}
+                            title="Editar"
+                          >
+                            <IconoEditar />
+                          </button>
+                        )}
+                        {tienePermiso('eliminarCliente') && (
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => manejarEliminar(cliente.id)}
+                            title="Eliminar"
+                          >
+                            <IconoEliminar />
+                          </button>
+                        )}
+                        {!tienePermiso('editarCliente') && !tienePermiso('eliminarCliente') && (
+                          <span className="text-muted small">Solo lectura</span>
+                        )}
                       </td>
                     </tr>
                   ))

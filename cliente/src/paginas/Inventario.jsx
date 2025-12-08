@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../servicios/api';
+import { useAuth } from '../contexto/AuthContext';
 
 const Inventario = () => {
+  // Hook de autenticación y permisos
+  const { tienePermiso } = useAuth();
+
   const [libros, setLibros] = useState([]);
   const [autores, setAutores] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -101,10 +105,12 @@ const Inventario = () => {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>📦 Inventario Actual</h2>
-        {/* Botón para Crear */}
-        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalLibro" onClick={abrirModalNuevo}>
-          + Nuevo Libro
-        </button>
+        {/* Botón para Crear - Solo Administradores */}
+        {tienePermiso('crearLibro') && (
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalLibro" onClick={abrirModalNuevo}>
+            + Nuevo Libro
+          </button>
+        )}
       </div>
 
       {cargando ? <div className="text-center"><div className="spinner-border text-primary"></div></div> : (
@@ -131,16 +137,22 @@ const Inventario = () => {
                   <td>${new Intl.NumberFormat('es-CO').format(libro.precio_venta || 0)}</td>
                   <td><span className={`badge ${(libro.stock_actual || 0) <= libro.stock_minimo ? 'bg-danger' : 'bg-success'}`}>{libro.stock_actual || 0}</span></td>
                   <td>
-                    {/* ¡AQUÍ ESTÁ EL BOTÓN QUE FALTABA! */}
-                    <button 
-                        className="btn btn-sm btn-outline-info me-2" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#modalLibro"
-                        onClick={() => abrirModalEditar(libro)}
-                    >
-                        Editar
-                    </button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleEliminar(libro.id, libro.titulo)}>Borrar</button>
+                    {tienePermiso('editarLibro') && (
+                      <button
+                          className="btn btn-sm btn-outline-info me-2"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalLibro"
+                          onClick={() => abrirModalEditar(libro)}
+                      >
+                          Editar
+                      </button>
+                    )}
+                    {tienePermiso('eliminarLibro') && (
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleEliminar(libro.id, libro.titulo)}>Borrar</button>
+                    )}
+                    {!tienePermiso('editarLibro') && !tienePermiso('eliminarLibro') && (
+                      <span className="text-muted small">Solo consulta</span>
+                    )}
                   </td>
                 </tr>
               ))}

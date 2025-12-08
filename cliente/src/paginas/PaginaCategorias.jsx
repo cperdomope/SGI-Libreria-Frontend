@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../servicios/api';
+import { useAuth } from '../contexto/AuthContext';
 
 const PaginaCategorias = () => {
+  // Hook de autenticación y permisos
+  const { tienePermiso } = useAuth();
+
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [datosCategoria, setDatosCategoria] = useState({ id: null, nombre: '' });
@@ -60,9 +64,11 @@ const PaginaCategorias = () => {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Gestión de Categorías</h2>
-        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria" onClick={abrirModalNuevo}>
-          + Nueva Categoría
-        </button>
+        {tienePermiso('crearCategoria') && (
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria" onClick={abrirModalNuevo}>
+            + Nueva Categoría
+          </button>
+        )}
       </div>
 
       {cargando ? (
@@ -83,20 +89,27 @@ const PaginaCategorias = () => {
                   <td>{categoria.id}</td>
                   <td className="fw-bold">{categoria.nombre}</td>
                   <td>
-                    <button
-                      className="btn btn-sm btn-outline-info me-2"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalCategoria"
-                      onClick={() => abrirModalEditar(categoria)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleEliminar(categoria.id, categoria.nombre)}
-                    >
-                      Eliminar
-                    </button>
+                    {tienePermiso('editarCategoria') && (
+                      <button
+                        className="btn btn-sm btn-outline-info me-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalCategoria"
+                        onClick={() => abrirModalEditar(categoria)}
+                      >
+                        Editar
+                      </button>
+                    )}
+                    {tienePermiso('eliminarCategoria') && (
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleEliminar(categoria.id, categoria.nombre)}
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                    {!tienePermiso('editarCategoria') && !tienePermiso('eliminarCategoria') && (
+                      <span className="text-muted small">Solo consulta</span>
+                    )}
                   </td>
                 </tr>
               ))}

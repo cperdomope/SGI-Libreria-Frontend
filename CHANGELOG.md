@@ -4,7 +4,92 @@ Todos los cambios notables del Sistema de Gestión de Inventario serán document
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
-## [Versión Actual] - 2025-12-07
+## [Versión Actual] - 2025-12-07 (Corrección Crítica de Seguridad)
+
+### Corregido
+
+#### 🔒 Corrección Crítica: Permisos de Frontend en Módulos
+
+**Problema identificado:**
+- El rol VENDEDOR podía ver y usar botones de editar/eliminar en Clientes y Libros
+- Aunque el backend bloqueaba las peticiones (403 Forbidden), la UI mostraba opciones no permitidas
+- Esto generaba confusión y mala experiencia de usuario
+
+**Solución implementada:**
+
+**1. PaginaClientes.jsx**
+- ✅ Importado `useAuth` para verificar permisos
+- ✅ Botón "Nuevo Cliente" ahora verifica `tienePermiso('crearCliente')`
+- ✅ Botón "Editar" ahora verifica `tienePermiso('editarCliente')` - **VENDEDOR NO PUEDE EDITAR**
+- ✅ Botón "Eliminar" ahora verifica `tienePermiso('eliminarCliente')` - **VENDEDOR NO PUEDE ELIMINAR**
+- ✅ Muestra "Solo lectura" cuando no tiene permisos de edición/eliminación
+
+**2. Inventario.jsx (Libros)**
+- ✅ Importado `useAuth` para verificar permisos
+- ✅ Botón "+ Nuevo Libro" ahora verifica `tienePermiso('crearLibro')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Editar" ahora verifica `tienePermiso('editarLibro')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Borrar" ahora verifica `tienePermiso('eliminarLibro')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Muestra "Solo consulta" cuando no tiene permisos
+
+**3. PaginaAutores.jsx**
+- ✅ Importado `useAuth` para verificar permisos
+- ✅ Botón "+ Nuevo Autor" ahora verifica `tienePermiso('crearAutor')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Editar" ahora verifica `tienePermiso('editarAutor')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Eliminar" ahora verifica `tienePermiso('eliminarAutor')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Muestra "Solo consulta" cuando no tiene permisos
+
+**4. PaginaCategorias.jsx**
+- ✅ Importado `useAuth` para verificar permisos
+- ✅ Botón "+ Nueva Categoría" ahora verifica `tienePermiso('crearCategoria')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Editar" ahora verifica `tienePermiso('editarCategoria')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Botón "Eliminar" ahora verifica `tienePermiso('eliminarCategoria')` - **VENDEDOR NO VE EL BOTÓN**
+- ✅ Muestra "Solo consulta" cuando no tiene permisos
+
+**5. Permisos Actualizados en AuthContext.jsx**
+- Confirmado: `editarCliente: false` para VENDEDOR (línea 83)
+- Confirmado: Clientes comentado como "Solo listar y crear (para ventas)"
+- Confirmado: Todos los permisos de Autores en `false` (crear, editar, eliminar)
+- Confirmado: Todos los permisos de Categorías en `false` (crear, editar, eliminar)
+
+**6. Backend Verificado**
+- Confirmado: `clienteRutas.js` línea 19 usa `soloAdministrador` para PUT (editar)
+- Confirmado: `clienteRutas.js` línea 22 usa `soloAdministrador` para DELETE (eliminar)
+- Confirmado: `autorRutas.js` protegido con `soloAdministrador` para todas las operaciones de escritura
+- Confirmado: `categoriaRutas.js` protegido con `soloAdministrador` para todas las operaciones de escritura
+
+**Resultado:**
+- ✅ VENDEDOR ahora ve una interfaz limpia sin opciones prohibidas
+- ✅ Doble capa de seguridad: Frontend oculta + Backend bloquea
+- ✅ Mejor experiencia de usuario (no intenta acciones que fallarán)
+- ✅ Cumple 100% con los requisitos de RBAC
+
+**Permisos VENDEDOR en Clientes:**
+- ✅ Ver lista de clientes (para consulta en ventas)
+- ✅ Crear nuevos clientes (para registro durante venta)
+- ❌ Editar clientes existentes (solo Admin)
+- ❌ Eliminar clientes (solo Admin)
+
+**Permisos VENDEDOR en Libros:**
+- ✅ Ver catálogo (precios y stock para ventas)
+- ❌ Crear libros (solo Admin)
+- ❌ Editar libros (solo Admin)
+- ❌ Eliminar libros (solo Admin)
+
+**Permisos VENDEDOR en Autores:**
+- ✅ Ver lista de autores (solo consulta)
+- ❌ Crear autores (solo Admin)
+- ❌ Editar autores (solo Admin)
+- ❌ Eliminar autores (solo Admin)
+
+**Permisos VENDEDOR en Categorías:**
+- ✅ Ver lista de categorías (solo consulta)
+- ❌ Crear categorías (solo Admin)
+- ❌ Editar categorías (solo Admin)
+- ❌ Eliminar categorías (solo Admin)
+
+---
+
+## [Versión Anterior] - 2025-12-07
 
 ### Agregado
 
@@ -66,6 +151,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
   - Corrección: el campo ahora se muestra correctamente en la tabla
   - Incluido en formulario modal
 
+- **Sistema de Roles y Permisos (CRÍTICO)**
+  - Implementación completa de control de acceso basado en roles
+  - Diferenciación entre Administrador y Vendedor
+  - Middleware de verificación de roles en backend
+  - Protección de rutas en frontend según permisos
+  - Interfaz adaptativa que muestra/oculta opciones según rol
+
 ### Cambiado
 
 #### Seguridad
@@ -107,6 +199,119 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - **Prevención de traducción NIT**
   - Campo NIT ya no se traduce a "LIENDRE" por navegadores
   - Solución: atributo HTML `translate="no"`
+
+## [Nueva Versión] - 2025-12-07 (Implementación de Roles)
+
+### Agregado
+
+#### Sistema de Control de Acceso por Roles
+
+**Backend:**
+- **Middleware de verificación de roles** (`servidor/middlewares/verificarRol.js`)
+  - Constantes de roles: ADMINISTRADOR (1), VENDEDOR (2)
+  - Función `verificarRol(rolesPermitidos)` para validar acceso
+  - Middlewares preconfigurados: `soloAdministrador`, `administradorOVendedor`
+  - Logging de intentos de acceso denegado para auditoría
+
+- **Protección de endpoints por rol:**
+  - **Dashboard** (`/api/dashboard`) - Solo Administrador
+  - **Libros** (`/api/libros`):
+    - GET: Administrador y Vendedor (consulta)
+    - POST/PUT/DELETE: Solo Administrador (gestión)
+  - **Autores** (`/api/autores`):
+    - GET: Administrador y Vendedor (consulta)
+    - POST/PUT/DELETE: Solo Administrador (gestión)
+  - **Categorías** (`/api/categorias`):
+    - GET: Administrador y Vendedor (consulta)
+    - POST/PUT/DELETE: Solo Administrador (gestión)
+  - **Clientes** (`/api/clientes`):
+    - GET/POST/PUT: Administrador y Vendedor (gestión)
+    - DELETE: Solo Administrador
+  - **Proveedores** (`/api/proveedores`) - Solo Administrador (todos los métodos)
+  - **Ventas** (`/api/ventas`) - Administrador y Vendedor (función principal de vendedores)
+  - **Movimientos** (`/api/movimientos`) - Solo Administrador (ajustes de inventario sensibles)
+
+**Frontend:**
+- **Actualización de AuthContext** (`cliente/src/contexto/AuthContext.jsx`)
+  - Constantes exportadas: `ROLES` y `PERMISOS`
+  - Mapeo completo de permisos por rol
+  - Funciones utilitarias:
+    - `tieneRol(rolRequerido)`: Verifica si usuario tiene rol específico
+    - `esAdministrador()`: Verifica si es administrador
+    - `esVendedor()`: Verifica si es vendedor
+    - `tienePermiso(permiso)`: Verifica permiso específico
+    - `nombreRol()`: Obtiene nombre legible del rol
+
+- **Componente RutaProtegidaPorRol** (`cliente/src/componentes/RutaProtegidaPorRol.jsx`)
+  - Protección de rutas basada en permisos granulares
+  - Redirección automática si no tiene permiso
+  - Mensaje de "Acceso Denegado" amigable
+  - Ruta de redirección configurable
+
+- **BarraNavegación actualizada** (`cliente/src/componentes/BarraNavegacion.jsx`)
+  - Muestra/oculta opciones del menú según permisos del usuario
+  - Dropdown "Gestión Comercial": visible para roles con acceso a ventas/clientes
+  - Dropdown "Logística": visible para roles con acceso a inventario
+  - Dashboard: solo visible para administradores
+  - Indicador de rol en sección de usuario
+
+- **Rutas protegidas en App.jsx** (`cliente/src/App.jsx`)
+  - Todas las rutas ahora verifican permisos específicos
+  - Redirección inteligente: usuarios sin acceso a Dashboard van a /ventas
+  - Doble capa de protección: autenticación + permisos
+
+### Permisos Definidos por Rol
+
+#### ADMINISTRADOR (rol_id = 1)
+**Acceso Total:**
+- ✅ Dashboard/Estadísticas
+- ✅ Inventario: Ver, Crear, Editar, Eliminar
+- ✅ Autores: Ver, Crear, Editar, Eliminar
+- ✅ Categorías: Ver, Crear, Editar, Eliminar
+- ✅ Clientes: Ver, Crear, Editar, Eliminar
+- ✅ Proveedores: Ver, Crear, Editar, Eliminar
+- ✅ Ventas: Registrar, Ver Historial
+- ✅ Movimientos: Registrar Entradas/Salidas
+
+#### VENDEDOR (rol_id = 2)
+**Acceso Limitado:**
+- ✅ Ventas (POS): Registrar ventas (FUNCIÓN PRINCIPAL)
+- ✅ Historial: Ver ventas realizadas
+- ✅ Clientes: Ver, Crear, Editar (necesario para ventas)
+- ✅ Inventario: Solo lectura (consultar productos disponibles)
+- ✅ Autores: Solo lectura (información)
+- ✅ Categorías: Solo lectura (información)
+- ❌ Dashboard (sin acceso a métricas del negocio)
+- ❌ Proveedores (gestión administrativa)
+- ❌ Movimientos (solo admin ajusta stock)
+- ❌ Eliminar Clientes (solo administrador)
+- ❌ Crear/Editar/Eliminar: Libros, Autores, Categorías
+
+### Seguridad
+
+- **Doble validación de permisos:**
+  - Backend: Middleware `verificarRol` rechaza peticiones no autorizadas (HTTP 403)
+  - Frontend: Componentes y rutas ocultan/bloquean acceso según permisos
+
+- **Auditoría de accesos:**
+  - Log de intentos de acceso denegado en consola del servidor
+  - Incluye: Usuario ID, Rol, Método HTTP, URL solicitada
+
+- **Mensajes de error seguros:**
+  - No revelan estructura interna del sistema
+  - Respuestas uniformes: "Acceso denegado" / "No tiene permisos suficientes"
+
+### Compatibilidad
+
+- **Sin cambios en base de datos:**
+  - Utiliza tabla `roles` existente
+  - Roles ya definidos: Administrador (ID=1), Vendedor (ID=2)
+  - Compatible con usuarios existentes
+
+- **Retrocompatibilidad:**
+  - Usuario administrador existente mantiene todos los permisos
+  - Tokens JWT existentes continúan funcionando
+  - No requiere re-login de usuarios activos
 
 ### Documentación
 

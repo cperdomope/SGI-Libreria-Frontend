@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../servicios/api';
+import { useAuth } from '../contexto/AuthContext';
 
 const PaginaAutores = () => {
+  // Hook de autenticación y permisos
+  const { tienePermiso } = useAuth();
+
   const [autores, setAutores] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [datosAutor, setDatosAutor] = useState({ id: null, nombre: '' });
@@ -60,9 +64,11 @@ const PaginaAutores = () => {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Gestión de Autores</h2>
-        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAutor" onClick={abrirModalNuevo}>
-          + Nuevo Autor
-        </button>
+        {tienePermiso('crearAutor') && (
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAutor" onClick={abrirModalNuevo}>
+            + Nuevo Autor
+          </button>
+        )}
       </div>
 
       {cargando ? (
@@ -83,20 +89,27 @@ const PaginaAutores = () => {
                   <td>{autor.id}</td>
                   <td className="fw-bold">{autor.nombre}</td>
                   <td>
-                    <button
-                      className="btn btn-sm btn-outline-info me-2"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalAutor"
-                      onClick={() => abrirModalEditar(autor)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleEliminar(autor.id, autor.nombre)}
-                    >
-                      Eliminar
-                    </button>
+                    {tienePermiso('editarAutor') && (
+                      <button
+                        className="btn btn-sm btn-outline-info me-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalAutor"
+                        onClick={() => abrirModalEditar(autor)}
+                      >
+                        Editar
+                      </button>
+                    )}
+                    {tienePermiso('eliminarAutor') && (
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleEliminar(autor.id, autor.nombre)}
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                    {!tienePermiso('editarAutor') && !tienePermiso('eliminarAutor') && (
+                      <span className="text-muted small">Solo consulta</span>
+                    )}
                   </td>
                 </tr>
               ))}

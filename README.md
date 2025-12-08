@@ -19,6 +19,9 @@ Aplicación web completa que implementa un sistema de gestión de inventario par
 
 1. **Autenticación y Seguridad**
    - Sistema de login con JWT (JSON Web Tokens)
+   - **Control de Acceso Basado en Roles (RBAC)** - Dos roles: Administrador y Vendedor
+   - Middleware de verificación de roles para protección de endpoints
+   - Protección de rutas en frontend basada en permisos
    - Protección contra ataques de fuerza bruta (bloqueo después de 3 intentos fallidos por 3 minutos)
    - Encriptación de contraseñas con bcrypt
    - Rutas protegidas con verificación de token
@@ -190,9 +193,25 @@ La aplicación estará disponible en `http://localhost:5173`
 
 ## Credenciales de Acceso
 
-**Usuario Administrador por defecto:**
+### Sistema de Roles
+
+El sistema cuenta con **dos roles** con diferentes niveles de acceso:
+
+**Usuario Administrador (Acceso Total):**
 - Email: `admin@sena.edu.co`
-- Contraseña: `123456`
+- Contraseña: `admin123`
+- **Permisos:** Acceso completo a todos los módulos del sistema
+
+**Usuario Vendedor (Acceso Limitado):**
+- Email: `vendedor@sena.edu.co`
+- Contraseña: `vendedor123`
+- **Permisos:**
+  - ✅ Punto de Venta (POS) - Registrar ventas
+  - ✅ Historial de Ventas - Consultar ventas realizadas
+  - ✅ Clientes - Ver y crear clientes (no puede editar ni eliminar)
+  - ✅ Inventario - Solo lectura (consultar precios y stock)
+  - ✅ Autores y Categorías - Solo lectura
+  - ❌ Dashboard, Proveedores, Movimientos - Sin acceso
 
 > **Importante:** Cambiar estas credenciales en un entorno de producción
 
@@ -219,7 +238,8 @@ proyecto-inventario/
 │   │   ├── autorControlador.js
 │   │   └── categoriaControlador.js
 │   ├── middlewares/
-│   │   └── verificarToken.js     # Middleware JWT
+│   │   ├── verificarToken.js     # Middleware JWT
+│   │   └── verificarRol.js       # Middleware RBAC (roles)
 │   ├── rutas/
 │   │   ├── rutasAuth.js
 │   │   ├── rutasLibros.js
@@ -240,9 +260,11 @@ proyecto-inventario/
     ├── public/
     ├── src/
     │   ├── componentes/
-    │   │   └── BarraNavegacion.jsx  # Menú de navegación con iconos
+    │   │   ├── BarraNavegacion.jsx      # Menú de navegación con iconos
+    │   │   ├── RutaProtegida.jsx        # HOC para rutas autenticadas
+    │   │   └── RutaProtegidaPorRol.jsx  # HOC para rutas con permisos
     │   ├── contexto/
-    │   │   └── AuthContext.jsx      # Contexto de autenticación
+    │   │   └── AuthContext.jsx          # Contexto de autenticación y permisos
     │   ├── paginas/
     │   │   ├── Acceso.jsx           # Página de login
     │   │   ├── Inicio.jsx           # Dashboard
@@ -344,7 +366,14 @@ proyecto-inventario/
    - No se suben al repositorio (.gitignore)
    - Configuración separada por entorno
 
-6. **Validación de Datos**
+6. **Control de Acceso Basado en Roles (RBAC)**
+   - Sistema de roles jerárquicos (Administrador, Vendedor)
+   - Middleware de verificación de roles en backend
+   - Protección de rutas en frontend basada en permisos
+   - Ocultamiento de elementos UI según permisos
+   - Doble capa de seguridad: Frontend + Backend
+
+7. **Validación de Datos**
    - Validación en backend de todos los campos
    - Verificación de integridad referencial
    - Prevención de duplicados
@@ -352,6 +381,15 @@ proyecto-inventario/
 ## Mejoras y Actualizaciones Recientes
 
 ### Versión Actual (Diciembre 2025)
+
+#### Sistema de Control de Acceso por Roles (RBAC)
+- **Implementación completa de roles:** Administrador y Vendedor
+- **Middleware verificarRol.js:** Protección de endpoints por rol
+- **Componente RutaProtegidaPorRol:** Protección de rutas en frontend
+- **Sistema de permisos granular:** Control específico por acción (ver, crear, editar, eliminar)
+- **Validación de permisos en UI:** Ocultamiento de botones según rol
+- **Doble capa de seguridad:** Frontend oculta opciones + Backend bloquea peticiones
+- **Scripts de verificación:** Herramientas para probar el sistema RBAC
 
 #### Nuevas Funcionalidades
 - Implementación completa de gestión de Autores (CRUD)
