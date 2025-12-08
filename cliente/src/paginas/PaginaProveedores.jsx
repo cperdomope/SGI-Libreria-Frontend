@@ -132,7 +132,7 @@ const PaginaProveedores = () => {
   return (
     <div className="container-fluid py-4">
       <div className="card shadow-sm">
-        <div className="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <div className="module-header">
           <h4 className="mb-0">Gestión de Proveedores</h4>
           <button className="btn btn-light btn-sm" onClick={abrirModalCrear}>
             <IconoPlus /> Nuevo Proveedor
@@ -153,9 +153,6 @@ const PaginaProveedores = () => {
             }
             .tabla-proveedores tbody tr:hover {
               background-color: #c3f0ca !important;
-              box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3) !important;
-              transform: scale(1.01);
-              transition: all 0.2s ease;
             }
           `}</style>
           <div className="table-responsive" style={{ overflowX: 'auto' }}>
@@ -189,16 +186,16 @@ const PaginaProveedores = () => {
                       <td className="d-none d-xl-table-cell text-center">{proveedor.email || '-'}</td>
                       <td className="text-center">{proveedor.telefono || '-'}</td>
                       <td className="d-none d-lg-table-cell text-center">{proveedor.direccion || '-'}</td>
-                      <td className="text-center" style={{ whiteSpace: 'nowrap' }}>
+                      <td className="text-center action-buttons">
                         <button
-                          className="btn btn-sm btn-primary me-2"
+                          className="btn btn-sm btn-outline-primary me-1"
                           onClick={() => abrirModalEditar(proveedor)}
                           title="Editar"
                         >
                           <IconoEditar />
                         </button>
                         <button
-                          className="btn btn-sm btn-danger"
+                          className="btn btn-sm btn-outline-danger"
                           onClick={() => manejarEliminar(proveedor.id)}
                           title="Eliminar"
                         >
@@ -220,7 +217,7 @@ const PaginaProveedores = () => {
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog">
               <div className="modal-content">
-                <div className="modal-header bg-success text-white">
+                <div className="modal-header bg-primary text-white">
                   <h5 className="modal-title">
                     {formDatos.id ? 'Editar Proveedor' : 'Nuevo Proveedor'}
                   </h5>
@@ -317,7 +314,7 @@ const PaginaProveedores = () => {
                     >
                       Cancelar
                     </button>
-                    <button type="submit" className="btn btn-success">
+                    <button type="submit" className="btn btn-primary">
                       {formDatos.id ? 'Actualizar' : 'Guardar'}
                     </button>
                   </div>

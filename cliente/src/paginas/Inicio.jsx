@@ -118,11 +118,11 @@ const Inicio = () => {
       <div className="row g-3 mb-4">
         {/* Ventas Hoy */}
         <div className="col-md-3">
-          <div className="card border-0 shadow-sm h-100 bg-gradient" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <div className="card border-0 shadow-sm h-100 bg-primary">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 className="text-white-50 mb-2">Ventas Hoy</h6>
+                  <h6 className="mb-2" style={{ opacity: 0.85 }}>Ventas Hoy</h6>
                   <h3 className="fw-bold mb-0">{estadisticas.ventas_hoy.cantidad}</h3>
                   <p className="small mb-0 mt-2">{formatearPrecio(estadisticas.ventas_hoy.ingresos)}</p>
                 </div>
@@ -134,11 +134,11 @@ const Inicio = () => {
 
         {/* Ventas del Mes */}
         <div className="col-md-3">
-          <div className="card border-0 shadow-sm h-100 bg-gradient" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
+          <div className="card border-0 shadow-sm h-100 bg-secondary">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 className="text-white-50 mb-2">Ventas del Mes</h6>
+                  <h6 className="mb-2" style={{ opacity: 0.85 }}>Ventas del Mes</h6>
                   <h3 className="fw-bold mb-0">{estadisticas.ventas_mes.cantidad}</h3>
                   <p className="small mb-0 mt-2">{formatearPrecio(estadisticas.ventas_mes.ingresos)}</p>
                 </div>
@@ -150,11 +150,11 @@ const Inicio = () => {
 
         {/* Total Libros */}
         <div className="col-md-3">
-          <div className="card border-0 shadow-sm h-100 bg-primary">
+          <div className="card border-0 shadow-sm h-100 bg-info">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 className="text-white-50 mb-2">Catálogo</h6>
+                  <h6 className="mb-2" style={{ opacity: 0.85 }}>Catálogo</h6>
                   <h3 className="fw-bold mb-0">{estadisticas.total_libros}</h3>
                   <p className="small mb-0 mt-2">Libros registrados</p>
                 </div>
@@ -170,7 +170,7 @@ const Inicio = () => {
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <h6 className="text-white-50 mb-2">Alertas Stock</h6>
+                  <h6 className="mb-2" style={{ opacity: 0.85 }}>Alertas Stock</h6>
                   <h3 className="fw-bold mb-0">{estadisticas.alertas_stock}</h3>
                   <p className="small mb-0 mt-2">
                     {estadisticas.alertas_stock > 0 ? 'Requieren reposición' : 'Todo OK'}

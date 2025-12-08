@@ -36,7 +36,7 @@ const LayoutPrincipal = ({ children }) => {
         {children}
       </div>
       <footer className="bg-light text-center p-3 mt-auto border-top">
-        <small className="text-muted">© 2025 SGI Librería - Proyecto SENA</small>
+        <small className="text-muted">© 2025 SGI Librería el Saber - Proyecto SENA</small>
       </footer>
     </div>
   );

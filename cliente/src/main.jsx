@@ -6,7 +6,10 @@ import App from './App.jsx'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-// 2. Cargamos tus Estilos Personalizados (¡ESTO FALTABA!)
+// 2. Cargamos el Tema Personalizado (Rebranding SGI Librería)
+import './styles/custom-theme.css';
+
+// 3. Cargamos tus Estilos Personalizados (¡ESTO FALTABA!)
 // Sin esto, la tarjeta de login no sabe que debe centrarse ni tener color
 import './index.css';
 

@@ -134,10 +134,10 @@ const PaginaClientes = () => {
   return (
     <div className="container-fluid p-4">
       {/* Encabezado */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="text-primary fw-bold">Gestión de Clientes</h2>
+      <div className="module-header mb-4 shadow-sm" style={{ borderRadius: '8px' }}>
+        <h2 className="text-white fw-bold">Gestión de Clientes</h2>
         {tienePermiso('crearCliente') && (
-          <button className="btn btn-success d-flex align-items-center gap-2" onClick={abrirModalCrear}>
+          <button className="btn btn-light btn-sm d-flex align-items-center gap-2" onClick={abrirModalCrear}>
             <IconoPlus /> Nuevo Cliente
           </button>
         )}
@@ -180,10 +180,10 @@ const PaginaClientes = () => {
                       <td>{cliente.nombre_completo}</td>
                       <td>{cliente.email || <span className="text-muted small">N/A</span>}</td>
                       <td>{cliente.telefono || <span className="text-muted small">N/A</span>}</td>
-                      <td className="text-end pe-4">
+                      <td className="text-center action-buttons">
                         {tienePermiso('editarCliente') && (
                           <button
-                            className="btn btn-outline-primary btn-sm me-2"
+                            className="btn btn-outline-primary btn-sm me-1"
                             onClick={() => abrirModalEditar(cliente)}
                             title="Editar"
                           >
