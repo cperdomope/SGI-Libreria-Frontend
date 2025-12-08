@@ -4,7 +4,61 @@ Todos los cambios notables del Sistema de Gestión de Inventario serán document
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
-## [Versión Actual] - 2025-12-07 (Corrección Crítica de Seguridad)
+## [Versión Actual] - 2025-12-08 (Unificación Visual y Mejoras de UI)
+
+### Cambiado
+
+#### 🎨 Unificación de Diseño Visual en Modales y Acciones
+
+**Objetivo:**
+Estandarizar el esquema de colores en toda la aplicación siguiendo el diseño del módulo "Historial de Ventas".
+
+**Cambios implementados:**
+
+**1. Headers de Modales - Color Evergreen (#053225)**
+- ✅ **PaginaClientes.jsx** - Modal header cambiado a `bg-primary` (color evergreen)
+- ✅ **Inventario.jsx** - Modal header cambiado a `bg-primary`
+- ✅ **PaginaAutores.jsx** - Modal header cambiado a `bg-primary`
+- ✅ **PaginaCategorias.jsx** - Modal header cambiado a `bg-primary`
+- ✅ **PaginaProveedores.jsx** - Modal header cambiado a `bg-primary`
+- **Antes:** Gradiente verde/teal `linear-gradient(135deg, #1e7464 0%, #26a69a 100%)`
+- **Ahora:** Color sólido evergreen consistente con HistorialVentas
+
+**2. Botones de "Editar" - Color Evergreen**
+- ✅ Todos los botones de editar cambiados de `btn-outline-info` (azul #3498DB) a `btn-outline-primary` (evergreen)
+- ✅ Nuevo estilo CSS para `.action-buttons .btn-outline-primary`:
+  - Color base: evergreen (#053225)
+  - Hover: Fondo rgba(5, 50, 37, 0.1) con escala 1.1
+  - Transición suave y efecto visual mejorado
+- Aplica a: Clientes, Inventario, Autores, Categorías, Proveedores
+
+**3. Botones de Submit en Modales**
+- ✅ Cambiados de gradiente inline a `btn-primary` estándar
+- ✅ Consistencia visual en todos los formularios de agregar/editar
+
+**4. Botones "+" de Agregar - Posicionamiento**
+- ✅ Nueva clase CSS `.module-header` con flexbox
+- ✅ Posicionamiento automático en esquina superior derecha
+- ✅ Diseño responsivo: `justify-content: space-between`
+- ✅ Aplica a: Inventario, Autores, Categorías, Proveedores
+
+**Archivos modificados:**
+- `cliente/src/paginas/PaginaClientes.jsx`
+- `cliente/src/paginas/Inventario.jsx`
+- `cliente/src/paginas/PaginaAutores.jsx`
+- `cliente/src/paginas/PaginaCategorias.jsx`
+- `cliente/src/paginas/PaginaProveedores.jsx`
+- `cliente/src/styles/custom-theme.css`
+
+**Resultado:**
+- ✅ Diseño visual 100% consistente en toda la aplicación
+- ✅ Esquema de colores unificado basado en paleta evergreen
+- ✅ Mejor experiencia de usuario con interfaz coherente
+- ✅ Headers de módulos posicionados correctamente (título izquierda, botón derecha)
+
+---
+
+## [Versión Anterior] - 2025-12-07 (Corrección Crítica de Seguridad)
 
 ### Corregido
 

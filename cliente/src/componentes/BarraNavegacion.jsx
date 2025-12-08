@@ -106,7 +106,6 @@ const BarraNavegacion = () => {
   return (
     <nav
       className="navbar navbar-expand-lg navbar-dark shadow"
-      style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)' }}
     >
       <div className="container-fluid px-4">
         {/* Marca / Logo */}
@@ -114,7 +113,7 @@ const BarraNavegacion = () => {
           <div className="bg-white text-primary rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: 35, height: 35 }}>
              <IconoLibro />
           </div>
-          <span>SGI Librería</span>
+          <span>SGI Librería el Saber</span>
         </Link>
 
         {/* Botón hamburguesa para móvil */}
@@ -245,8 +244,8 @@ const BarraNavegacion = () => {
           {/* Sección de Usuario */}
           <div className="d-flex align-items-center text-white border-start border-white border-opacity-25 ps-lg-4 ms-lg-2 mt-3 mt-lg-0">
             <div className="me-3 lh-1 text-end d-none d-lg-block">
-              <div className="small text-white-50">{nombreRol()}</div>
               <div className="fw-bold">{usuario?.nombre || 'Usuario'}</div>
+              <div className="small text-white-50">{nombreRol()}</div>
             </div>
             <button
               className="btn btn-light bg-white bg-opacity-10 border-0 text-white rounded-circle p-2 d-flex align-items-center justify-content-center hover-bg-opacity-25"

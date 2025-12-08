@@ -1,0 +1,544 @@
+/**
+ * ========================================
+ * SGI LIBRERÍA - SISTEMA DE DISEÑO VISUAL (RENOVADO)
+ * ========================================
+ * Paleta: Evergreen & Magenta Bloom
+ * Estilo: Profesional, Botánico y Moderno
+ */
+
+/* ========================================
+   1. VARIABLES Y PALETA DE COLORES
+   ======================================== */
+
+:root {
+  /* === PALETA DEL USUARIO (DEFINICIÓN BASE) === */
+  --evergreen: #053225;       /* Principal: Seriedad, Fondo oscuro, Textos */
+  --magenta-bloom: #e34a6f;   /* Acento fuerte: Botones de acción, Alertas */
+  --cherry-blossom: #f7b2bd;  /* Acento suave: Fondos claros, Badges info */
+  --khaki-beige: #b2a198;     /* Neutro: Bordes, Elementos secundarios */
+  --sage-green: #60a561;      /* Éxito: Estados positivos, crecimiento */
+
+  /* === MAPPING A BOOTSTRAP (REDEFINICIÓN SEMÁNTICA) === */
+  
+  /* Primary: Evergreen (La base de la marca) */
+  --bs-primary: var(--evergreen);
+  --bs-primary-rgb: 5, 50, 37;
+
+  /* Secondary: Khaki Beige (Elementos de soporte) */
+  --bs-secondary: var(--khaki-beige);
+  --bs-secondary-rgb: 178, 161, 152;
+
+  /* Success: Sage Green */
+  --bs-success: var(--sage-green);
+  --bs-success-rgb: 96, 165, 97;
+
+  /* Danger: Magenta Bloom (Usamos el magenta como color de alerta/acción fuerte) */
+  --bs-danger: var(--magenta-bloom);
+  --bs-danger-rgb: 227, 74, 111;
+
+  /* Info: Cherry Blossom (Para destacados suaves) */
+  --bs-info: var(--cherry-blossom);
+  --bs-info-rgb: 247, 178, 189;
+
+  /* Warning: Usamos Khaki o una mezcla para mantener la armonía */
+  --bs-warning: #d4a373; /* Un tono caramelo derivado del Khaki para alertas */
+  --bs-warning-rgb: 212, 163, 115;
+
+  /* === GRISES Y FONDOS === */
+  --bs-body-bg: #f9fbfb;      /* Un blanco con una pizca imperceptible de verde/cyan */
+  --bs-body-color: var(--evergreen); /* El texto base no es negro, es Evergreen */
+
+  --bs-gray-100: #f4f6f5;
+  --bs-gray-200: #e9eceb;
+  --bs-gray-300: #dee2e6;
+  --bs-gray-600: #6c757d;
+  
+  /* === TIPOGRAFÍA === */
+  --bs-body-font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  --bs-heading-color: var(--evergreen);
+
+  /* === BORDES Y SOMBRAS === */
+  --bs-border-radius: 8px;
+  --bs-border-radius-lg: 12px;
+  
+  /* Sombra con tinte Evergreen */
+  --bs-box-shadow: 0 4px 12px rgba(5, 50, 37, 0.08);
+  --bs-box-shadow-lg: 0 10px 25px rgba(5, 50, 37, 0.12);
+
+  --bs-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   2. ESTILOS GLOBALES
+   ======================================== */
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-family: var(--bs-body-font-family);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #319175;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Enlaces */
+a {
+  color: var(--magenta-bloom);
+  text-decoration: none;
+  transition: var(--bs-transition);
+}
+
+a:hover {
+  color: var(--evergreen);
+}
+
+/* ========================================
+   3. COMPONENTES - CARDS
+   ======================================== */
+
+.card {
+  border: 1px solid rgba(5, 50, 37, 0.1); /* Borde sutil Evergreen */
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  background-color: #FFFFFF;
+  overflow: hidden;
+  transition: var(--bs-transition);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--bs-box-shadow-lg);
+  border-color: rgba(227, 74, 111, 0.3); /* Brillo sutil Magenta al hover */
+}
+
+.card-header {
+  background-color: #FFFFFF;
+  border-bottom: 2px solid var(--bs-gray-100);
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  color: var(--evergreen);
+}
+
+/* Card Header Primario (Evergreen) */
+.card-header.bg-primary {
+  background: linear-gradient(135deg, var(--evergreen) 0%, #0a4f3a 100%);
+  color: #FFFFFF;
+  border-bottom: none;
+}
+
+/* Card Header Acento (Magenta) */
+.card-header.bg-danger, 
+.card-header.bg-accent {
+  background: linear-gradient(135deg, var(--magenta-bloom) 0%, #c93b5e 100%);
+  color: #FFFFFF;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* ========================================
+   4. COMPONENTES - BOTONES
+   ======================================== */
+
+.btn {
+  border-radius: var(--bs-border-radius);
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: none;
+  transition: var(--bs-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* --- Botón Primario (Evergreen) --- */
+.btn-primary {
+  background-color: var(--evergreen);
+  /* Un degradado sutil solo para dar volumen */
+  background: linear-gradient(160deg, var(--evergreen) 0%, #084231 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(5, 50, 37, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(160deg, #084231 0%, var(--evergreen) 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 15px rgba(5, 50, 37, 0.4);
+}
+
+/* --- Botón Secundario (Khaki Beige) --- */
+.btn-secondary {
+  background-color: var(--khaki-beige);
+  background: linear-gradient(160deg, var(--khaki-beige) 0%, #a39188 100%);
+  color: #FFFFFF; /* Blanco se lee bien sobre Khaki oscuro */
+}
+
+.btn-secondary:hover {
+  background: #96837a;
+  color: #FFFFFF;
+}
+
+/* --- Botón Peligro/Acción (Magenta Bloom) --- */
+.btn-danger {
+  background: linear-gradient(160deg, var(--magenta-bloom) 0%, #cc3e60 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(227, 74, 111, 0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(160deg, #cc3e60 0%, var(--magenta-bloom) 100%);
+  color: #FFFFFF;
+}
+
+/* --- Botón Éxito (Sage Green) --- */
+.btn-success {
+  background: linear-gradient(160deg, var(--sage-green) 0%, #529153 100%);
+  color: #FFFFFF;
+}
+
+/* --- Botón Info (Cherry Blossom) - CUIDADO CON EL TEXTO --- */
+.btn-info {
+  background-color: var(--cherry-blossom);
+  color: var(--evergreen); /* Texto oscuro para contraste */
+  font-weight: 700;
+}
+
+.btn-info:hover {
+  background-color: #f0a1ae;
+  color: var(--evergreen);
+}
+
+/* --- Botones Outline --- */
+.btn-outline-primary {
+  color: var(--evergreen);
+  border: 2px solid var(--evergreen);
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--evergreen);
+  color: #FFFFFF;
+}
+
+.btn-outline-danger {
+  color: var(--magenta-bloom);
+  border: 2px solid var(--magenta-bloom);
+  background: transparent;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--magenta-bloom);
+  color: #FFFFFF;
+}
+
+/* ========================================
+   5. COMPONENTES - TABLAS
+   ======================================== */
+
+.table {
+  border-collapse: separate; 
+  border-spacing: 0;
+  width: 100%;
+  margin-bottom: 1rem;
+  color: var(--evergreen);
+}
+
+.table thead th {
+  background-color: var(--evergreen);
+  color: #FFFFFF;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+  border: none;
+  text-align: center;
+}
+
+/* Bordes redondeados en la cabecera */
+.table thead th:first-child { border-top-left-radius: var(--bs-border-radius); }
+.table thead th:last-child { border-top-right-radius: var(--bs-border-radius); }
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(178, 161, 152, 0.3); /* Khaki muy suave */
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(96, 165, 97, 0.05); /* Sage Green muy suave */
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(247, 178, 189, 0.2); /* Cherry Blossom suave al hover */
+}
+
+/* ========================================
+   6. COMPONENTES - FORMULARIOS
+   ======================================== */
+
+.form-control, .form-select {
+  border: 2px solid var(--bs-gray-200);
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  color: var(--evergreen);
+  background-color: #FFFFFF;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--magenta-bloom); /* Foco en Magenta para resaltar */
+  box-shadow: 0 0 0 0.25rem rgba(227, 74, 111, 0.15);
+  outline: none;
+}
+
+.form-label {
+  color: var(--evergreen);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ========================================
+   7. COMPONENTES - BADGES (Etiquetas)
+   ======================================== */
+
+.badge {
+  padding: 0.5em 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+}
+
+/* Badge Primario */
+.bg-primary, .badge.bg-primary {
+  background-color: var(--evergreen) !important;
+  color: #FFFFFF !important;
+}
+
+/* Badge Danger (Magenta) */
+.bg-danger, .badge.bg-danger {
+  background-color: var(--magenta-bloom) !important;
+  color: #FFFFFF !important;
+}
+
+/* Badge Success (Sage) */
+.bg-success, .badge.bg-success {
+  background-color: var(--sage-green) !important;
+  color: #FFFFFF !important;
+}
+
+/* Badge Info (Cherry) - IMPORTANTE: TEXTO OSCURO */
+.bg-info, .badge.bg-info {
+  background-color: var(--cherry-blossom) !important;
+  color: var(--evergreen) !important; /* Contraste corregido */
+}
+
+/* Badge Secondary (Khaki) */
+.bg-secondary, .badge.bg-secondary {
+  background-color: var(--khaki-beige) !important;
+  color: #FFFFFF !important; /* Khaki es medio, blanco pasa, pero mejor negrita */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ========================================
+   8. NAVEGACIÓN (NAVBAR)
+   ======================================== */
+
+.navbar {
+  /* Usamos un gradiente horizontal Evergreen -> Sage para dar profundidad */
+  background: linear-gradient(90deg, var(--evergreen) 0%, #0a4f3a 100%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 1rem 0;
+}
+
+.navbar-brand {
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.nav-link {
+  color: rgba(255,255,255, 0.85) !important;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--cherry-blossom) !important; /* Hover en rosa suave */
+}
+
+/* ========================================
+   9. UTILIDADES Y EXTRAS
+   ======================================== */
+
+/* Texto Coloreado */
+.text-primary { color: var(--evergreen) !important; }
+.text-danger { color: var(--magenta-bloom) !important; }
+.text-success { color: var(--sage-green) !important; }
+.text-muted { color: #8898aa !important; }
+
+/* Barra de Gradiente Decorativa (Opcional para separar secciones) */
+.brand-gradient-bar {
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, 
+    var(--evergreen), 
+    var(--magenta-bloom), 
+    var(--cherry-blossom), 
+    var(--khaki-beige), 
+    var(--sage-green)
+  );
+}
+
+/* Modales */
+.modal-header {
+  background-color: var(--evergreen);
+  color: #FFFFFF;
+  border-bottom: none;
+}
+
+.modal-content {
+  border-radius: var(--bs-border-radius-lg);
+  border: none;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+.btn-close {
+  filter: brightness(0) invert(1); /* Cruz blanca en headers oscuros */
+}
+
+/* Scrollbar Personalizado (Webkit) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--khaki-beige);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--evergreen);
+}
+
+/* ========================================
+   BOTONES DE ACCIÓN EN TABLAS (SIN BORDES)
+   ======================================== */
+
+/* Contenedor de botones de acciones */
+.action-buttons {
+  white-space: nowrap;
+  padding: 0.5rem !important;
+}
+
+/* Botones de acción - Sin bordes, solo íconos con fondo al hover */
+.action-buttons .btn {
+  border: none !important;
+  background: transparent !important;
+  padding: 0.4rem 0.6rem;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+}
+
+/* Botón Editar - Primary (Evergreen) */
+.action-buttons .btn-outline-primary {
+  color: var(--evergreen) !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.action-buttons .btn-outline-primary:hover {
+  background: rgba(5, 50, 37, 0.1) !important;
+  color: #084231 !important;
+  transform: scale(1.1);
+}
+
+/* Botón Editar - Info (Mantenido para compatibilidad) */
+.action-buttons .btn-outline-info {
+  color: #3498DB !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.action-buttons .btn-outline-info:hover {
+  background: rgba(52, 152, 219, 0.1) !important;
+  color: #2980B9 !important;
+  transform: scale(1.1);
+}
+
+/* Botón Eliminar - Danger */
+.action-buttons .btn-outline-danger {
+  color: var(--magenta-bloom) !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.action-buttons .btn-outline-danger:hover {
+  background: rgba(227, 74, 111, 0.1) !important;
+  color: #c93b5e !important;
+  transform: scale(1.1);
+}
+
+/* ========================================
+   10. ALERTAS
+   ======================================== */
+
+.alert {
+  border: none;
+  border-left: 5px solid;
+  background-color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.alert-success {
+  border-color: var(--sage-green);
+  color: #2e5c35; /* Un verde más oscuro para el texto de lectura */
+  background-color: rgba(96, 165, 97, 0.1);
+}
+
+.alert-danger {
+  border-color: var(--magenta-bloom);
+  color: #8a1c36; /* Un rojo/magenta oscuro para el texto */
+  background-color: rgba(227, 74, 111, 0.1);
+}
+
+.alert-info {
+  border-color: var(--evergreen);
+  color: var(--evergreen);
+  background-color: rgba(247, 178, 189, 0.3); /* Fondo Cherry Blossom */
+}
+
+/* ========================================
+   11. MODULE HEADER (Encabezados de Módulos)
+   ======================================== */
+
+.module-header {
+  background: linear-gradient(135deg, #1e7464 0%, #26a69a 100%);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--bs-border-radius) var(--bs-border-radius) 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--bs-box-shadow);
+}
+
+.module-header h2,
+.module-header h4 {
+  color: #FFFFFF;
+  margin: 0;
+  font-weight: 700;
+}
+
+.module-header .btn {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}

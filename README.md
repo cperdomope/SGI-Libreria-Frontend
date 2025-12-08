@@ -380,7 +380,17 @@ proyecto-inventario/
 
 ## Mejoras y Actualizaciones Recientes
 
-### Versión Actual (Diciembre 2025)
+### Versión Actual (Diciembre 8, 2025)
+
+#### Unificación Visual y Mejoras de UI
+- **Estandarización de colores:** Todos los modales y botones ahora usan el esquema de color evergreen (#053225)
+- **Headers de modales unificados:** Cambio de gradiente verde/teal a color sólido evergreen (bg-primary)
+- **Botones de editar actualizados:** Color cambiado de azul (#3498DB) a evergreen para consistencia
+- **Posicionamiento de botones "+":** Movidos a esquina superior derecha usando flexbox
+- **Clase CSS .module-header:** Nueva clase para encabezados de módulos con diseño responsivo
+- **Experiencia visual mejorada:** Interfaz 100% consistente en toda la aplicación
+
+### Versión Anterior (Diciembre 7, 2025)
 
 #### Sistema de Control de Acceso por Roles (RBAC)
 - **Implementación completa de roles:** Administrador y Vendedor
