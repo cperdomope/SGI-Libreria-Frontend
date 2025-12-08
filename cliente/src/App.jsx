@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import BarraNavegacion from './componentes/BarraNavegacion';
+import RutaProtegidaPorRol from './componentes/RutaProtegidaPorRol';
 import Inicio from './paginas/Inicio';
 import Inventario from './paginas/Inventario';
 import Movimientos from './paginas/Movimientos';
@@ -49,68 +50,91 @@ function App() {
         <Routes>
           <Route path="/acceso" element={<Acceso />} />
 
-          {/* Rutas Privadas */}
+          {/* Rutas Privadas con Protección por Rol */}
+
+          {/* DASHBOARD - Solo Administradores */}
           <Route path="/" element={
             <RutaProtegida>
-              <LayoutPrincipal><Inicio /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verDashboard" redirigirA="/ventas">
+                <LayoutPrincipal><Inicio /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
-          
+
+          {/* INVENTARIO - Todos pueden ver, solo Admin edita (control en página) */}
           <Route path="/inventario" element={
             <RutaProtegida>
-              <LayoutPrincipal><Inventario /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verInventario">
+                <LayoutPrincipal><Inventario /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
-          
+
+          {/* MOVIMIENTOS - Solo Administradores */}
           <Route path="/movimientos" element={
             <RutaProtegida>
-              <LayoutPrincipal><Movimientos /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="registrarMovimiento">
+                <LayoutPrincipal><Movimientos /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
+          {/* CLIENTES - Todos pueden gestionar */}
           <Route path="/clientes" element={
             <RutaProtegida>
-              <LayoutPrincipal><PaginaClientes /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verClientes">
+                <LayoutPrincipal><PaginaClientes /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* --- NUEVA RUTA DE VENTAS (POS) --- */}
+          {/* VENTAS (POS) - Administradores y Vendedores */}
           <Route path="/ventas" element={
             <RutaProtegida>
-              <LayoutPrincipal><PaginaVentas /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="registrarVenta">
+                <LayoutPrincipal><PaginaVentas /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* --- RUTA DE HISTORIAL DE VENTAS --- */}
+          {/* HISTORIAL VENTAS - Administradores y Vendedores */}
           <Route path="/historial-ventas" element={
             <RutaProtegida>
-              <LayoutPrincipal><HistorialVentas /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verVentas">
+                <LayoutPrincipal><HistorialVentas /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* --- RUTA DE PROVEEDORES --- */}
+          {/* PROVEEDORES - Solo Administradores */}
           <Route path="/proveedores" element={
             <RutaProtegida>
-              <LayoutPrincipal><PaginaProveedores /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verProveedores">
+                <LayoutPrincipal><PaginaProveedores /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* --- RUTA DE AUTORES --- */}
+          {/* AUTORES - Todos pueden ver, solo Admin edita (control en página) */}
           <Route path="/autores" element={
             <RutaProtegida>
-              <LayoutPrincipal><PaginaAutores /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verAutores">
+                <LayoutPrincipal><PaginaAutores /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* --- RUTA DE CATEGORÍAS --- */}
+          {/* CATEGORÍAS - Todos pueden ver, solo Admin edita (control en página) */}
           <Route path="/categorias" element={
             <RutaProtegida>
-              <LayoutPrincipal><PaginaCategorias /></LayoutPrincipal>
+              <RutaProtegidaPorRol permiso="verCategorias">
+                <LayoutPrincipal><PaginaCategorias /></LayoutPrincipal>
+              </RutaProtegidaPorRol>
             </RutaProtegida>
           } />
 
-          {/* Cualquier ruta desconocida redirige al inicio */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Cualquier ruta desconocida redirige a ventas (accesible para todos) */}
+          <Route path="*" element={<Navigate to="/ventas" />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -71,7 +71,7 @@ const IconoSalir = () => (
 );
 
 const BarraNavegacion = () => {
-  const { usuario, logout } = useAuth();
+  const { usuario, logout, tienePermiso, nombreRol } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -133,92 +133,120 @@ const BarraNavegacion = () => {
         {/* Contenido colapsable */}
         <div className="collapse navbar-collapse py-2 py-lg-0" id="menuNavegacion">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-            {/* Dashboard - Link Simple */}
-            <li className="nav-item">
-              <Link className={claseLink('/')} to="/">
-                Dashboard
-              </Link>
-            </li>
+            {/* Dashboard - Solo Administradores */}
+            {tienePermiso('verDashboard') && (
+              <li className="nav-item">
+                <Link className={claseLink('/')} to="/">
+                  Dashboard
+                </Link>
+              </li>
+            )}
 
-            {/* DROPDOWN: Gestión Comercial */}
-            <li className="nav-item dropdown">
-              <a
-                className={claseDropdown(['/ventas', '/historial-ventas', '/clientes'])}
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Gestión Comercial
-              </a>
-              <ul className="dropdown-menu shadow-sm border-0">
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/ventas">
-                    <IconoVentas /> POS / Ventas
-                  </Link>
-                </li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/historial-ventas">
-                    <IconoHistorial /> Historial
-                  </Link>
-                </li>
-                <li><hr className="dropdown-divider" /></li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/clientes">
-                    <IconoClientes /> Clientes
-                  </Link>
-                </li>
-              </ul>
-            </li>
+            {/* DROPDOWN: Gestión Comercial - Mostrar si tiene acceso a ventas o clientes */}
+            {(tienePermiso('registrarVenta') || tienePermiso('verClientes')) && (
+              <li className="nav-item dropdown">
+                <a
+                  className={claseDropdown(['/ventas', '/historial-ventas', '/clientes'])}
+                  href="#"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Gestión Comercial
+                </a>
+                <ul className="dropdown-menu shadow-sm border-0">
+                  {tienePermiso('registrarVenta') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/ventas">
+                        <IconoVentas /> POS / Ventas
+                      </Link>
+                    </li>
+                  )}
+                  {tienePermiso('verVentas') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/historial-ventas">
+                        <IconoHistorial /> Historial
+                      </Link>
+                    </li>
+                  )}
+                  {(tienePermiso('registrarVenta') && tienePermiso('verClientes')) && (
+                    <li><hr className="dropdown-divider" /></li>
+                  )}
+                  {tienePermiso('verClientes') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/clientes">
+                        <IconoClientes /> Clientes
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              </li>
+            )}
 
-            {/* DROPDOWN: Logística */}
-            <li className="nav-item dropdown">
-              <a
-                className={claseDropdown(['/inventario', '/movimientos', '/proveedores', '/autores', '/categorias'])}
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Logística
-              </a>
-              <ul className="dropdown-menu shadow-sm border-0">
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/inventario">
-                    <IconoInventario /> Inventario
-                  </Link>
-                </li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/movimientos">
-                    <IconoMovimientos /> Movimientos
-                  </Link>
-                </li>
-                <li><hr className="dropdown-divider" /></li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/autores">
-                    <IconoAutores /> Autores
-                  </Link>
-                </li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/categorias">
-                    <IconoCategorias /> Categorías
-                  </Link>
-                </li>
-                <li><hr className="dropdown-divider" /></li>
-                <li>
-                  <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/proveedores">
-                    <IconoProveedores /> Proveedores
-                  </Link>
-                </li>
-              </ul>
-            </li>
+            {/* DROPDOWN: Logística - Mostrar si tiene acceso a inventario */}
+            {(tienePermiso('verInventario') || tienePermiso('verProveedores') || tienePermiso('registrarMovimiento')) && (
+              <li className="nav-item dropdown">
+                <a
+                  className={claseDropdown(['/inventario', '/movimientos', '/proveedores', '/autores', '/categorias'])}
+                  href="#"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Logística
+                </a>
+                <ul className="dropdown-menu shadow-sm border-0">
+                  {tienePermiso('verInventario') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/inventario">
+                        <IconoInventario /> Inventario
+                      </Link>
+                    </li>
+                  )}
+                  {tienePermiso('registrarMovimiento') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/movimientos">
+                        <IconoMovimientos /> Movimientos
+                      </Link>
+                    </li>
+                  )}
+                  {(tienePermiso('verInventario') && (tienePermiso('verAutores') || tienePermiso('verCategorias'))) && (
+                    <li><hr className="dropdown-divider" /></li>
+                  )}
+                  {tienePermiso('verAutores') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/autores">
+                        <IconoAutores /> Autores
+                      </Link>
+                    </li>
+                  )}
+                  {tienePermiso('verCategorias') && (
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/categorias">
+                        <IconoCategorias /> Categorías
+                      </Link>
+                    </li>
+                  )}
+                  {tienePermiso('verProveedores') && (
+                    <>
+                      <li><hr className="dropdown-divider" /></li>
+                      <li>
+                        <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/proveedores">
+                          <IconoProveedores /> Proveedores
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </li>
+            )}
           </ul>
 
           {/* Sección de Usuario */}
           <div className="d-flex align-items-center text-white border-start border-white border-opacity-25 ps-lg-4 ms-lg-2 mt-3 mt-lg-0">
             <div className="me-3 lh-1 text-end d-none d-lg-block">
-              <div className="small text-white-50">Bienvenido</div>
-              <div className="fw-bold">{usuario?.nombre || 'Administrador'}</div>
+              <div className="small text-white-50">{nombreRol()}</div>
+              <div className="fw-bold">{usuario?.nombre || 'Usuario'}</div>
             </div>
             <button
               className="btn btn-light bg-white bg-opacity-10 border-0 text-white rounded-circle p-2 d-flex align-items-center justify-content-center hover-bg-opacity-25"
