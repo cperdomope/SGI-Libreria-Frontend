@@ -4,7 +4,55 @@ Todos los cambios notables del Sistema de Gestión de Inventario serán document
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
-## [Versión Actual] - 2025-12-08 (Unificación Visual y Mejoras de UI)
+## [Versión Actual] - 2025-12-08 (Mejoras de Navegación y UX)
+
+### Cambiado
+
+#### 🎯 Navbar Sticky y Mejoras en Menús Desplegables
+
+**Objetivo:**
+Mejorar la experiencia de usuario en la navegación, manteniendo el navbar visible al hacer scroll y mejorando la usabilidad de los menús desplegables.
+
+**Cambios implementados:**
+
+**1. Navbar Fijo al Hacer Scroll**
+- ✅ Implementado `position: sticky` en el navbar
+- ✅ El navbar permanece visible en la parte superior al desplazarse por la página
+- ✅ `z-index: 1030` para mantener jerarquía visual correcta
+- ✅ Mejora significativa en la navegación de páginas largas (Inventario, Historial de Ventas, etc.)
+
+**2. Rediseño de Menús Desplegables (Dropdowns)**
+- ✅ **Color de fondo personalizado:** `#f0f5f4` (tono suave inspirado en evergreen, reemplazando el blanco)
+- ✅ **Efecto hover mejorado en items:**
+  - Color de resaltado: Sage green suave `rgba(96, 165, 97, 0.15)`
+  - Animación de deslizamiento hacia la derecha (`transform: translateX(4px)`)
+  - Transición suave de 0.2 segundos para mejor feedback visual
+- ✅ **Bordes y sombras coherentes:** Integrados con el sistema de diseño evergreen
+- ✅ **Separadores estilizados:** Dividers con color evergreen para mejor organización visual
+
+**3. Mejoras Visuales Adicionales**
+- ✅ Padding optimizado en items del dropdown para mejor clickabilidad
+- ✅ Font-weight 500 para mejor legibilidad de opciones
+- ✅ Estados activos y hover claramente diferenciados
+- ✅ Margen superior en dropdown para separación del navbar
+
+**Archivos modificados:**
+- `cliente/src/styles/custom-theme.css` (líneas 355-422)
+
+**Resultado:**
+- ✅ Navegación más eficiente con navbar siempre visible
+- ✅ Menús desplegables más intuitivos con feedback visual claro
+- ✅ Experiencia de usuario mejorada en todos los módulos
+- ✅ Consistencia visual mantenida con la paleta evergreen
+- ✅ Accesibilidad mejorada con estados hover más visibles
+
+**Módulos beneficiados:**
+- Dropdown "Gestión Comercial" (POS/Ventas, Historial, Clientes)
+- Dropdown "Logística" (Inventario, Movimientos, Autores, Categorías, Proveedores)
+
+---
+
+## [Versión Anterior] - 2025-12-08 (Unificación Visual y Mejoras de UI)
 
 ### Cambiado
 

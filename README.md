@@ -382,7 +382,15 @@ proyecto-inventario/
 
 ### Versión Actual (Diciembre 8, 2025)
 
-#### Unificación Visual y Mejoras de UI
+#### Mejoras de Navegación y Experiencia de Usuario
+- **Navbar fijo (sticky):** El menú de navegación permanece visible al hacer scroll en páginas largas
+- **Menús desplegables rediseñados:** Nuevo color de fondo suave (#f0f5f4) para mejor contraste
+- **Efecto hover mejorado en dropdowns:** Resaltado visual con sage green y animación de deslizamiento
+- **Transiciones suaves:** Feedback visual inmediato al interactuar con opciones del menú
+- **Mejor usabilidad:** Navegación más intuitiva en módulos de Gestión Comercial y Logística
+- **Z-index optimizado:** Navbar siempre visible sobre el contenido de la página
+
+#### Unificación Visual y Mejoras de UI (Versión anterior del mismo día)
 - **Estandarización de colores:** Todos los modales y botones ahora usan el esquema de color evergreen (#053225)
 - **Headers de modales unificados:** Cambio de gradiente verde/teal a color sólido evergreen (bg-primary)
 - **Botones de editar actualizados:** Color cambiado de azul (#3498DB) a evergreen para consistencia

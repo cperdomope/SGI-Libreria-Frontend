@@ -357,6 +357,10 @@ a:hover {
   background: linear-gradient(90deg, var(--evergreen) 0%, #0a4f3a 100%);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   padding: 1rem 0;
+  /* Navbar fijo al hacer scroll */
+  position: sticky;
+  top: 0;
+  z-index: 1030;
 }
 
 .navbar-brand {
@@ -373,6 +377,48 @@ a:hover {
 
 .nav-link:hover, .nav-link.active {
   color: var(--cherry-blossom) !important; /* Hover en rosa suave */
+}
+
+/* ========================================
+   ESTILOS PARA DROPDOWN MENUS
+   ======================================== */
+
+/* Fondo del menú dropdown con color evergreen suave */
+.navbar .dropdown-menu {
+  background-color: #f0f5f4; /* Tono suave inspirado en evergreen */
+  border: 1px solid rgba(5, 50, 37, 0.15);
+  box-shadow: 0 6px 16px rgba(5, 50, 37, 0.15);
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+}
+
+/* Items del dropdown con efecto hover */
+.navbar .dropdown-item {
+  color: var(--evergreen);
+  padding: 0.65rem 1.25rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+/* Efecto hover para resaltar items */
+.navbar .dropdown-item:hover {
+  background-color: rgba(96, 165, 97, 0.15); /* Sage green suave */
+  color: var(--evergreen);
+  transform: translateX(4px);
+  padding-left: 1.5rem;
+}
+
+/* Items activos */
+.navbar .dropdown-item:active,
+.navbar .dropdown-item.active {
+  background-color: rgba(96, 165, 97, 0.25);
+  color: var(--evergreen);
+}
+
+/* Separadores del dropdown */
+.navbar .dropdown-divider {
+  border-color: rgba(5, 50, 37, 0.15);
+  margin: 0.5rem 0;
 }
 
 /* ========================================
