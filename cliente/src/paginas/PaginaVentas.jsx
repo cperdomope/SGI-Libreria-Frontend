@@ -346,9 +346,9 @@ const PaginaVentas = () => {
             COLUMNA IZQUIERDA: CATÁLOGO DE LIBROS
             ───────────────────────────────────────────────── */}
         <div className="col-md-8">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3>Catálogo de Libros</h3>
-            <div className="input-group w-50">
+          <div className="mb-3">
+            <h3 className="mb-2">Catálogo de Libros</h3>
+            <div className="input-group">
               <span className="input-group-text"><IconoBuscar /></span>
               <input
                 type="text"
@@ -375,7 +375,7 @@ const PaginaVentas = () => {
               libros
                 .filter(l => l.titulo.toLowerCase().includes(busqueda.toLowerCase()))
                 .map(libro => (
-                  <div key={libro.id} className="col-md-4 mb-3">
+                  <div key={libro.id} className="col-12 col-sm-6 col-md-4 mb-3">
                     <div className="card shadow-sm h-100">
                       <div className="card-body">
                         <h5 className="card-title text-truncate">{libro.titulo}</h5>
@@ -428,7 +428,7 @@ const PaginaVentas = () => {
 
               {/* Lista de productos en carrito */}
               <h6>Productos en Carrito:</h6>
-              <ul className="list-group list-group-flush mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <ul className="list-group list-group-flush mb-3" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
                 {carrito.length === 0 && (
                   <li className="list-group-item text-muted">Carrito vacío</li>
                 )}

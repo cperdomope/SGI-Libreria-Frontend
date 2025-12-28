@@ -240,7 +240,7 @@ const PaginaAutores = () => {
 
       {/* Modal */}
       <div className="modal fade" id="modalAutor" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog">
+        <div className="modal-dialog modal-fullscreen-sm-down">
           <div className="modal-content">
             <div className="modal-header bg-primary text-white">
               <h5 className="modal-title">{datosAutor.id ? 'Editar Autor' : 'Nuevo Autor'}</h5>

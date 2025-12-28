@@ -247,7 +247,7 @@ const PaginaProveedores = () => {
             }
           `}</style>
           <div className="table-responsive" style={{ overflowX: 'auto' }}>
-            <table className="table table-hover table-striped align-middle tabla-proveedores" style={{ minWidth: '800px' }}>
+            <table className="table table-hover table-striped align-middle tabla-proveedores">
               <thead className="table-dark text-center">
                 <tr>
                   <th className="d-none d-md-table-cell">ID</th>
@@ -331,7 +331,7 @@ const PaginaProveedores = () => {
       {mostrarModal && (
         <>
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-fullscreen-sm-down">
               <div className="modal-content">
                 <div className="modal-header bg-primary text-white">
                   <h5 className="modal-title">
