@@ -1,8 +1,33 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * =====================================================
+ * PÁGINA DE GESTIÓN DE CLIENTES
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Módulo CRUD para la gestión de clientes.
+ * Permite registrar, listar, editar y eliminar clientes
+ * que realizan compras en la librería.
+ *
+ * @requires react - Hooks useState, useEffect
+ * @requires ../servicios/api - Cliente Axios configurado
+ * @requires ../contexto/AuthContext - Hook de autenticación RBAC
+ *
+ * CARACTERÍSTICAS:
+ * - Control de acceso por permisos (RBAC)
+ * - Tabla responsiva con paginación cliente
+ * - Modal reutilizable para crear/editar
+ * - Validación de documento único
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
+import { useState, useEffect } from 'react';
 import api from '../servicios/api';
 import { useAuth } from '../contexto/AuthContext';
 
-// --- ICONOS SVG INLINE (Para evitar dependencias externas) ---
+// --- ICONOS SVG INLINE (evita dependencias externas) ---
 const IconoPlus = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16">
     <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
@@ -22,11 +47,18 @@ const IconoEliminar = () => (
   </svg>
 );
 
+/**
+ * Componente principal para la gestión de clientes.
+ * Implementa operaciones CRUD con control de acceso RBAC.
+ *
+ * @component
+ * @returns {JSX.Element} Interfaz de gestión de clientes
+ */
 const PaginaClientes = () => {
-  // Hook de autenticación y permisos
+  // Hook RBAC para verificar permisos del usuario actual
   const { tienePermiso } = useAuth();
 
-  // Estados para datos y control de interfaz
+  // --- ESTADOS DEL COMPONENTE ---
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -42,30 +74,59 @@ const PaginaClientes = () => {
     direccion: ''
   });
 
+  // Estado de paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
+
+  // Calcular datos paginados
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina;
+  const indiceFin = indiceInicio + elementosPorPagina;
+  const clientesPaginados = clientes.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(clientes.length / elementosPorPagina);
+
   // Cargar clientes al montar el componente
   useEffect(() => {
     cargarClientes();
   }, []);
 
+  /**
+   * Obtiene el listado de clientes desde el backend.
+   * Maneja el formato de respuesta { exito, datos }.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const cargarClientes = async () => {
     try {
       setCargando(true);
       const respuesta = await api.get('/clientes');
-      setClientes(respuesta.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const clientesData = respuesta.data.datos || respuesta.data;
+      setClientes(Array.isArray(clientesData) ? clientesData : []);
     } catch (err) {
       setError(err.message);
+      if (import.meta.env.DEV) {
+        console.error('[PaginaClientes] Error:', err);
+      }
     } finally {
       setCargando(false);
     }
   };
 
-  // Manejar cambios en los inputs del formulario
+  /**
+   * Actualiza el estado del formulario cuando cambia un input.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del input
+   */
   const manejarCambioInput = (e) => {
     const { name, value } = e.target;
     setFormDatos({ ...formDatos, [name]: value });
   };
 
-  // Abrir modal para crear
+  /**
+   * Prepara el modal para crear un nuevo cliente.
+   * Limpia el formulario y resetea errores.
+   */
   const abrirModalCrear = () => {
     setFormDatos({
       id: null,
@@ -79,19 +140,31 @@ const PaginaClientes = () => {
     setMostrarModal(true);
   };
 
-  // Abrir modal para editar
+  /**
+   * Prepara el modal para editar un cliente existente.
+   *
+   * @param {Object} cliente - Datos del cliente a editar
+   */
   const abrirModalEditar = (cliente) => {
-    setFormDatos(cliente); // Carga los datos del cliente seleccionado
+    setFormDatos(cliente);
     setError(null);
     setMostrarModal(true);
   };
 
+  /** Cierra el modal y limpia el estado de error */
   const cerrarModal = () => {
     setMostrarModal(false);
     setError(null);
   };
 
-  // Enviar formulario (Crear o Actualizar)
+  /**
+   * Guarda un cliente (crear o actualizar).
+   * Valida campos obligatorios antes de enviar.
+   *
+   * @async
+   * @param {React.FormEvent} e - Evento del formulario
+   * @returns {Promise<void>}
+   */
   const manejarGuardar = async (e) => {
     e.preventDefault();
     setError(null);
@@ -119,7 +192,14 @@ const PaginaClientes = () => {
     }
   };
 
-  // Eliminar cliente
+  /**
+   * Elimina un cliente previa confirmación del usuario.
+   * Recarga la lista completa tras eliminar.
+   *
+   * @async
+   * @param {number} id - ID del cliente a eliminar
+   * @returns {Promise<void>}
+   */
   const manejarEliminar = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) return;
 
@@ -127,6 +207,7 @@ const PaginaClientes = () => {
       await api.delete(`/clientes/${id}`);
       await cargarClientes();
     } catch (err) {
+      // Mostrar mensaje del backend o error genérico
       setError(err.response?.data?.mensaje || err.message);
     }
   };
@@ -174,7 +255,7 @@ const PaginaClientes = () => {
                     <td colSpan="5" className="text-center py-4 text-muted">No hay clientes registrados.</td>
                   </tr>
                 ) : (
-                  clientes.map((cliente) => (
+                  clientesPaginados.map((cliente) => (
                     <tr key={cliente.id}>
                       <td className="ps-4 fw-medium">{cliente.documento}</td>
                       <td>{cliente.nombre_completo}</td>
@@ -210,6 +291,31 @@ const PaginaClientes = () => {
             </table>
           </div>
         </div>
+
+        {/* Controles de Paginación */}
+        {!cargando && totalPaginas > 1 && (
+          <nav className="d-flex justify-content-center mt-3">
+            <ul className="pagination pagination-sm">
+              <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1}>
+                  Anterior
+                </button>
+              </li>
+              {[...Array(totalPaginas)].map((_, i) => (
+                <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+                  <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
+                    {i + 1}
+                  </button>
+                </li>
+              ))}
+              <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas}>
+                  Siguiente
+                </button>
+              </li>
+            </ul>
+          </nav>
+        )}
       </div>
 
       {/* Modal Personalizado (Usando clases Bootstrap sin JS externo) */}

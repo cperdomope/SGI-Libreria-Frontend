@@ -1,8 +1,42 @@
+/**
+ * =====================================================
+ * PÁGINA DE INICIO - DASHBOARD
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Panel de control con indicadores clave (KPIs)
+ * y estadísticas en tiempo real. Acceso exclusivo para Administradores.
+ *
+ * MÉTRICAS MOSTRADAS:
+ * - Ventas del día (cantidad e ingresos)
+ * - Ventas del mes (cantidad e ingresos)
+ * - Total de libros en catálogo
+ * - Alertas de stock bajo
+ * - Top 5 productos más vendidos
+ * - Top 5 mejores clientes
+ * - Libros que requieren reabastecimiento
+ *
+ * INTERACTIVIDAD:
+ * - Actualización manual de datos
+ * - Accesos directos a módulos principales
+ * - Links de acción rápida para reabastecer
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../servicios/api';
 
-// --- ICONOS SVG INLINE ---
+// =====================================================
+// ICONOS SVG (Bootstrap Icons - MIT License)
+// =====================================================
+
+/**
+ * Icono de dinero/billetes - Indicador de ventas
+ */
 const IconoDinero = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
     <path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1H1zm7 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
@@ -10,12 +44,18 @@ const IconoDinero = () => (
   </svg>
 );
 
+/**
+ * Icono de alerta/advertencia - Indicador de stock bajo
+ */
 const IconoAlerta = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
     <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
   </svg>
 );
 
+/**
+ * Icono de libros - Indicador de catálogo
+ */
 const IconoLibros = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
     <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v11a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-11z"/>
@@ -24,6 +64,10 @@ const IconoLibros = () => (
   </svg>
 );
 
+/**
+ * Icono de clientes/usuarios - No usado actualmente
+ * Mantenido para futura tarjeta de total de clientes
+ */
 const IconoClientes = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
     <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
@@ -31,37 +75,91 @@ const IconoClientes = () => (
   </svg>
 );
 
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+/**
+ * Dashboard principal del sistema.
+ * Muestra métricas clave y estadísticas de ventas/inventario.
+ *
+ * @returns {JSX.Element} Panel de control completo
+ */
 const Inicio = () => {
+  // ─────────────────────────────────────────────────
+  // ESTADOS
+  // ─────────────────────────────────────────────────
+
   const [estadisticas, setEstadisticas] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
+  // ─────────────────────────────────────────────────
+  // EFECTOS
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Carga las estadísticas al montar el componente.
+   */
   useEffect(() => {
     cargarEstadisticas();
   }, []);
 
+  // ─────────────────────────────────────────────────
+  // CARGA DE DATOS
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Obtiene las estadísticas del dashboard desde el backend.
+   * Maneja estados de carga y error apropiadamente.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const cargarEstadisticas = async () => {
     try {
       setCargando(true);
       const respuesta = await api.get('/dashboard');
-      setEstadisticas(respuesta.data);
+
+      // La respuesta incluye { exito, datos }
+      // Accedemos directamente a los datos del dashboard
+      setEstadisticas(respuesta.data.datos || respuesta.data);
       setError(null);
     } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
+      // Log solo en desarrollo para debugging
+      if (import.meta.env.DEV) {
+        console.error('[Dashboard] Error al cargar estadísticas:', err);
+      }
       setError('Error al cargar estadísticas del dashboard');
     } finally {
       setCargando(false);
     }
   };
 
+  // ─────────────────────────────────────────────────
+  // UTILIDADES DE FORMATO
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Formatea un valor numérico como precio en pesos colombianos.
+   * Usa Intl.NumberFormat para localización correcta.
+   *
+   * @param {number} precio - Valor a formatear
+   * @returns {string} Precio formateado (ej: "$125.000")
+   */
   const formatearPrecio = (precio) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0
-    }).format(precio);
+    }).format(precio || 0);
   };
 
+  // ─────────────────────────────────────────────────
+  // ESTADOS DE CARGA Y ERROR
+  // ─────────────────────────────────────────────────
+
+  // Mostrar spinner mientras carga
   if (cargando) {
     return (
       <div className="container mt-5 text-center">
@@ -73,6 +171,7 @@ const Inicio = () => {
     );
   }
 
+  // Mostrar mensaje de error con opción de reintentar
   if (error) {
     return (
       <div className="container mt-4">
@@ -87,6 +186,7 @@ const Inicio = () => {
     );
   }
 
+  // Mostrar mensaje si no hay datos
   if (!estadisticas) {
     return (
       <div className="container mt-4">
@@ -100,8 +200,16 @@ const Inicio = () => {
     );
   }
 
+  // ─────────────────────────────────────────────────
+  // RENDER PRINCIPAL
+  // ─────────────────────────────────────────────────
+
   return (
     <div className="container-fluid py-4">
+
+      {/* ─────────────────────────────────────────────────
+          ENCABEZADO CON BOTÓN DE ACTUALIZAR
+          ───────────────────────────────────────────────── */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold text-dark mb-0">
           Panel de Control - Dashboard
@@ -109,22 +217,28 @@ const Inicio = () => {
         <button
           onClick={cargarEstadisticas}
           className="btn btn-outline-primary btn-sm"
+          title="Actualizar estadísticas"
         >
-          🔄 Actualizar
+          Actualizar
         </button>
       </div>
 
-      {/* KPIs Principales - Tarjetas */}
+      {/* ─────────────────────────────────────────────────
+          KPIs PRINCIPALES - TARJETAS DE INDICADORES
+          ───────────────────────────────────────────────── */}
       <div className="row g-3 mb-4">
-        {/* Ventas Hoy */}
+
+        {/* Ventas del Día */}
         <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100 bg-primary">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="mb-2" style={{ opacity: 0.85 }}>Ventas Hoy</h6>
-                  <h3 className="fw-bold mb-0">{estadisticas.ventas_hoy.cantidad}</h3>
-                  <p className="small mb-0 mt-2">{formatearPrecio(estadisticas.ventas_hoy.ingresos)}</p>
+                  <h3 className="fw-bold mb-0">{estadisticas.ventas_hoy?.cantidad || 0}</h3>
+                  <p className="small mb-0 mt-2">
+                    {formatearPrecio(estadisticas.ventas_hoy?.ingresos)}
+                  </p>
                 </div>
                 <IconoDinero />
               </div>
@@ -139,8 +253,10 @@ const Inicio = () => {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="mb-2" style={{ opacity: 0.85 }}>Ventas del Mes</h6>
-                  <h3 className="fw-bold mb-0">{estadisticas.ventas_mes.cantidad}</h3>
-                  <p className="small mb-0 mt-2">{formatearPrecio(estadisticas.ventas_mes.ingresos)}</p>
+                  <h3 className="fw-bold mb-0">{estadisticas.ventas_mes?.cantidad || 0}</h3>
+                  <p className="small mb-0 mt-2">
+                    {formatearPrecio(estadisticas.ventas_mes?.ingresos)}
+                  </p>
                 </div>
                 <IconoDinero />
               </div>
@@ -148,14 +264,14 @@ const Inicio = () => {
           </div>
         </div>
 
-        {/* Total Libros */}
+        {/* Total de Libros en Catálogo */}
         <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100 bg-info">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="mb-2" style={{ opacity: 0.85 }}>Catálogo</h6>
-                  <h3 className="fw-bold mb-0">{estadisticas.total_libros}</h3>
+                  <h3 className="fw-bold mb-0">{estadisticas.total_libros || 0}</h3>
                   <p className="small mb-0 mt-2">Libros registrados</p>
                 </div>
                 <IconoLibros />
@@ -164,16 +280,18 @@ const Inicio = () => {
           </div>
         </div>
 
-        {/* Stock Bajo */}
+        {/* Alertas de Stock Bajo */}
         <div className="col-md-3">
-          <div className={`card border-0 shadow-sm h-100 ${estadisticas.alertas_stock > 0 ? 'bg-danger' : 'bg-success'}`}>
+          <div className={`card border-0 shadow-sm h-100 ${
+            (estadisticas.alertas_stock || 0) > 0 ? 'bg-danger' : 'bg-success'
+          }`}>
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="mb-2" style={{ opacity: 0.85 }}>Alertas Stock</h6>
-                  <h3 className="fw-bold mb-0">{estadisticas.alertas_stock}</h3>
+                  <h3 className="fw-bold mb-0">{estadisticas.alertas_stock || 0}</h3>
                   <p className="small mb-0 mt-2">
-                    {estadisticas.alertas_stock > 0 ? 'Requieren reposición' : 'Todo OK'}
+                    {(estadisticas.alertas_stock || 0) > 0 ? 'Requieren reposición' : 'Todo OK'}
                   </p>
                 </div>
                 <IconoAlerta />
@@ -183,15 +301,19 @@ const Inicio = () => {
         </div>
       </div>
 
+      {/* ─────────────────────────────────────────────────
+          TABLAS DE RANKINGS
+          ───────────────────────────────────────────────── */}
       <div className="row g-4">
-        {/* Productos Más Vendidos */}
+
+        {/* Top 5 Productos Más Vendidos */}
         <div className="col-md-6">
           <div className="card shadow-sm border-0">
             <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0 fw-bold">📊 Top 5 Productos Más Vendidos</h5>
+              <h5 className="mb-0 fw-bold">Top 5 Productos Más Vendidos</h5>
             </div>
             <div className="card-body p-0">
-              {estadisticas.productos_mas_vendidos.length === 0 ? (
+              {(estadisticas.productos_mas_vendidos?.length || 0) === 0 ? (
                 <p className="text-center text-muted py-4">No hay ventas registradas</p>
               ) : (
                 <div className="table-responsive">
@@ -225,14 +347,14 @@ const Inicio = () => {
           </div>
         </div>
 
-        {/* Mejores Clientes */}
+        {/* Top 5 Mejores Clientes */}
         <div className="col-md-6">
           <div className="card shadow-sm border-0">
             <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0 fw-bold">⭐ Top 5 Mejores Clientes</h5>
+              <h5 className="mb-0 fw-bold">Top 5 Mejores Clientes</h5>
             </div>
             <div className="card-body p-0">
-              {estadisticas.mejores_clientes.length === 0 ? (
+              {(estadisticas.mejores_clientes?.length || 0) === 0 ? (
                 <p className="text-center text-muted py-4">No hay clientes con compras</p>
               ) : (
                 <div className="table-responsive">
@@ -267,15 +389,18 @@ const Inicio = () => {
           </div>
         </div>
 
-        {/* Libros con Stock Bajo */}
+        {/* ─────────────────────────────────────────────────
+            TABLA DE LIBROS CON STOCK BAJO
+            Muestra libros que necesitan reabastecimiento
+            ───────────────────────────────────────────────── */}
         <div className="col-12">
           <div className="card shadow-sm border-0">
             <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0 fw-bold text-danger">⚠️ Libros con Stock Bajo</h5>
+              <h5 className="mb-0 fw-bold text-danger">Libros con Stock Bajo</h5>
             </div>
             <div className="card-body p-0">
-              {estadisticas.libros_stock_bajo.length === 0 ? (
-                <p className="text-center text-success py-4">✅ No hay libros con stock bajo</p>
+              {(estadisticas.libros_stock_bajo?.length || 0) === 0 ? (
+                <p className="text-center text-success py-4">No hay libros con stock bajo</p>
               ) : (
                 <div className="table-responsive">
                   <table className="table table-hover table-striped mb-0">
@@ -320,22 +445,24 @@ const Inicio = () => {
         </div>
       </div>
 
-      {/* Accesos Directos */}
+      {/* ─────────────────────────────────────────────────
+          ACCESOS DIRECTOS A MÓDULOS PRINCIPALES
+          ───────────────────────────────────────────────── */}
       <div className="card shadow-sm border-0 mt-4">
         <div className="card-body">
-          <h5 className="fw-bold mb-3">🚀 Accesos Directos</h5>
+          <h5 className="fw-bold mb-3">Accesos Directos</h5>
           <div className="d-flex flex-wrap gap-3">
             <Link to="/ventas" className="btn btn-primary px-4">
-              💰 Nueva Venta (POS)
+              Nueva Venta (POS)
             </Link>
             <Link to="/historial-ventas" className="btn btn-outline-primary px-4">
-              📋 Ver Historial de Ventas
+              Ver Historial de Ventas
             </Link>
             <Link to="/inventario" className="btn btn-outline-secondary px-4">
-              📦 Gestionar Inventario
+              Gestionar Inventario
             </Link>
             <Link to="/clientes" className="btn btn-outline-info px-4">
-              👥 Gestionar Clientes
+              Gestionar Clientes
             </Link>
           </div>
         </div>

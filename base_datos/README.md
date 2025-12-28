@@ -1,517 +1,345 @@
-# Base de Datos - Sistema de Gestión de Inventario
+# Base de Datos - Sistema de Gestion de Inventario
 
-Documentación de la estructura de base de datos y scripts SQL del sistema.
+Documentacion de la estructura de base de datos del sistema SGI Libreria.
 
-## Contenido
+## Archivos SQL
 
-- `script_inicial.sql` - Script de creación completa de la base de datos
-- `migracion_metodo_pago.sql` - Migración para agregar métodos de pago
-- `verificar_estructura_ventas.sql` - Script de verificación de tablas de ventas
+| Archivo | Descripcion | Uso |
+|---------|-------------|-----|
+| `sgi_libreria_completo.sql` | **Script completo portátil (USAR ESTE)** | Instalación nueva o en otra máquina |
+| `script_completo.sql` | Script anterior (depreciado) | No usar - reemplazado por sgi_libreria_completo.sql |
+| `migracion_columnas_faltantes.sql` | Añade columnas faltantes a BD existente | Solo si BD ya existe y faltan columnas |
 
-## Estructura de Base de Datos
+## Instalacion Rapida
 
-### Nombre de la Base de Datos
-```sql
-inventario_libreria
+### Nueva Instalacion (Recomendado para otra máquina)
+
+```bash
+# 1. Ejecutar script SQL completo
+mysql -u root -p < sgi_libreria_completo.sql
+
+# 2. Generar contrasenas bcrypt validas
+cd ../servidor
+node scripts/reset_password.js
+
+# 3. Iniciar el servidor
+npm start
 ```
+
+## Credenciales por Defecto
+
+| Usuario | Email | Password | Rol |
+|---------|-------|----------|-----|
+| Administrador | admin@sena.edu.co | 123456 | Administrador |
+| Vendedor | vendedor@sena.edu.co | vendedor123 | Vendedor |
+
+> **⚠️ IMPORTANTE:** Ejecutar `reset_password.js` después de la instalación SQL para generar hashes bcrypt válidos. Sin este paso, NO podrás iniciar sesión.
+
+## Estructura de la Base de Datos
+
+### Nombre: `inventario_libreria`
+
+### Prefijo de Tablas: `mdc_`
+
+Todas las tablas usan el prefijo `mdc_` para evitar conflictos en hosting compartido.
 
 ### Diagrama de Relaciones
 
 ```
-roles (1) ───< (N) usuarios
-                      │
-                      └──> movimientos (N)
-                      └──> ventas (N)
+mdc_roles (1) ────< (N) mdc_usuarios
+                              │
+                              ├──> mdc_movimientos (N)
+                              └──> mdc_ventas (N)
 
-autores (1) ───< (N) libros ───< (N) movimientos
-categorias (1) ───< (N) libros ───< (N) detalle_ventas
+mdc_autores (1) ────< (N) mdc_libros ────< (N) mdc_movimientos
+mdc_categorias (1) ─< (N) mdc_libros ────< (N) mdc_detalle_ventas
 
-clientes (1) ───< (N) ventas (1) ───< (N) detalle_ventas
-
-libros (1) ───< (N) detalle_ventas
+mdc_clientes (1) ───< (N) mdc_ventas (1) ───< (N) mdc_detalle_ventas
 ```
 
-## Tablas Detalladas
+## Tablas del Sistema (10)
 
-### 1. roles
-Catálogo de roles del sistema
+### 1. mdc_roles
+Control de acceso por roles (RBAC).
 
-| Campo  | Tipo        | Descripción           |
-|--------|-------------|-----------------------|
-| id     | INT (PK)    | ID autoincremental    |
-| nombre | VARCHAR(50) | Nombre del rol (UNIQUE)|
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre | VARCHAR(50) | Nombre unico del rol |
 
-**Datos iniciales:**
-- Administrador
-- Vendedor
+**Roles disponibles:** Administrador, Vendedor
 
-### 2. usuarios
-Usuarios del sistema con autenticación
+---
 
-| Campo           | Tipo         | Descripción                    |
-|-----------------|--------------|--------------------------------|
-| id              | INT (PK)     | ID autoincremental             |
-| nombre_completo | VARCHAR(100) | Nombre del usuario             |
-| email           | VARCHAR(100) | Email (UNIQUE)                 |
-| password_hash   | VARCHAR(255) | Contraseña hasheada con bcrypt |
-| rol_id          | INT (FK)     | Relación con tabla roles       |
-| estado          | TINYINT(1)   | 1: Activo, 0: Inactivo         |
-| fecha_creacion  | TIMESTAMP    | Fecha de registro              |
+### 2. mdc_usuarios
+Usuarios del sistema con autenticacion.
 
-**Índices:**
-- PRIMARY KEY: id
-- UNIQUE: email
-- FOREIGN KEY: rol_id → roles(id)
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre_completo | VARCHAR(100) | Nombre del usuario |
+| email | VARCHAR(100) | Email unico |
+| password_hash | VARCHAR(255) | Contrasena hasheada (bcrypt) |
+| rol_id | INT (FK) | Referencia a mdc_roles |
+| estado | TINYINT(1) | 1=Activo, 0=Inactivo |
+| fecha_creacion | TIMESTAMP | Fecha de registro |
 
-**Usuario por defecto:**
-- Email: admin@sena.edu.co
-- Password: 123456 (hasheada)
-- Rol: Administrador
+---
 
-### 3. autores
-Autores de los libros
+### 3. mdc_autores
+Catalogo de autores de libros.
 
-| Campo  | Tipo         | Descripción        |
-|--------|--------------|---------------------|
-| id     | INT (PK)     | ID autoincremental |
-| nombre | VARCHAR(100) | Nombre del autor   |
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre | VARCHAR(100) | Nombre del autor |
+| nacionalidad | VARCHAR(50) | País de origen |
+| fecha_creacion | TIMESTAMP | Fecha de registro |
 
-**Validaciones:**
-- No se puede eliminar si tiene libros asociados
+---
 
-### 4. categorias
-Categorías de clasificación de libros
+### 4. mdc_categorias
+Categorias de clasificacion.
 
-| Campo  | Tipo        | Descripción              |
-|--------|-------------|--------------------------|
-| id     | INT (PK)    | ID autoincremental       |
-| nombre | VARCHAR(50) | Nombre de categoría (UNIQUE)|
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre | VARCHAR(50) | Nombre unico de categoria |
+| descripcion | VARCHAR(200) | Descripción de la categoría |
+| fecha_creacion | TIMESTAMP | Fecha de registro |
 
-**Validaciones:**
-- Nombre único (no duplicados)
-- No se puede eliminar si tiene libros asociados
+---
 
-### 5. libros
-Catálogo de libros (inventario)
+### 5. mdc_libros
+Inventario principal de libros.
 
-| Campo         | Tipo          | Descripción                        |
-|---------------|---------------|------------------------------------|
-| id            | INT (PK)      | ID autoincremental                 |
-| isbn          | VARCHAR(20)   | Código internacional (UNIQUE)      |
-| titulo        | VARCHAR(150)  | Título del libro                   |
-| descripcion   | TEXT          | Descripción detallada              |
-| precio_venta  | DECIMAL(10,2) | Precio de venta al público         |
-| stock_actual  | INT           | Cantidad disponible                |
-| stock_minimo  | INT           | Umbral para alertas (default: 5)   |
-| autor_id      | INT (FK)      | Relación con autores               |
-| categoria_id  | INT (FK)      | Relación con categorías            |
-| fecha_creacion| TIMESTAMP     | Fecha de registro                  |
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| isbn | VARCHAR(20) | Codigo ISBN unico |
+| titulo | VARCHAR(150) | Titulo del libro |
+| descripcion | TEXT | Descripcion detallada |
+| precio_venta | DECIMAL(10,2) | Precio de venta |
+| stock_actual | INT | Cantidad disponible |
+| stock_minimo | INT | Umbral para alertas (default: 5) |
+| autor_id | INT (FK) | Referencia a mdc_autores |
+| categoria_id | INT (FK) | Referencia a mdc_categorias |
+| activo | TINYINT(1) | 1=Activo, 0=Desactivado (default: 1) |
+| fecha_creacion | TIMESTAMP | Fecha de registro |
 
-**Índices:**
-- PRIMARY KEY: id
-- UNIQUE: isbn
-- FOREIGN KEY: autor_id → autores(id)
-- FOREIGN KEY: categoria_id → categorias(id)
+---
 
-**Reglas de negocio:**
-- stock_actual se actualiza automáticamente con movimientos
-- stock_minimo se usa para alertas de inventario bajo
+### 6. mdc_movimientos
+Kardex - Historial de entradas y salidas.
 
-### 6. movimientos
-Kardex - Historial de entradas y salidas
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| libro_id | INT (FK) | Libro afectado |
+| usuario_id | INT (FK) | Usuario que registro |
+| tipo_movimiento | ENUM | 'ENTRADA' o 'SALIDA' |
+| cantidad | INT | Cantidad del movimiento |
+| fecha_movimiento | TIMESTAMP | Fecha/hora del registro |
+| observaciones | TEXT | Notas adicionales |
 
-| Campo           | Tipo         | Descripción                       |
-|-----------------|--------------|-----------------------------------|
-| id              | INT (PK)     | ID autoincremental                |
-| libro_id        | INT (FK)     | Libro afectado                    |
-| usuario_id      | INT (FK)     | Usuario que registró              |
-| tipo_movimiento | ENUM         | 'ENTRADA' o 'SALIDA'              |
-| cantidad        | INT          | Cantidad del movimiento           |
-| fecha_movimiento| TIMESTAMP    | Fecha/hora del registro           |
-| observaciones   | TEXT         | Notas adicionales                 |
+---
 
-**Índices:**
-- PRIMARY KEY: id
-- FOREIGN KEY: libro_id → libros(id)
-- FOREIGN KEY: usuario_id → usuarios(id)
+### 7. mdc_clientes
+Registro de clientes.
 
-**Tipos de movimiento:**
-- `ENTRADA`: Compras, devoluciones de clientes
-- `SALIDA`: Ventas, ajustes de inventario
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre_completo | VARCHAR(100) | Nombre del cliente o empresa |
+| documento | VARCHAR(20) | Documento unico |
+| tipo_documento | ENUM | 'CC', 'NIT', 'CE', 'Pasaporte' |
+| email | VARCHAR(100) | Correo electronico |
+| telefono | VARCHAR(20) | Numero de contacto |
+| direccion | VARCHAR(200) | Direccion fisica |
+| fecha_registro | TIMESTAMP | Fecha de registro |
 
-### 7. clientes
-Registro de clientes
+---
 
-| Campo           | Tipo         | Descripción                |
-|-----------------|--------------|----------------------------|
-| id              | INT (PK)     | ID autoincremental         |
-| nombre_completo | VARCHAR(100) | Nombre del cliente         |
-| documento       | VARCHAR(20)  | Documento de identidad (UNIQUE)|
-| email           | VARCHAR(100) | Correo electrónico         |
-| telefono        | VARCHAR(20)  | Número de contacto         |
-| direccion       | VARCHAR(200) | Dirección física           |
-| fecha_registro  | TIMESTAMP    | Fecha de registro          |
+### 8. mdc_proveedores
+Registro de proveedores.
 
-**Índices:**
-- PRIMARY KEY: id
-- UNIQUE: documento
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| nombre_empresa | VARCHAR(100) | Razon social |
+| nit | VARCHAR(20) | NIT de la empresa |
+| nombre_contacto | VARCHAR(100) | Persona de contacto |
+| email | VARCHAR(100) | Correo corporativo |
+| telefono | VARCHAR(20) | Telefono de contacto |
+| direccion | VARCHAR(200) | Direccion de la empresa |
+| fecha_registro | TIMESTAMP | Fecha de registro |
 
-### 8. proveedores
-Registro de empresas proveedoras
+---
 
-| Campo          | Tipo         | Descripción                |
-|----------------|--------------|----------------------------|
-| id             | INT (PK)     | ID autoincremental         |
-| nombre_empresa | VARCHAR(100) | Razón social               |
-| nit            | VARCHAR(20)  | NIT de la empresa          |
-| nombre_contacto| VARCHAR(100) | Persona de contacto        |
-| email          | VARCHAR(100) | Correo corporativo         |
-| telefono       | VARCHAR(20)  | Teléfono de contacto       |
-| direccion      | VARCHAR(200) | Dirección de la empresa    |
-| fecha_registro | TIMESTAMP    | Fecha de registro          |
+### 9. mdc_ventas
+Cabecera de facturas de venta.
 
-**Nota:** Campo "nit" almacenado directamente en proveedores (no hay campo identificación separado)
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | Numero de factura |
+| cliente_id | INT (FK) | Cliente que compro |
+| usuario_id | INT (FK) | Usuario que registro |
+| total_venta | DECIMAL(10,2) | Total de la venta |
+| metodo_pago | ENUM | 'Efectivo', 'Tarjeta', 'Transferencia' |
+| estado | ENUM | 'Completada', 'Pendiente', 'Cancelada' (default: 'Completada') |
+| fecha_venta | TIMESTAMP | Fecha/hora de la transaccion |
 
-### 9. ventas
-Cabecera de facturas
+---
 
-| Campo       | Tipo          | Descripción                  |
-|-------------|---------------|------------------------------|
-| id          | INT (PK)      | Número de factura            |
-| cliente_id  | INT (FK)      | Cliente que compró           |
-| total       | DECIMAL(10,2) | Total de la venta            |
-| fecha_venta | TIMESTAMP     | Fecha/hora de la transacción |
-| usuario_id  | INT (FK)      | Usuario que registró         |
+### 10. mdc_detalle_ventas
+Items de cada factura.
 
-**Índices:**
-- PRIMARY KEY: id
-- FOREIGN KEY: cliente_id → clientes(id)
-- FOREIGN KEY: usuario_id → usuarios(id)
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| id | INT (PK) | ID autoincremental |
+| venta_id | INT (FK) | Factura relacionada |
+| libro_id | INT (FK) | Libro vendido |
+| cantidad | INT | Unidades vendidas |
+| precio_unitario | DECIMAL(10,2) | Precio al momento de venta |
+| subtotal | DECIMAL(10,2) | Cantidad x Precio |
 
-### 10. detalle_ventas
-Items de cada factura
+**Regla:** ON DELETE CASCADE - Si se elimina venta, se eliminan sus detalles.
 
-| Campo          | Tipo          | Descripción              |
-|----------------|---------------|--------------------------|
-| id             | INT (PK)      | ID autoincremental       |
-| venta_id       | INT (FK)      | Factura relacionada      |
-| libro_id       | INT (FK)      | Libro vendido            |
-| cantidad       | INT           | Unidades vendidas        |
-| precio_unitario| DECIMAL(10,2) | Precio al momento venta  |
+---
 
-**Índices:**
-- PRIMARY KEY: id
-- FOREIGN KEY: venta_id → ventas(id) ON DELETE CASCADE
-- FOREIGN KEY: libro_id → libros(id)
+## Vistas del Sistema (3)
 
-**Reglas:**
-- ON DELETE CASCADE: Si se elimina venta, se eliminan sus detalles
-- precio_unitario se guarda para mantener histórico (puede cambiar el precio del libro)
+El script `sgi_libreria_completo.sql` crea automáticamente 3 vistas útiles:
 
-## Scripts SQL
-
-### script_inicial.sql
-
-Script completo para crear la base de datos desde cero.
-
-**Contenido:**
-1. Creación de base de datos
-2. Definición de todas las tablas
-3. Relaciones y claves foráneas
-4. Datos semilla (seeders) para pruebas:
-   - 2 roles
-   - 1 usuario administrador
-   - 5 categorías
-   - 4 autores
-   - 3 libros de ejemplo
-   - 3 clientes de prueba
-   - 2 proveedores de ejemplo
-
-**Uso:**
-```bash
-mysql -u root -p < script_inicial.sql
-```
-
-**Importante:**
-- Ejecutar solo una vez al iniciar el proyecto
-- Crear backup antes de re-ejecutar
-- Dropea y recrea toda la base de datos
-
-### migracion_metodo_pago.sql
-
-Migración para agregar funcionalidad de métodos de pago.
-
-**Contenido:**
-- Agregar columnas de método de pago a tabla ventas
-- Valores por defecto
-- Actualización de registros existentes
-
-**Uso:**
-```bash
-mysql -u root -p inventario_libreria < migracion_metodo_pago.sql
-```
-
-### verificar_estructura_ventas.sql
-
-Script de verificación para validar estructura de tablas de ventas.
-
-**Uso:**
-```bash
-mysql -u root -p inventario_libreria < verificar_estructura_ventas.sql
-```
-
-**Utilidad:**
-- Verificar que las tablas existan
-- Validar estructura de columnas
-- Debugging de problemas de esquema
-
-## Normalización
-
-La base de datos está normalizada en **Tercera Forma Normal (3NF)**:
-
-### Primera Forma Normal (1NF)
-- Todos los valores son atómicos
-- No hay grupos repetitivos
-- Cada columna tiene un nombre único
-
-### Segunda Forma Normal (2NF)
-- Cumple 1NF
-- Todos los atributos no clave dependen completamente de la clave primaria
-- Ejemplo: autores y categorías están separados de libros
-
-### Tercera Forma Normal (3NF)
-- Cumple 2NF
-- No hay dependencias transitivas
-- Ejemplo: nombre_autor no está en libros, sino en tabla autores
-
-**Beneficios:**
-- Eliminación de redundancia
-- Integridad de datos
-- Facilita actualizaciones
-- Optimiza almacenamiento
-
-## Integridad Referencial
-
-### Claves Foráneas Configuradas
-
-Todas las relaciones tienen claves foráneas definidas:
+### v_libros_stock_bajo
+Muestra libros que están en o bajo el stock mínimo.
 
 ```sql
--- Ejemplo en tabla libros
-FOREIGN KEY (autor_id) REFERENCES autores(id)
-FOREIGN KEY (categoria_id) REFERENCES categorias(id)
-
--- Ejemplo en tabla movimientos
-FOREIGN KEY (libro_id) REFERENCES libros(id)
-FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-
--- Ejemplo en detalle_ventas con CASCADE
-FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE
+SELECT * FROM v_libros_stock_bajo;
 ```
 
-### Validaciones en Backend
+### v_ventas_hoy
+Resumen de ventas del día actual (total ventas, ingresos, promedio).
 
-El backend implementa validaciones adicionales:
-- No eliminar autor si tiene libros asociados
-- No eliminar categoría si tiene libros asociados
-- No permitir categorías con nombres duplicados
-- Validar existencia de registros antes de crear relaciones
+```sql
+SELECT * FROM v_ventas_hoy;
+```
 
-## Consultas Útiles
+### v_catalogo_libros
+Catálogo completo con autor, categoría y estado de stock.
+
+```sql
+SELECT * FROM v_catalogo_libros WHERE estado_stock = 'Disponible';
+```
+
+---
+
+## Índices de Optimización
+
+El script incluye 10 índices para mejorar el rendimiento:
+
+- `idx_libros_titulo` - Búsquedas por título
+- `idx_libros_isbn` - Búsquedas por ISBN
+- `idx_libros_stock` - Consultas de inventario
+- `idx_ventas_fecha` - Reportes por fecha
+- `idx_ventas_cliente` - Historial por cliente
+- `idx_movimientos_fecha` - Kardex por fecha
+- `idx_movimientos_libro` - Movimientos por libro
+- `idx_clientes_nombre` - Búsqueda de clientes
+- `idx_clientes_documento` - Validación de documentos
+- `idx_usuarios_email` - Login rápido
+
+---
+
+## Consultas Utiles
 
 ### Ver todas las tablas
 ```sql
 USE inventario_libreria;
-SHOW TABLES;
+SHOW TABLES LIKE 'mdc_%';
 ```
 
-### Verificar estructura de tabla
-```sql
-DESCRIBE libros;
-SHOW CREATE TABLE libros;
-```
-
-### Estadísticas de inventario
+### Estadisticas de inventario
 ```sql
 SELECT
     COUNT(*) as total_libros,
-    SUM(stock_actual) as total_stock,
+    SUM(stock_actual) as total_unidades,
     AVG(precio_venta) as precio_promedio
-FROM libros;
+FROM mdc_libros;
 ```
 
 ### Libros con stock bajo
 ```sql
 SELECT id, titulo, stock_actual, stock_minimo
-FROM libros
+FROM mdc_libros
 WHERE stock_actual <= stock_minimo;
 ```
 
-### Libros por categoría
-```sql
-SELECT c.nombre as categoria, COUNT(l.id) as cantidad
-FROM categorias c
-LEFT JOIN libros l ON c.id = l.categoria_id
-GROUP BY c.id, c.nombre;
-```
-
-### Historial de movimientos de un libro
-```sql
-SELECT
-    m.fecha_movimiento,
-    m.tipo_movimiento,
-    m.cantidad,
-    m.observaciones,
-    u.nombre_completo as usuario
-FROM movimientos m
-JOIN usuarios u ON m.usuario_id = u.id
-WHERE m.libro_id = 1
-ORDER BY m.fecha_movimiento DESC;
-```
-
-### Ventas del día
+### Ventas del dia
 ```sql
 SELECT
     v.id as factura,
     c.nombre_completo as cliente,
-    v.total,
+    v.total_venta,
+    v.metodo_pago,
     v.fecha_venta
-FROM ventas v
-JOIN clientes c ON v.cliente_id = c.id
-WHERE DATE(v.fecha_venta) = CURDATE()
-ORDER BY v.fecha_venta DESC;
+FROM mdc_ventas v
+JOIN mdc_clientes c ON v.cliente_id = c.id
+WHERE DATE(v.fecha_venta) = CURDATE();
 ```
 
-### Top libros más vendidos
+### Top 5 libros mas vendidos
 ```sql
 SELECT
     l.titulo,
-    SUM(dv.cantidad) as total_vendido,
-    SUM(dv.cantidad * dv.precio_unitario) as ingresos
-FROM detalle_ventas dv
-JOIN libros l ON dv.libro_id = l.id
-GROUP BY l.id, l.titulo
-ORDER BY total_vendido DESC
-LIMIT 10;
+    SUM(dv.cantidad) as vendidos,
+    SUM(dv.subtotal) as ingresos
+FROM mdc_detalle_ventas dv
+JOIN mdc_libros l ON dv.libro_id = l.id
+GROUP BY l.id
+ORDER BY vendidos DESC
+LIMIT 5;
 ```
 
-## Backup y Restauración
+## Backup y Restauracion
 
 ### Crear Backup
 ```bash
-mysqldump -u root -p inventario_libreria > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u root -p inventario_libreria > backup_$(date +%Y%m%d).sql
 ```
 
-### Restaurar desde Backup
+### Restaurar Backup
 ```bash
-mysql -u root -p inventario_libreria < backup_20251207_120000.sql
+mysql -u root -p inventario_libreria < backup_20251227.sql
 ```
 
-### Backup de solo datos (sin estructura)
-```bash
-mysqldump -u root -p --no-create-info inventario_libreria > datos_backup.sql
-```
+## Características del Script Completo
 
-### Backup de solo estructura (sin datos)
-```bash
-mysqldump -u root -p --no-data inventario_libreria > estructura_backup.sql
-```
+El archivo `sgi_libreria_completo.sql` incluye:
 
-## Migraciones Futuras
+✅ **10 Tablas** con prefijo `mdc_` y todas las relaciones FK
+✅ **Datos de prueba** (8 categorías, 8 autores, 10 libros, 7 clientes, 4 proveedores)
+✅ **2 Usuarios** (Administrador y Vendedor) con hashes placeholder
+✅ **10 Índices** de optimización para consultas frecuentes
+✅ **3 Vistas** útiles (stock bajo, ventas hoy, catálogo)
+✅ **Verificación automática** de instalación al ejecutarse
+✅ **Charset UTF-8** completo (utf8mb4) para emojis y caracteres especiales
 
-Si se necesitan hacer cambios en la estructura:
+## Normalizacion
 
-1. **Crear nuevo archivo** en `base_datos/` con nombre descriptivo
-2. **Documentar cambios** con comentarios SQL
-3. **Incluir validaciones** (IF NOT EXISTS, etc.)
-4. **Probar en desarrollo** antes de aplicar en producción
-5. **Actualizar este README** con la nueva migración
+La base de datos cumple con la **Tercera Forma Normal (3NF)**:
 
-**Plantilla de migración:**
-```sql
--- =============================================
--- MIGRACIÓN: [Descripción del cambio]
--- Fecha: [YYYY-MM-DD]
--- Autor: [Nombre]
--- =============================================
+- **1NF:** Valores atomicos, sin grupos repetitivos
+- **2NF:** Atributos dependen completamente de la clave primaria
+- **3NF:** No hay dependencias transitivas
 
-USE inventario_libreria;
-
--- Agregar nueva columna si no existe
-ALTER TABLE nombre_tabla
-ADD COLUMN IF NOT EXISTS nueva_columna VARCHAR(100) DEFAULT NULL;
-
--- Actualizar datos existentes si es necesario
-UPDATE nombre_tabla SET nueva_columna = 'valor' WHERE condicion;
-
--- Verificar cambios
-SELECT * FROM nombre_tabla LIMIT 5;
-```
-
-## Índices y Optimización
-
-### Índices Actuales
-
-**Índices primarios (PRIMARY KEY):**
-- Todas las tablas tienen id como PK autoincremental
-
-**Índices únicos (UNIQUE):**
-- usuarios.email
-- libros.isbn
-- clientes.documento
-- categorias.nombre
-
-**Índices de clave foránea:**
-- Creados automáticamente en todas las FK
-
-### Recomendaciones de Optimización
-
-Si la BD crece, considerar agregar índices en:
-```sql
--- Búsquedas frecuentes por título
-CREATE INDEX idx_libros_titulo ON libros(titulo);
-
--- Filtros por fecha en ventas
-CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta);
-
--- Búsquedas de movimientos por tipo
-CREATE INDEX idx_movimientos_tipo ON movimientos(tipo_movimiento);
-```
-
-## Mantenimiento
-
-### Limpiar datos de prueba
-```sql
--- Eliminar datos de ejemplo (mantener estructura)
-DELETE FROM detalle_ventas;
-DELETE FROM ventas;
-DELETE FROM movimientos;
-DELETE FROM libros;
-DELETE FROM clientes;
-DELETE FROM proveedores;
-DELETE FROM autores WHERE id > 0;
-DELETE FROM categorias WHERE id > 0;
-
--- Resetear autoincrements
-ALTER TABLE ventas AUTO_INCREMENT = 1;
-ALTER TABLE libros AUTO_INCREMENT = 1;
--- etc.
-```
-
-### Verificar integridad
-```sql
--- Verificar claves foráneas huérfanas
-SELECT l.id, l.titulo, l.autor_id
-FROM libros l
-LEFT JOIN autores a ON l.autor_id = a.id
-WHERE a.id IS NULL;
-```
+**Motor:** InnoDB (soporte transaccional y claves foráneas)
 
 ## Seguridad
 
-### Usuarios de Base de Datos
+### Usuario de Base de Datos (Produccion)
 
-**NO usar root en producción.** Crear usuario específico:
+No usar root en produccion. Crear usuario especifico:
 
 ```sql
 CREATE USER 'inventario_app'@'localhost' IDENTIFIED BY 'password_segura';
@@ -519,14 +347,56 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON inventario_libreria.* TO 'inventario_app
 FLUSH PRIVILEGES;
 ```
 
-### Buenas Prácticas
+### Buenas Practicas
 
-- Nunca exponer credenciales en código
-- Usar variables de entorno (.env)
-- Hacer backups periódicos
+- Usar variables de entorno (.env) para credenciales
+- Hacer backups periodicos
 - Mantener MySQL actualizado
-- Monitorear logs de errores
+- No exponer puertos de BD al exterior
 
 ---
 
-Proyecto SENA - Sistema de Gestión de Inventario
+## Verificación de Instalación
+
+Después de ejecutar `sgi_libreria_completo.sql`, el script muestra automáticamente:
+
+- ✅ Estado de creación de la base de datos
+- 📊 Lista de tablas creadas con número de registros
+- 👁️ Vistas disponibles
+
+### Prueba rápida
+
+```sql
+-- Ver tablas creadas
+USE inventario_libreria;
+SHOW TABLES;
+
+-- Ver cantidad de registros
+SELECT
+    (SELECT COUNT(*) FROM mdc_libros) AS libros,
+    (SELECT COUNT(*) FROM mdc_autores) AS autores,
+    (SELECT COUNT(*) FROM mdc_categorias) AS categorias,
+    (SELECT COUNT(*) FROM mdc_clientes) AS clientes,
+    (SELECT COUNT(*) FROM mdc_proveedores) AS proveedores;
+
+-- Ver libros con stock bajo
+SELECT * FROM v_libros_stock_bajo;
+```
+
+---
+
+## Datos de Prueba Incluidos
+
+El script `sgi_libreria_completo.sql` incluye datos de ejemplo para pruebas:
+
+- **8 Categorías**: Tecnología, Ficción, Historia, Ciencia, Negocios, Arte, Infantil, Autoayuda
+- **8 Autores**: García Márquez, Robert C. Martin, Isabel Allende, Vargas Llosa, Paulo Coelho, Stephen King, Borges, Cortázar
+- **10 Libros**: Incluyendo "Cien Años de Soledad", "Clean Code", "El Alquimista", "It", etc.
+- **7 Clientes**: 5 personas naturales + 2 empresas
+- **4 Proveedores**: Distribuidoras y editoriales
+
+---
+
+**Proyecto SENA - Sistema de Gestion de Inventario**
+**Tecnologo en Analisis y Desarrollo de Software**
+**Version: 2.1.0 - Diciembre 2024**

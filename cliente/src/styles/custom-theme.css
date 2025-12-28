@@ -588,3 +588,30 @@ a:hover {
   flex-shrink: 0;
   margin-left: 1rem;
 }
+
+/* ========================================
+   12. ICONOS SVG EXTERNOS
+   ======================================== */
+
+/* Clase para iconos que heredan el color del texto (dropdown items) */
+.icon-current-color {
+  filter: brightness(0) saturate(100%);
+  opacity: 0.85;
+}
+
+/* Iconos en items de dropdown - color evergreen */
+.dropdown-item .icon-current-color {
+  filter: brightness(0) saturate(100%) invert(18%) sepia(15%) saturate(1500%) hue-rotate(113deg) brightness(95%) contrast(95%);
+}
+
+/* Iconos en navbar (color blanco) */
+.navbar .nav-link .icon-current-color {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+/* Hover en iconos de dropdown */
+.dropdown-item:hover .icon-current-color {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(18%) sepia(15%) saturate(2000%) hue-rotate(113deg) brightness(90%) contrast(95%);
+}

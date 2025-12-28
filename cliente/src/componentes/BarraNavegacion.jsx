@@ -1,122 +1,204 @@
+/**
+ * =====================================================
+ * BARRA DE NAVEGACIÓN PRINCIPAL
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Componente de navegación responsivo con control RBAC.
+ * Muestra/oculta opciones de menú según los permisos del usuario.
+ *
+ * CARACTERÍSTICAS:
+ * - Menú responsivo (Bootstrap 5)
+ * - Dropdowns organizados por área funcional
+ * - Indicador visual de ruta activa
+ * - Información del usuario y rol
+ * - Botón de logout con confirmación
+ *
+ * ÁREAS DE MENÚ:
+ * - Dashboard: Solo Administradores
+ * - Gestión Comercial: Ventas, Historial, Clientes
+ * - Logística: Inventario, Movimientos, Autores, Categorías, Proveedores
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexto/AuthContext';
 
-// --- ICONOS SVG INLINE ---
-const IconoLibro = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v9.138a1.5 1.5 0 0 1-1.272 1.488L2.5 13.5A1.5 1.5 0 0 1 1 12V2.5zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-3z"/>
-    <path d="M8 2.5A1.5 1.5 0 0 1 9.5 1h3A1.5 1.5 0 0 1 14 2.5v9.138a1.5 1.5 0 0 1-1.272 1.488L9.5 13.5A1.5 1.5 0 0 1 8 12V2.5zM9.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-3z"/>
-  </svg>
+// =====================================================
+// ICONOS SVG (Bootstrap Icons - MIT License)
+// =====================================================
+
+import iconoLibro from '../assets/icons/icono-libro.svg';
+import iconoInventario from '../assets/icons/icono-inventario.svg';
+import iconoClientes from '../assets/icons/icono-clientes.svg';
+import iconoProveedores from '../assets/icons/icono-proveedores.svg';
+import iconoMovimientos from '../assets/icons/icono-movimientos.svg';
+import iconoVentas from '../assets/icons/icono-ventas.svg';
+import iconoHistorial from '../assets/icons/icono-historial.svg';
+import iconoAutores from '../assets/icons/icono-autores.svg';
+import iconoCategorias from '../assets/icons/icono-categorias.svg';
+import iconoSalir from '../assets/icons/icono-salir.svg';
+
+// =====================================================
+// COMPONENTES DE ICONOS
+// =====================================================
+
+/**
+ * Componentes wrapper para iconos SVG con tamaño configurable.
+ * Facilitan el uso consistente de iconos en el menú.
+ */
+
+const IconoLibro = ({ size = 22 }) => (
+  <img
+    src={iconoLibro}
+    alt=""
+    width={size}
+    height={size}
+    style={{ filter: 'brightness(0) saturate(100%) invert(27%) sepia(89%) saturate(1046%) hue-rotate(178deg) brightness(93%) contrast(91%)' }}
+  />
 );
 
-const IconoInventario = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
-  </svg>
+const IconoInventario = ({ size = 18 }) => (
+  <img src={iconoInventario} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoClientes = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-  </svg>
+const IconoClientes = ({ size = 18 }) => (
+  <img src={iconoClientes} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoProveedores = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-  </svg>
+const IconoProveedores = ({ size = 18 }) => (
+  <img src={iconoProveedores} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoMovimientos = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path fillRule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 4H14.5a.5.5 0 0 0 .5-.5z"/>
-  </svg>
+const IconoMovimientos = ({ size = 18 }) => (
+  <img src={iconoMovimientos} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-// Nuevo Icono para Ventas (Billete/Caja)
-const IconoVentas = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1H1zm7 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
-    <path d="M0 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V5zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V7a2 2 0 0 1-2-2H3z"/>
-  </svg>
+const IconoVentas = ({ size = 18 }) => (
+  <img src={iconoVentas} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoHistorial = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/>
-    <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/>
-    <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
-  </svg>
+const IconoHistorial = ({ size = 18 }) => (
+  <img src={iconoHistorial} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoAutores = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
-  </svg>
+const IconoAutores = ({ size = 18 }) => (
+  <img src={iconoAutores} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoCategorias = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-    <path d="M1.293 7.793A1 1 0 0 1 1 7.086V2a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l.043-.043-7.457-7.457z"/>
-  </svg>
+const IconoCategorias = ({ size = 18 }) => (
+  <img src={iconoCategorias} alt="" width={size} height={size} className="icon-current-color" />
 );
 
-const IconoSalir = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-    <path fillRule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0v2z"/>
-    <path fillRule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/>
-  </svg>
+const IconoSalir = ({ size = 18 }) => (
+  <img src={iconoSalir} alt="" width={size} height={size} style={{ filter: 'brightness(0) invert(1)' }} />
 );
 
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+/**
+ * Barra de navegación principal de la aplicación.
+ * Implementa control de acceso basado en roles (RBAC).
+ *
+ * @returns {JSX.Element} Navbar responsiva con menús dinámicos
+ */
 const BarraNavegacion = () => {
   const { usuario, logout, tienePermiso, nombreRol } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ─────────────────────────────────────────────────
+  // MANEJADORES DE EVENTOS
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Cierra la sesión del usuario previa confirmación.
+   */
   const manejarSalida = () => {
-    if(window.confirm('¿Desea cerrar sesión?')) {
+    if (window.confirm('¿Desea cerrar sesión?')) {
       logout();
     }
   };
 
-  // Función para determinar si un link está activo
+  // ─────────────────────────────────────────────────
+  // UTILIDADES DE ESTILOS
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Verifica si una ruta específica es la actual.
+   * @param {string} ruta - Ruta a comparar
+   * @returns {boolean} True si es la ruta activa
+   */
   const esRutaActiva = (ruta) => location.pathname === ruta;
 
-  // Función para determinar si un dropdown contiene la ruta activa
+  /**
+   * Verifica si alguna ruta del array está activa.
+   * Usado para destacar dropdowns cuando un hijo está activo.
+   * @param {string[]} rutas - Array de rutas
+   * @returns {boolean} True si alguna está activa
+   */
   const dropdownActivo = (rutas) => rutas.includes(location.pathname);
 
-  // Clases para links normales
+  /**
+   * Genera clases CSS para links normales.
+   * Aplica estilo destacado si la ruta está activa.
+   * @param {string} ruta - Ruta del link
+   * @returns {string} Clases CSS
+   */
   const claseLink = (ruta) => {
-    const base = "nav-link d-flex align-items-center gap-2 px-3 mx-1";
+    const base = 'nav-link d-flex align-items-center gap-2 px-3 mx-1';
     return esRutaActiva(ruta)
       ? `${base} text-white bg-white bg-opacity-25 rounded-pill fw-bold shadow-sm`
       : `${base} text-white text-opacity-75`;
   };
 
-  // Clases para dropdown toggle
+  /**
+   * Genera clases CSS para toggles de dropdown.
+   * Aplica estilo destacado si algún hijo está activo.
+   * @param {string[]} rutas - Rutas hijas del dropdown
+   * @returns {string} Clases CSS
+   */
   const claseDropdown = (rutas) => {
-    const base = "nav-link dropdown-toggle d-flex align-items-center gap-2 px-3 mx-1";
+    const base = 'nav-link dropdown-toggle d-flex align-items-center gap-2 px-3 mx-1';
     return dropdownActivo(rutas)
       ? `${base} text-white bg-white bg-opacity-25 rounded-pill fw-bold shadow-sm`
       : `${base} text-white text-opacity-75`;
   };
 
+  // ─────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────
+
   return (
-    <nav
-      className="navbar navbar-expand-lg navbar-dark shadow"
-    >
+    <nav className="navbar navbar-expand-lg navbar-dark shadow">
       <div className="container-fluid px-4">
-        {/* Marca / Logo */}
-        <Link className="navbar-brand d-flex align-items-center gap-2 fw-bold" to="/" style={{ fontSize: '1.25rem' }}>
-          <div className="bg-white text-primary rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: 35, height: 35 }}>
-             <IconoLibro />
+
+        {/* ─────────────────────────────────────────────────
+            LOGO Y MARCA
+            ───────────────────────────────────────────────── */}
+        <Link
+          className="navbar-brand d-flex align-items-center gap-2 fw-bold"
+          to="/"
+          style={{ fontSize: '1.25rem' }}
+        >
+          <div
+            className="bg-white text-primary rounded-circle p-1 d-flex align-items-center justify-content-center"
+            style={{ width: 35, height: 35 }}
+          >
+            <IconoLibro />
           </div>
           <span>SGI Librería el Saber</span>
         </Link>
 
-        {/* Botón hamburguesa para móvil */}
+        {/* ─────────────────────────────────────────────────
+            BOTÓN HAMBURGUESA (MÓVIL)
+            ───────────────────────────────────────────────── */}
         <button
           className="navbar-toggler border-0"
           type="button"
@@ -129,10 +211,13 @@ const BarraNavegacion = () => {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Contenido colapsable */}
+        {/* ─────────────────────────────────────────────────
+            MENÚ COLAPSABLE
+            ───────────────────────────────────────────────── */}
         <div className="collapse navbar-collapse py-2 py-lg-0" id="menuNavegacion">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-            {/* Dashboard - Solo Administradores */}
+
+            {/* DASHBOARD - Solo visible para Administradores */}
             {tienePermiso('verDashboard') && (
               <li className="nav-item">
                 <Link className={claseLink('/')} to="/">
@@ -141,7 +226,10 @@ const BarraNavegacion = () => {
               </li>
             )}
 
-            {/* DROPDOWN: Gestión Comercial - Mostrar si tiene acceso a ventas o clientes */}
+            {/* ─────────────────────────────────────────────────
+                DROPDOWN: GESTIÓN COMERCIAL
+                Ventas, Historial, Clientes
+                ───────────────────────────────────────────────── */}
             {(tienePermiso('registrarVenta') || tienePermiso('verClientes')) && (
               <li className="nav-item dropdown">
                 <a
@@ -182,7 +270,10 @@ const BarraNavegacion = () => {
               </li>
             )}
 
-            {/* DROPDOWN: Logística - Mostrar si tiene acceso a inventario */}
+            {/* ─────────────────────────────────────────────────
+                DROPDOWN: LOGÍSTICA
+                Inventario, Movimientos, Autores, Categorías, Proveedores
+                ───────────────────────────────────────────────── */}
             {(tienePermiso('verInventario') || tienePermiso('verProveedores') || tienePermiso('registrarMovimiento')) && (
               <li className="nav-item dropdown">
                 <a
@@ -241,7 +332,10 @@ const BarraNavegacion = () => {
             )}
           </ul>
 
-          {/* Sección de Usuario */}
+          {/* ─────────────────────────────────────────────────
+              SECCIÓN DE USUARIO
+              Nombre, rol y botón de logout
+              ───────────────────────────────────────────────── */}
           <div className="d-flex align-items-center text-white border-start border-white border-opacity-25 ps-lg-4 ms-lg-2 mt-3 mt-lg-0">
             <div className="me-3 lh-1 text-end d-none d-lg-block">
               <div className="fw-bold">{usuario?.nombre || 'Usuario'}</div>
