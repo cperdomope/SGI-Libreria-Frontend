@@ -229,7 +229,7 @@ const Inicio = () => {
       <div className="row g-3 mb-4">
 
         {/* Ventas del Día */}
-        <div className="col-md-3">
+        <div className="col-sm-6 col-md-3">
           <div className="card border-0 shadow-sm h-100 bg-primary">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
@@ -247,7 +247,7 @@ const Inicio = () => {
         </div>
 
         {/* Ventas del Mes */}
-        <div className="col-md-3">
+        <div className="col-sm-6 col-md-3">
           <div className="card border-0 shadow-sm h-100 bg-secondary">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
@@ -265,7 +265,7 @@ const Inicio = () => {
         </div>
 
         {/* Total de Libros en Catálogo */}
-        <div className="col-md-3">
+        <div className="col-sm-6 col-md-3">
           <div className="card border-0 shadow-sm h-100 bg-info">
             <div className="card-body text-white">
               <div className="d-flex justify-content-between align-items-start">
@@ -281,7 +281,7 @@ const Inicio = () => {
         </div>
 
         {/* Alertas de Stock Bajo */}
-        <div className="col-md-3">
+        <div className="col-sm-6 col-md-3">
           <div className={`card border-0 shadow-sm h-100 ${
             (estadisticas.alertas_stock || 0) > 0 ? 'bg-danger' : 'bg-success'
           }`}>

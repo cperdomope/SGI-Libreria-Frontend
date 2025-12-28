@@ -240,7 +240,7 @@ const PaginaCategorias = () => {
 
       {/* Modal */}
       <div className="modal fade" id="modalCategoria" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog">
+        <div className="modal-dialog modal-fullscreen-sm-down">
           <div className="modal-content">
             <div className="modal-header bg-primary text-white">
               <h5 className="modal-title">{datosCategoria.id ? 'Editar Categoría' : 'Nueva Categoría'}</h5>

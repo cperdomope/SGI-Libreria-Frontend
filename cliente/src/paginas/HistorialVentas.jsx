@@ -201,7 +201,7 @@ const HistorialVentas = () => {
       {mostrarModal && detalleVenta && (
         <>
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg">
+            <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
               <div className="modal-content">
                 <div className="modal-header bg-primary text-white">
                   <h5 className="modal-title">Detalle de Venta #{detalleVenta.venta.id}</h5>
