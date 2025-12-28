@@ -109,7 +109,7 @@ const IconoSalir = ({ size = 18 }) => (
  * @returns {JSX.Element} Navbar responsiva con menús dinámicos
  */
 const BarraNavegacion = () => {
-  const { usuario, logout, tienePermiso, nombreRol } = useAuth();
+  const { usuario, logout, tienePermiso, nombreRol, ROLES } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -124,6 +124,15 @@ const BarraNavegacion = () => {
     if (window.confirm('¿Desea cerrar sesión?')) {
       logout();
     }
+  };
+
+  /**
+   * Obtiene el nombre del usuario según su rol.
+   * @returns {string} Nombre del usuario
+   */
+  const obtenerNombreUsuario = () => {
+    if (!usuario || !usuario.rol_id) return 'Usuario';
+    return usuario.rol_id === ROLES.ADMINISTRADOR ? 'Luz Darlys' : 'Yaniri Michelle';
   };
 
   // ─────────────────────────────────────────────────
@@ -338,7 +347,7 @@ const BarraNavegacion = () => {
               ───────────────────────────────────────────────── */}
           <div className="d-flex align-items-center text-white border-start border-white border-opacity-25 ps-lg-4 ms-lg-2 mt-3 mt-lg-0">
             <div className="me-3 lh-1 text-end d-none d-lg-block">
-              <div className="fw-bold">{usuario?.nombre || 'Usuario'}</div>
+              <div className="fw-bold">{obtenerNombreUsuario()}</div>
               <div className="small text-white-50">{nombreRol()}</div>
             </div>
             <button
