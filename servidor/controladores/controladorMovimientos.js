@@ -78,7 +78,7 @@ const TIPOS_MOVIMIENTO = {
  * }
  */
 exports.registrarMovimiento = async (req, res) => {
-  const { libro_id, tipo_movimiento, cantidad, observaciones } = req.body;
+  let { libro_id, tipo_movimiento, cantidad, observaciones } = req.body;
 
   // ─────────────────────────────────────────────────
   // VALIDACIÓN DE ENTRADA
@@ -92,19 +92,29 @@ exports.registrarMovimiento = async (req, res) => {
     });
   }
 
+  // Convertir y validar libro_id
+  libro_id = parseInt(libro_id, 10);
+  if (isNaN(libro_id) || libro_id <= 0) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'El libro_id debe ser un número válido mayor a cero'
+    });
+  }
+
+  // Convertir y validar cantidad
+  cantidad = parseInt(cantidad, 10);
+  if (isNaN(cantidad) || cantidad <= 0) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'La cantidad debe ser un número entero mayor a cero'
+    });
+  }
+
   // Validar tipo de movimiento
   if (!Object.values(TIPOS_MOVIMIENTO).includes(tipo_movimiento)) {
     return res.status(400).json({
       exito: false,
       mensaje: `Tipo de movimiento inválido. Use: ${Object.values(TIPOS_MOVIMIENTO).join(' o ')}`
-    });
-  }
-
-  // Validar cantidad positiva
-  if (cantidad <= 0 || !Number.isInteger(cantidad)) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'La cantidad debe ser un número entero mayor a cero'
     });
   }
 

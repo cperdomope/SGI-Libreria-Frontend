@@ -99,7 +99,14 @@ const Movimientos = () => {
     }
 
     try {
-      const res = await api.post('/movimientos', formData);
+      // Convertir valores numéricos de string a number antes de enviar
+      const dataToSend = {
+        ...formData,
+        libro_id: parseInt(formData.libro_id, 10),
+        cantidad: parseInt(formData.cantidad, 10)
+      };
+
+      const res = await api.post('/movimientos', dataToSend);
 
       // Mostrar mensaje de éxito del backend o genérico
       const textoExito = res.data.mensaje || '¡Movimiento registrado correctamente!';
@@ -116,7 +123,7 @@ const Movimientos = () => {
 
     } catch (error) {
       // Mostrar mensaje de error del backend o genérico
-      const errorMsg = error.response?.data?.error || 'Error al procesar la solicitud';
+      const errorMsg = error.response?.data?.mensaje || error.response?.data?.error || 'Error al procesar la solicitud';
       setMensaje({ texto: errorMsg, tipo: 'danger' });
     }
   };
