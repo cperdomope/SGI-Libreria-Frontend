@@ -68,6 +68,11 @@ const configuracionPool = {
   },
 
   // ─────────────────────────────────────────────────
+  // CODIFICACIÓN UTF-8 (Soporte para ñ, tildes, etc.)
+  // ─────────────────────────────────────────────────
+  charset: 'utf8mb4', // Charset completo con emojis
+
+  // ─────────────────────────────────────────────────
   // CONFIGURACIÓN DEL POOL
   // ─────────────────────────────────────────────────
   waitForConnections: true,
