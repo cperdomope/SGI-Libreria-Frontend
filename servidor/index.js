@@ -30,6 +30,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Middleware para forzar UTF-8 en todas las respuestas
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+});
 // ---------------------------------------------------
 
 // Usar Rutas (Ahora sí funcionarán porque ya se configuró JSON)
