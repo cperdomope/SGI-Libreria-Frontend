@@ -1,8 +1,32 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * =====================================================
+ * PÁGINA DE GESTIÓN DE CATEGORÍAS
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Módulo CRUD para la gestión de categorías.
+ * Permite crear, listar, editar y eliminar categorías
+ * para clasificar los libros del inventario.
+ *
+ * @requires react - Hooks useState, useEffect
+ * @requires ../servicios/api - Cliente Axios configurado
+ * @requires ../contexto/AuthContext - Hook de autenticación RBAC
+ *
+ * CARACTERÍSTICAS:
+ * - Control de acceso por permisos (RBAC)
+ * - Tabla con paginación cliente (5 elementos)
+ * - Modal Bootstrap para crear/editar
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
+import { useEffect, useState } from 'react';
 import api from '../servicios/api';
 import { useAuth } from '../contexto/AuthContext';
 
-// --- ICONOS SVG INLINE ---
+// --- ICONOS SVG INLINE (evita dependencias externas) ---
 const IconoEditar = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
@@ -16,52 +40,107 @@ const IconoEliminar = () => (
   </svg>
 );
 
+/**
+ * Componente principal para la gestión de categorías.
+ * Implementa operaciones CRUD con control de acceso RBAC.
+ *
+ * @component
+ * @returns {JSX.Element} Interfaz de gestión de categorías
+ */
 const PaginaCategorias = () => {
-  // Hook de autenticación y permisos
+  // Hook RBAC para verificar permisos del usuario actual
   const { tienePermiso } = useAuth();
 
+  // --- ESTADOS DEL COMPONENTE ---
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [datosCategoria, setDatosCategoria] = useState({ id: null, nombre: '' });
 
+  // Estado de paginación (5 elementos por página)
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
+
+  // Cálculos de paginación derivados del estado
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina;
+  const indiceFin = indiceInicio + elementosPorPagina;
+  const categoriasPaginadas = categorias.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(categorias.length / elementosPorPagina);
+
+  /**
+   * Obtiene el listado de categorías desde el backend.
+   * Maneja el formato de respuesta { exito, datos }.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const cargarCategorias = async () => {
     try {
       const res = await api.get('/categorias');
-      setCategorias(res.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const categoriasData = res.data.datos || res.data;
+      setCategorias(Array.isArray(categoriasData) ? categoriasData : []);
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
+      if (import.meta.env.DEV) {
+        console.error('[PaginaCategorias] Error:', error);
+      }
     } finally {
       setCargando(false);
     }
   };
 
+  // Cargar categorías al montar el componente
   useEffect(() => { cargarCategorias(); }, []);
 
+  /** Prepara el modal para crear una nueva categoría */
   const abrirModalNuevo = () => {
     setDatosCategoria({ id: null, nombre: '' });
   };
 
+  /**
+   * Prepara el modal para editar una categoría existente.
+   *
+   * @param {Object} categoria - Datos de la categoría a editar
+   */
   const abrirModalEditar = (categoria) => {
     setDatosCategoria({ id: categoria.id, nombre: categoria.nombre });
   };
 
+  /**
+   * Guarda una categoría (crear o actualizar).
+   * Cierra el modal automáticamente al completar.
+   *
+   * @async
+   * @param {React.FormEvent} e - Evento del formulario
+   * @returns {Promise<void>}
+   */
   const handleGuardar = async (e) => {
     e.preventDefault();
     try {
       if (datosCategoria.id) {
+        // Actualizar categoría existente
         await api.put(`/categorias/${datosCategoria.id}`, { nombre: datosCategoria.nombre });
         alert('Categoría actualizada correctamente');
       } else {
+        // Crear nueva categoría
         await api.post('/categorias', { nombre: datosCategoria.nombre });
         alert('Categoría creada exitosamente');
       }
       cargarCategorias();
+      // Cerrar modal usando el botón Bootstrap
       document.getElementById('cerrarModalBtn').click();
     } catch (error) {
       alert(error.response?.data?.error || 'Error al guardar');
     }
   };
 
+  /**
+   * Elimina una categoría previa confirmación del usuario.
+   *
+   * @async
+   * @param {number} id - ID de la categoría a eliminar
+   * @param {string} nombre - Nombre de la categoría (para mensaje)
+   * @returns {Promise<void>}
+   */
   const handleEliminar = async (id, nombre) => {
     if (window.confirm(`¿Eliminar la categoría "${nombre}"?`)) {
       try {
@@ -98,7 +177,7 @@ const PaginaCategorias = () => {
               </tr>
             </thead>
             <tbody>
-              {categorias.map((categoria) => (
+              {categoriasPaginadas.map((categoria) => (
                 <tr key={categoria.id}>
                   <td>{categoria.id}</td>
                   <td className="fw-bold">{categoria.nombre}</td>
@@ -132,6 +211,31 @@ const PaginaCategorias = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Controles de Paginación */}
+      {!cargando && totalPaginas > 1 && (
+        <nav className="d-flex justify-content-center mt-3">
+          <ul className="pagination pagination-sm">
+            <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1}>
+                Anterior
+              </button>
+            </li>
+            {[...Array(totalPaginas)].map((_, i) => (
+              <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+                <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
+                  {i + 1}
+                </button>
+              </li>
+            ))}
+            <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas}>
+                Siguiente
+              </button>
+            </li>
+          </ul>
+        </nav>
       )}
 
       {/* Modal */}

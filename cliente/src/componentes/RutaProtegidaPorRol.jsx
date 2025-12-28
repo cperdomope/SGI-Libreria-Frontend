@@ -1,3 +1,23 @@
+/**
+ * =====================================================
+ * COMPONENTE DE PROTECCIÓN POR ROL (RBAC)
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Protege rutas verificando si el usuario
+ * tiene el permiso requerido según su rol.
+ *
+ * FLUJO:
+ * 1. Verifica si hay sesión activa
+ * 2. Consulta la matriz PERMISOS del AuthContext
+ * 3. Si tiene permiso, renderiza el children
+ * 4. Si no, redirige a la ruta especificada
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexto/AuthContext';

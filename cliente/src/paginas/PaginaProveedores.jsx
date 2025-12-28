@@ -1,7 +1,31 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * =====================================================
+ * PÁGINA DE GESTIÓN DE PROVEEDORES
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Módulo CRUD para la gestión de proveedores.
+ * Permite crear, listar, editar y eliminar empresas proveedoras
+ * que suministran libros a la librería.
+ *
+ * @requires react - Hooks useState, useEffect
+ * @requires ../servicios/api - Cliente Axios configurado
+ *
+ * CARACTERÍSTICAS:
+ * - Tabla responsiva con paginación cliente
+ * - Modal reutilizable para crear/editar
+ * - Validación de campos obligatorios
+ * - Manejo seguro de errores
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
+import { useState, useEffect } from 'react';
 import api from '../servicios/api';
 
-// --- ICONOS SVG INLINE ---
+// --- ICONOS SVG INLINE (evita dependencias externas) ---
 const IconoPlus = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
     <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
@@ -21,7 +45,15 @@ const IconoEliminar = () => (
   </svg>
 );
 
+/**
+ * Componente principal para la gestión de proveedores.
+ * Implementa operaciones CRUD con paginación cliente.
+ *
+ * @component
+ * @returns {JSX.Element} Interfaz de gestión de proveedores
+ */
 const PaginaProveedores = () => {
+  // --- ESTADOS DEL COMPONENTE ---
   const [proveedores, setProveedores] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -37,29 +69,61 @@ const PaginaProveedores = () => {
     direccion: ''
   });
 
+  // Estado de paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
+
+  // Calcular datos paginados
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina;
+  const indiceFin = indiceInicio + elementosPorPagina;
+  const proveedoresPaginados = proveedores.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(proveedores.length / elementosPorPagina);
+
+  // Cargar proveedores al montar el componente
   useEffect(() => {
     cargarProveedores();
   }, []);
 
+  /**
+   * Obtiene el listado de proveedores desde el backend.
+   * Maneja el formato de respuesta { exito, datos }.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const cargarProveedores = async () => {
     try {
       setCargando(true);
       const respuesta = await api.get('/proveedores');
-      setProveedores(respuesta.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const proveedoresData = respuesta.data.datos || respuesta.data;
+      setProveedores(Array.isArray(proveedoresData) ? proveedoresData : []);
       setError(null);
     } catch (err) {
       setError('Error al cargar proveedores');
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error('[PaginaProveedores] Error:', err);
+      }
     } finally {
       setCargando(false);
     }
   };
 
+  /**
+   * Actualiza el estado del formulario cuando cambia un input.
+   * Usa computed property names para manejar cualquier campo.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del input
+   */
   const manejarCambioInput = (e) => {
     const { name, value } = e.target;
     setFormDatos({ ...formDatos, [name]: value });
   };
 
+  /**
+   * Prepara el modal para crear un nuevo proveedor.
+   * Limpia el formulario y resetea errores.
+   */
   const abrirModalCrear = () => {
     setFormDatos({
       id: null,
@@ -74,21 +138,37 @@ const PaginaProveedores = () => {
     setMostrarModal(true);
   };
 
+  /**
+   * Prepara el modal para editar un proveedor existente.
+   * Carga los datos del proveedor seleccionado en el formulario.
+   *
+   * @param {Object} proveedor - Datos del proveedor a editar
+   */
   const abrirModalEditar = (proveedor) => {
     setFormDatos(proveedor);
     setError(null);
     setMostrarModal(true);
   };
 
+  /** Cierra el modal y limpia el estado de error */
   const cerrarModal = () => {
     setMostrarModal(false);
     setError(null);
   };
 
+  /**
+   * Guarda un proveedor (crear o actualizar).
+   * Decide la operación según si existe formDatos.id.
+   *
+   * @async
+   * @param {React.FormEvent} e - Evento del formulario
+   * @returns {Promise<void>}
+   */
   const manejarGuardar = async (e) => {
     e.preventDefault();
     setError(null);
 
+    // Validación de campo obligatorio
     if (!formDatos.nombre_empresa) {
       setError('El nombre de la empresa es obligatorio');
       return;
@@ -96,18 +176,29 @@ const PaginaProveedores = () => {
 
     try {
       if (formDatos.id) {
+        // Actualizar proveedor existente
         await api.put(`/proveedores/${formDatos.id}`, formDatos);
       } else {
+        // Crear nuevo proveedor
         await api.post('/proveedores', formDatos);
       }
 
       await cargarProveedores();
       cerrarModal();
     } catch (err) {
+      // Mostrar mensaje de error del backend o genérico
       setError(err.response?.data?.error || 'Error al guardar proveedor');
     }
   };
 
+  /**
+   * Elimina un proveedor previa confirmación.
+   * Actualiza la lista localmente sin recargar del servidor.
+   *
+   * @async
+   * @param {number} id - ID del proveedor a eliminar
+   * @returns {Promise<void>}
+   */
   const manejarEliminar = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este proveedor?')) return;
 
@@ -177,7 +268,7 @@ const PaginaProveedores = () => {
                     </td>
                   </tr>
                 ) : (
-                  proveedores.map((proveedor) => (
+                  proveedoresPaginados.map((proveedor) => (
                     <tr key={proveedor.id}>
                       <td className="d-none d-md-table-cell text-center">{proveedor.id}</td>
                       <td className="fw-bold text-center">{proveedor.nombre_empresa}</td>
@@ -208,6 +299,31 @@ const PaginaProveedores = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Controles de Paginación */}
+          {!cargando && totalPaginas > 1 && (
+            <nav className="d-flex justify-content-center mt-3">
+              <ul className="pagination pagination-sm">
+                <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1}>
+                    Anterior
+                  </button>
+                </li>
+                {[...Array(totalPaginas)].map((_, i) => (
+                  <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
+                      {i + 1}
+                    </button>
+                  </li>
+                ))}
+                <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas}>
+                    Siguiente
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
 

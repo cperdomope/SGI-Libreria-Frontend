@@ -1,75 +1,150 @@
 /**
- * Middleware de Verificación de Roles
+ * =====================================================
+ * MIDDLEWARE DE VERIFICACIÓN DE ROLES (RBAC)
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
  *
- * Valida que el usuario autenticado tenga el rol necesario para acceder a un endpoint.
- * Debe usarse DESPUÉS de verificarToken.js para asegurar que req.usuario existe.
+ * @description Este middleware implementa Control de Acceso Basado en Roles (RBAC).
+ * Verifica que el usuario autenticado tenga los permisos necesarios para
+ * acceder a recursos protegidos según su rol asignado.
+ *
+ * @requires verificarToken - Debe ejecutarse ANTES de este middleware
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
  */
 
+// =====================================================
+// DEFINICIÓN DE ROLES DEL SISTEMA
+// =====================================================
+
 /**
- * Constantes de Roles
- * Estos IDs corresponden a la tabla 'roles' en la base de datos
+ * Constantes que mapean los roles del sistema con sus IDs en la base de datos.
+ * Estos valores deben coincidir con la tabla mdc_roles.
+ *
+ * @constant {Object} ROLES
+ * @property {number} ADMINISTRADOR - ID 1: Acceso total al sistema
+ * @property {number} VENDEDOR - ID 2: Acceso limitado (solo ventas y consultas)
  */
 const ROLES = {
-    ADMINISTRADOR: 1,
-    VENDEDOR: 2
+  ADMINISTRADOR: 1,
+  VENDEDOR: 2
 };
 
+// =====================================================
+// MIDDLEWARE PRINCIPAL
+// =====================================================
+
 /**
- * Middleware para verificar que el usuario tenga uno de los roles permitidos
+ * Crea un middleware que verifica si el usuario tiene uno de los roles permitidos.
+ * Este es un patrón de "factory function" que permite configurar los roles dinámicamente.
  *
- * @param {Array<number>} rolesPermitidos - Array de IDs de roles que pueden acceder
- * @returns {Function} Middleware de Express
- *
- * @example
- * // Solo administradores
- * router.delete('/libros/:id', verificarToken, verificarRol([ROLES.ADMINISTRADOR]), eliminarLibro);
+ * @function verificarRol
+ * @param {number[]} rolesPermitidos - Array con los IDs de roles que pueden acceder
+ * @returns {Function} Middleware de Express configurado
  *
  * @example
- * // Administradores o Vendedores
- * router.get('/ventas', verificarToken, verificarRol([ROLES.ADMINISTRADOR, ROLES.VENDEDOR]), obtenerVentas);
+ * // Restringir a solo administradores
+ * router.delete('/usuarios/:id',
+ *   verificarToken,
+ *   verificarRol([ROLES.ADMINISTRADOR]),
+ *   controlador.eliminar
+ * );
+ *
+ * @example
+ * // Permitir a administradores y vendedores
+ * router.get('/ventas',
+ *   verificarToken,
+ *   verificarRol([ROLES.ADMINISTRADOR, ROLES.VENDEDOR]),
+ *   controlador.listar
+ * );
  */
 const verificarRol = (rolesPermitidos) => {
-    return (req, res, next) => {
-        // Verificar que req.usuario existe (debe haber pasado por verificarToken primero)
-        if (!req.usuario) {
-            return res.status(401).json({
-                error: 'No autenticado',
-                mensaje: 'Debe iniciar sesión para acceder a este recurso'
-            });
-        }
+  /**
+   * Middleware interno que ejecuta la verificación de roles.
+   *
+   * @param {Object} req - Objeto de solicitud Express (debe contener req.usuario)
+   * @param {Object} res - Objeto de respuesta Express
+   * @param {Function} next - Función para continuar la cadena
+   */
+  return (req, res, next) => {
+    // ─────────────────────────────────────────────────
+    // VALIDACIÓN 1: Verificar que el usuario esté autenticado
+    // req.usuario es establecido por verificarToken, si no existe
+    // significa que el middleware se usó incorrectamente
+    // ─────────────────────────────────────────────────
+    if (!req.usuario) {
+      return res.status(401).json({
+        error: 'No autenticado',
+        mensaje: 'Debe iniciar sesión para acceder a este recurso',
+        codigo: 'NOT_AUTHENTICATED'
+      });
+    }
 
-        // Obtener el rol del usuario desde el token JWT
-        const rolUsuario = req.usuario.rol;
+    // ─────────────────────────────────────────────────
+    // VALIDACIÓN 2: Verificar que el rol esté en la lista permitida
+    // El rol viene del payload del token JWT (establecido en login)
+    // ─────────────────────────────────────────────────
+    const rolUsuario = req.usuario.rol;
 
-        // Validar que el rol del usuario esté en la lista de roles permitidos
-        if (!rolesPermitidos.includes(rolUsuario)) {
-            // Log para auditoría (opcional)
-            console.warn(`[ACCESO DENEGADO] Usuario ID ${req.usuario.id} (Rol ${rolUsuario}) intentó acceder a recurso restringido: ${req.method} ${req.originalUrl}`);
+    if (!rolesPermitidos.includes(rolUsuario)) {
+      // ─────────────────────────────────────────────────
+      // LOG DE AUDITORÍA: Registrar intentos de acceso no autorizado
+      // Solo en desarrollo para no saturar logs de producción
+      // ─────────────────────────────────────────────────
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `[RBAC] Acceso denegado - Usuario: ${req.usuario.id} ` +
+          `(Rol: ${rolUsuario}) -> ${req.method} ${req.originalUrl}`
+        );
+      }
 
-            return res.status(403).json({
-                error: 'Acceso denegado',
-                mensaje: 'No tiene permisos suficientes para realizar esta acción'
-            });
-        }
+      return res.status(403).json({
+        error: 'Acceso denegado',
+        mensaje: 'No tiene permisos suficientes para realizar esta acción',
+        codigo: 'FORBIDDEN'
+      });
+    }
 
-        // El usuario tiene el rol adecuado, continuar
-        next();
-    };
+    // ─────────────────────────────────────────────────
+    // AUTORIZADO: El usuario tiene el rol adecuado
+    // Continuar con el siguiente middleware/controlador
+    // ─────────────────────────────────────────────────
+    next();
+  };
 };
 
-/**
- * Middlewares pre-configurados para uso común
- */
+// =====================================================
+// MIDDLEWARES PRE-CONFIGURADOS
+// =====================================================
+// Estos atajos simplifican el uso común en las rutas
 
-// Solo Administradores
+/**
+ * Middleware que solo permite acceso a Administradores.
+ * Útil para operaciones críticas como eliminar usuarios o configuración.
+ *
+ * @example
+ * router.delete('/usuarios/:id', verificarToken, soloAdministrador, eliminar);
+ */
 const soloAdministrador = verificarRol([ROLES.ADMINISTRADOR]);
 
-// Administradores y Vendedores
+/**
+ * Middleware que permite acceso a Administradores y Vendedores.
+ * Útil para operaciones generales del sistema.
+ *
+ * @example
+ * router.get('/libros', verificarToken, administradorOVendedor, listar);
+ */
 const administradorOVendedor = verificarRol([ROLES.ADMINISTRADOR, ROLES.VENDEDOR]);
 
+// =====================================================
+// EXPORTACIONES
+// =====================================================
+
 module.exports = {
-    verificarRol,
-    soloAdministrador,
-    administradorOVendedor,
-    ROLES
+  verificarRol,           // Factory function para roles personalizados
+  soloAdministrador,      // Preset: solo admins
+  administradorOVendedor, // Preset: admins y vendedores
+  ROLES                   // Constantes de roles
 };

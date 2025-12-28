@@ -1,7 +1,44 @@
+/**
+ * =====================================================
+ * APLICACIÓN PRINCIPAL - REACT
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Componente raíz que configura el enrutamiento
+ * y la estructura general de la aplicación.
+ *
+ * ARQUITECTURA:
+ * - AuthProvider: Contexto global de autenticación
+ * - BrowserRouter: Enrutamiento SPA
+ * - RutaProtegida: Requiere autenticación
+ * - RutaProtegidaPorRol: Requiere permiso específico
+ * - LayoutPrincipal: Navbar + contenido + footer
+ *
+ * FLUJO DE AUTORIZACIÓN:
+ * 1. Usuario accede a una ruta
+ * 2. RutaProtegida verifica si hay sesión
+ * 3. RutaProtegidaPorRol verifica el permiso
+ * 4. Si pasa ambas, renderiza el componente
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// =====================================================
+// COMPONENTES
+// =====================================================
+
 import BarraNavegacion from './componentes/BarraNavegacion';
 import RutaProtegidaPorRol from './componentes/RutaProtegidaPorRol';
+
+// =====================================================
+// PÁGINAS
+// =====================================================
+
 import Inicio from './paginas/Inicio';
 import Inventario from './paginas/Inventario';
 import Movimientos from './paginas/Movimientos';
@@ -12,129 +49,254 @@ import PaginaProveedores from './paginas/PaginaProveedores';
 import PaginaAutores from './paginas/PaginaAutores';
 import PaginaCategorias from './paginas/PaginaCategorias';
 import Acceso from './paginas/Acceso';
+
+// =====================================================
+// CONTEXTO
+// =====================================================
+
 import { AuthProvider, useAuth } from './contexto/AuthContext';
 
-// 1. Componente que protege las rutas privadas
+// =====================================================
+// COMPONENTES DE PROTECCIÓN Y LAYOUT
+// =====================================================
+
+/**
+ * Componente que protege rutas que requieren autenticación.
+ * Verifica si existe una sesión activa antes de renderizar.
+ *
+ * @param {Object} props - Props del componente
+ * @param {React.ReactNode} props.children - Componente a renderizar si está autenticado
+ * @returns {JSX.Element} Children o redirección a login
+ *
+ * @example
+ * <RutaProtegida>
+ *   <MiComponentePrivado />
+ * </RutaProtegida>
+ */
 const RutaProtegida = ({ children }) => {
   const { usuario, cargando } = useAuth();
-  
-  if (cargando) return <div className="p-5 text-center">Cargando sistema...</div>;
-  
+
+  // Mostrar loader mientras se verifica la sesión
+  // Esto evita flash de contenido no autorizado
+  if (cargando) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+          <p className="mt-3 text-muted">Cargando sistema...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay sesión, redirigir a login
   if (!usuario) {
     return <Navigate to="/acceso" replace />;
   }
-  
+
+  // Usuario autenticado, renderizar contenido
   return children;
 };
 
-// 2. Layout que incluye la barra de navegación
+/**
+ * Layout principal que envuelve las páginas privadas.
+ * Incluye barra de navegación y footer.
+ *
+ * @param {Object} props - Props del componente
+ * @param {React.ReactNode} props.children - Contenido de la página
+ * @returns {JSX.Element} Estructura completa con navbar y footer
+ */
 const LayoutPrincipal = ({ children }) => {
   return (
     <div className="d-flex flex-column min-vh-100">
+      {/* Barra de navegación sticky */}
       <BarraNavegacion />
-      <div className="flex-grow-1">
+
+      {/* Contenido principal */}
+      <main className="flex-grow-1">
         {children}
-      </div>
+      </main>
+
+      {/* Footer */}
       <footer className="bg-light text-center p-3 mt-auto border-top">
-        <small className="text-muted">© 2025 SGI Librería el Saber - Proyecto SENA</small>
+        <small className="text-muted">
+          © 2025 SGI Librería el Saber - Proyecto SENA
+        </small>
       </footer>
     </div>
   );
 };
 
-// 3. App Principal
+// =====================================================
+// APLICACIÓN PRINCIPAL
+// =====================================================
+
+/**
+ * Componente raíz de la aplicación.
+ * Configura providers y define todas las rutas.
+ *
+ * RUTAS PÚBLICAS:
+ * - /acceso: Página de login
+ *
+ * RUTAS PRIVADAS (requieren autenticación):
+ * - /: Dashboard (solo Admin)
+ * - /inventario: Gestión de libros
+ * - /movimientos: Entradas/Salidas (solo Admin)
+ * - /clientes: Gestión de clientes
+ * - /ventas: Punto de venta (POS)
+ * - /historial-ventas: Consulta de ventas
+ * - /proveedores: Gestión de proveedores (solo Admin)
+ * - /autores: Gestión de autores
+ * - /categorias: Gestión de categorías
+ *
+ * @returns {JSX.Element} Aplicación completa
+ */
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* ─────────────────────────────────────────────────
+              RUTA PÚBLICA: Login
+              ───────────────────────────────────────────────── */}
           <Route path="/acceso" element={<Acceso />} />
 
-          {/* Rutas Privadas con Protección por Rol */}
+          {/* ─────────────────────────────────────────────────
+              RUTAS PRIVADAS CON CONTROL DE ACCESO (RBAC)
+              ───────────────────────────────────────────────── */}
 
           {/* DASHBOARD - Solo Administradores */}
-          <Route path="/" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verDashboard" redirigirA="/ventas">
-                <LayoutPrincipal><Inicio /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          <Route
+            path="/"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verDashboard" redirigirA="/ventas">
+                  <LayoutPrincipal>
+                    <Inicio />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* INVENTARIO - Todos pueden ver, solo Admin edita (control en página) */}
-          <Route path="/inventario" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verInventario">
-                <LayoutPrincipal><Inventario /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* INVENTARIO - Todos pueden ver, solo Admin puede editar */}
+          <Route
+            path="/inventario"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verInventario">
+                  <LayoutPrincipal>
+                    <Inventario />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* MOVIMIENTOS - Solo Administradores */}
-          <Route path="/movimientos" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="registrarMovimiento">
-                <LayoutPrincipal><Movimientos /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* MOVIMIENTOS (Kardex) - Solo Administradores */}
+          <Route
+            path="/movimientos"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="registrarMovimiento">
+                  <LayoutPrincipal>
+                    <Movimientos />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* CLIENTES - Todos pueden gestionar */}
-          <Route path="/clientes" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verClientes">
-                <LayoutPrincipal><PaginaClientes /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* CLIENTES - Todos los roles pueden gestionar */}
+          <Route
+            path="/clientes"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verClientes">
+                  <LayoutPrincipal>
+                    <PaginaClientes />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
           {/* VENTAS (POS) - Administradores y Vendedores */}
-          <Route path="/ventas" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="registrarVenta">
-                <LayoutPrincipal><PaginaVentas /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          <Route
+            path="/ventas"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="registrarVenta">
+                  <LayoutPrincipal>
+                    <PaginaVentas />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* HISTORIAL VENTAS - Administradores y Vendedores */}
-          <Route path="/historial-ventas" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verVentas">
-                <LayoutPrincipal><HistorialVentas /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* HISTORIAL DE VENTAS - Administradores y Vendedores */}
+          <Route
+            path="/historial-ventas"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verVentas">
+                  <LayoutPrincipal>
+                    <HistorialVentas />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
           {/* PROVEEDORES - Solo Administradores */}
-          <Route path="/proveedores" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verProveedores">
-                <LayoutPrincipal><PaginaProveedores /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          <Route
+            path="/proveedores"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verProveedores">
+                  <LayoutPrincipal>
+                    <PaginaProveedores />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* AUTORES - Todos pueden ver, solo Admin edita (control en página) */}
-          <Route path="/autores" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verAutores">
-                <LayoutPrincipal><PaginaAutores /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* AUTORES - Todos pueden ver, solo Admin puede editar */}
+          <Route
+            path="/autores"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verAutores">
+                  <LayoutPrincipal>
+                    <PaginaAutores />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* CATEGORÍAS - Todos pueden ver, solo Admin edita (control en página) */}
-          <Route path="/categorias" element={
-            <RutaProtegida>
-              <RutaProtegidaPorRol permiso="verCategorias">
-                <LayoutPrincipal><PaginaCategorias /></LayoutPrincipal>
-              </RutaProtegidaPorRol>
-            </RutaProtegida>
-          } />
+          {/* CATEGORÍAS - Todos pueden ver, solo Admin puede editar */}
+          <Route
+            path="/categorias"
+            element={
+              <RutaProtegida>
+                <RutaProtegidaPorRol permiso="verCategorias">
+                  <LayoutPrincipal>
+                    <PaginaCategorias />
+                  </LayoutPrincipal>
+                </RutaProtegidaPorRol>
+              </RutaProtegida>
+            }
+          />
 
-          {/* Cualquier ruta desconocida redirige a ventas (accesible para todos) */}
-          <Route path="*" element={<Navigate to="/ventas" />} />
+          {/* ─────────────────────────────────────────────────
+              RUTA CATCH-ALL: Redirige a ventas
+              ───────────────────────────────────────────────── */}
+          <Route path="*" element={<Navigate to="/ventas" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

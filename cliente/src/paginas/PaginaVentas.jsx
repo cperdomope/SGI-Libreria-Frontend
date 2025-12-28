@@ -1,69 +1,190 @@
+/**
+ * =====================================================
+ * PÁGINA DE VENTAS - PUNTO DE VENTA (POS)
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * EVIDENCIA: GA7-220501096-AA4-EV03
+ * AUTOR: Carlos Ivan Perdomo
+ *
+ * @description Interfaz de punto de venta para registrar
+ * ventas de libros. Incluye catálogo, carrito y facturación.
+ *
+ * FUNCIONALIDADES:
+ * - Búsqueda de libros en tiempo real
+ * - Carrito de compras con control de stock
+ * - Incremento/decremento de cantidades
+ * - Cálculo automático de subtotales y total
+ * - Selección de cliente para facturación
+ * - Validaciones de stock y datos
+ *
+ * FLUJO DE VENTA:
+ * 1. Seleccionar cliente
+ * 2. Agregar libros al carrito
+ * 3. Ajustar cantidades si es necesario
+ * 4. Confirmar venta
+ * 5. Se actualiza stock automáticamente
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
 import React, { useState, useEffect } from 'react';
 import api from '../servicios/api';
 
-/* EVIDENCIA SENA: GA7-220501096-AA4-EV03
-  AUTOR: Carlos Ivan Perdomo
-  MÓDULO: Punto de Venta (POS) - Frontend
-  DESCRIPCIÓN: Interfaz para buscar libros, gestionar carrito de compras y registrar ventas.
-*/
+// =====================================================
+// ICONOS SVG (Feather Icons - MIT License)
+// =====================================================
 
-// --- ICONOS VISUALES (SVG) PARA LA INTERFAZ ---
-const IconoBuscar = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
-const IconoUsuario = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-const IconoBasura = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+/**
+ * Icono de lupa - Búsqueda de productos
+ */
+const IconoBuscar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+);
 
-// --- FUNCIÓN DE UTILIDAD ---
+/**
+ * Icono de usuario - Sección de facturación
+ */
+const IconoUsuario = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+/**
+ * Icono de basura - Eliminar del carrito
+ */
+const IconoBasura = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+  </svg>
+);
+
+// =====================================================
+// UTILIDADES DE CÁLCULO
+// =====================================================
+
+/**
+ * Convierte un valor a número de forma segura.
+ * Retorna 0 si el valor no es un número válido.
+ *
+ * @param {*} valor - Valor a convertir
+ * @returns {number} Número válido o 0
+ */
 const parsearNumero = (valor) => {
   const num = Number(valor);
   return isNaN(num) ? 0 : num;
 };
 
-// --- FUNCIÓN PARA CALCULAR SUBTOTAL ---
+/**
+ * Calcula el subtotal de un item del carrito.
+ *
+ * @param {number} cantidad - Cantidad de unidades
+ * @param {number} precio - Precio unitario
+ * @returns {number} Subtotal calculado
+ */
 const calcularSubtotal = (cantidad, precio) => {
   return parsearNumero(cantidad) * parsearNumero(precio);
 };
 
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+/**
+ * Punto de Venta (POS) para registro de ventas.
+ * Gestiona catálogo, carrito y proceso de facturación.
+ *
+ * @returns {JSX.Element} Interfaz completa del POS
+ */
 const PaginaVentas = () => {
-  // --- VARIABLES DE ESTADO ---
+  // ─────────────────────────────────────────────────
+  // ESTADOS
+  // ─────────────────────────────────────────────────
+
+  // Datos del catálogo y clientes
   const [libros, setLibros] = useState([]);
   const [clientes, setClientes] = useState([]);
+
+  // Control de búsqueda
   const [busqueda, setBusqueda] = useState('');
+
+  // Carrito de compras y cliente seleccionado
   const [carrito, setCarrito] = useState([]);
   const [clienteId, setClienteId] = useState('');
+
+  // Estados de UI
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
 
-  // --- CARGA INICIAL DE DATOS ---
+  // ─────────────────────────────────────────────────
+  // CARGA INICIAL DE DATOS
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Carga libros y clientes al montar el componente.
+   * Usa Promise.all para optimizar las peticiones.
+   */
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
+
+        // Cargar libros y clientes en paralelo
         const [resLibros, resClientes] = await Promise.all([
           api.get('/libros'),
           api.get('/clientes')
         ]);
-        setLibros(resLibros.data);
-        setClientes(resClientes.data);
+
+        // Extraer datos considerando estructura de respuesta
+        setLibros(resLibros.data.datos || resLibros.data);
+        setClientes(resClientes.data.datos || resClientes.data);
       } catch (error) {
-        console.error('Error cargando datos:', error);
+        if (import.meta.env.DEV) {
+          console.error('[POS] Error cargando datos:', error);
+        }
         alert('Error conectando con el servidor. Verifica que estés autenticado.');
       } finally {
         setLoading(false);
       }
     };
+
     cargarDatos();
   }, []);
 
-  // --- CALCULAR TOTAL DINÁMICAMENTE ---
-  // Se calcula cada vez que se renderiza, garantizando valores correctos
+  // ─────────────────────────────────────────────────
+  // CÁLCULOS DEL CARRITO
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Calcula el total de la venta sumando todos los subtotales.
+   * Se recalcula en cada render para garantizar precisión.
+   *
+   * @returns {number} Total de la venta
+   */
   const calcularTotal = () => {
     return carrito.reduce((total, item) => {
       return total + calcularSubtotal(item.cantidad, item.precio);
     }, 0);
   };
 
-  // --- LÓGICA DEL CARRITO DE COMPRAS ---
+  // ─────────────────────────────────────────────────
+  // GESTIÓN DEL CARRITO
+  // ─────────────────────────────────────────────────
 
+  /**
+   * Agrega un libro al carrito o incrementa su cantidad.
+   * Valida stock disponible antes de agregar.
+   *
+   * @param {Object} libro - Libro a agregar
+   */
   const agregarAlCarrito = (libro) => {
     const precio = parsearNumero(libro.precio_venta);
     const stock = parsearNumero(libro.stock_actual);
@@ -72,12 +193,13 @@ const PaginaVentas = () => {
       const indice = prevCarrito.findIndex(item => item.id === libro.id);
 
       if (indice >= 0) {
-        // Ya existe en el carrito
+        // Ya existe en el carrito - verificar stock
         if (prevCarrito[indice].cantidad >= stock) {
           alert(`Stock insuficiente. Solo hay ${stock} unidades.`);
           return prevCarrito;
         }
-        // Crear nuevo array con la cantidad incrementada
+
+        // Incrementar cantidad
         const nuevoCarrito = [...prevCarrito];
         nuevoCarrito[indice] = {
           ...nuevoCarrito[indice],
@@ -85,7 +207,7 @@ const PaginaVentas = () => {
         };
         return nuevoCarrito;
       } else {
-        // Nuevo item
+        // Nuevo item en el carrito
         return [...prevCarrito, {
           id: libro.id,
           titulo: libro.titulo,
@@ -97,10 +219,21 @@ const PaginaVentas = () => {
     });
   };
 
+  /**
+   * Elimina un libro del carrito por su ID.
+   *
+   * @param {number} id - ID del libro a eliminar
+   */
   const eliminarDelCarrito = (id) => {
     setCarrito(prevCarrito => prevCarrito.filter(item => item.id !== id));
   };
 
+  /**
+   * Incrementa la cantidad de un item en el carrito.
+   * Valida que no exceda el stock disponible.
+   *
+   * @param {number} id - ID del libro
+   */
   const incrementarCantidad = (id) => {
     setCarrito(prevCarrito => {
       return prevCarrito.map(item => {
@@ -116,6 +249,12 @@ const PaginaVentas = () => {
     });
   };
 
+  /**
+   * Decrementa la cantidad de un item en el carrito.
+   * No permite bajar de 1 unidad.
+   *
+   * @param {number} id - ID del libro
+   */
   const decrementarCantidad = (id) => {
     setCarrito(prevCarrito => {
       return prevCarrito.map(item => {
@@ -127,10 +266,21 @@ const PaginaVentas = () => {
     });
   };
 
-  // --- PROCESO FINAL DE VENTA ---
+  // ─────────────────────────────────────────────────
+  // PROCESO DE VENTA
+  // ─────────────────────────────────────────────────
+
+  /**
+   * Procesa y registra la venta en el backend.
+   * Valida datos, confirma con usuario y actualiza inventario.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const confirmarVenta = async () => {
     const total = calcularTotal();
 
+    // Validaciones previas
     if (!clienteId) {
       alert('Por favor selecciona un cliente.');
       return;
@@ -141,10 +291,15 @@ const PaginaVentas = () => {
       return;
     }
 
-    if (!window.confirm(`¿Confirmar venta por $${total.toLocaleString()}?`)) return;
+    // Confirmar con el usuario
+    if (!window.confirm(`¿Confirmar venta por $${total.toLocaleString('es-CO')}?`)) {
+      return;
+    }
 
     setProcesando(true);
+
     try {
+      // Preparar datos para el backend
       const datosVenta = {
         cliente_id: clienteId,
         total: total,
@@ -157,30 +312,39 @@ const PaginaVentas = () => {
 
       const respuesta = await api.post('/ventas', datosVenta);
 
-      alert(`¡Venta registrada exitosamente! ID: ${respuesta.data.ventaId}`);
+      alert(`Venta registrada exitosamente. ID: ${respuesta.data.ventaId}`);
 
+      // Limpiar carrito y selección
       setCarrito([]);
       setClienteId('');
 
+      // Recargar inventario para reflejar nuevo stock
       const resLibros = await api.get('/libros');
-      setLibros(resLibros.data);
+      setLibros(resLibros.data.datos || resLibros.data);
 
     } catch (error) {
-      console.error('Error al guardar venta:', error);
+      if (import.meta.env.DEV) {
+        console.error('[POS] Error al guardar venta:', error);
+      }
       alert(error.response?.data?.mensaje || 'Hubo un error al guardar la venta.');
     } finally {
       setProcesando(false);
     }
   };
 
-  // --- RENDERIZADO ---
+  // ─────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────
+
   const totalVenta = calcularTotal();
 
   return (
     <div className="container-fluid h-100 bg-light p-4">
       <div className="row">
 
-        {/* COLUMNA IZQUIERDA: Catálogo de Libros */}
+        {/* ─────────────────────────────────────────────────
+            COLUMNA IZQUIERDA: CATÁLOGO DE LIBROS
+            ───────────────────────────────────────────────── */}
         <div className="col-md-8">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3>Catálogo de Libros</h3>
@@ -215,9 +379,11 @@ const PaginaVentas = () => {
                     <div className="card shadow-sm h-100">
                       <div className="card-body">
                         <h5 className="card-title text-truncate">{libro.titulo}</h5>
-                        <p className="card-text text-muted small">Autor ID: {libro.autor_id || 'N/A'}</p>
+                        <p className="card-text text-muted small">
+                          Autor ID: {libro.autor_id || 'N/A'}
+                        </p>
                         <h6 className="text-primary fw-bold">
-                          ${parsearNumero(libro.precio_venta).toLocaleString()}
+                          ${parsearNumero(libro.precio_venta).toLocaleString('es-CO')}
                         </h6>
                         <small>Disponibles: {parsearNumero(libro.stock_actual)}</small>
                         <button
@@ -235,13 +401,16 @@ const PaginaVentas = () => {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: Resumen de Factura */}
+        {/* ─────────────────────────────────────────────────
+            COLUMNA DERECHA: RESUMEN DE FACTURACIÓN
+            ───────────────────────────────────────────────── */}
         <div className="col-md-4">
           <div className="card shadow">
             <div className="card-header bg-primary text-white">
               <h5 className="mb-0"><IconoUsuario /> Facturación</h5>
             </div>
             <div className="card-body">
+
               {/* Selector de Cliente */}
               <label className="form-label">Cliente:</label>
               <select
@@ -257,12 +426,13 @@ const PaginaVentas = () => {
 
               <hr />
 
-              {/* Lista de productos agregados */}
+              {/* Lista de productos en carrito */}
               <h6>Productos en Carrito:</h6>
-              <ul className="list-group list-group-flush mb-3" style={{maxHeight: '300px', overflowY: 'auto'}}>
-                {carrito.length === 0 && <li className="list-group-item text-muted">Carrito vacío</li>}
+              <ul className="list-group list-group-flush mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {carrito.length === 0 && (
+                  <li className="list-group-item text-muted">Carrito vacío</li>
+                )}
                 {carrito.map((item) => {
-                  // Calcular subtotal directamente aquí
                   const subtotalItem = calcularSubtotal(item.cantidad, item.precio);
 
                   return (
@@ -271,7 +441,7 @@ const PaginaVentas = () => {
                         <div className="flex-grow-1">
                           <strong className="d-block">{item.titulo}</strong>
                           <small className="text-muted">
-                            Precio unitario: ${parsearNumero(item.precio).toLocaleString()}
+                            Precio unitario: ${parsearNumero(item.precio).toLocaleString('es-CO')}
                           </small>
                         </div>
                         <button
@@ -282,6 +452,8 @@ const PaginaVentas = () => {
                           <IconoBasura />
                         </button>
                       </div>
+
+                      {/* Control de cantidad */}
                       <div className="d-flex justify-content-between align-items-center">
                         <div className="btn-group btn-group-sm" role="group">
                           <button
@@ -294,7 +466,7 @@ const PaginaVentas = () => {
                           <input
                             type="text"
                             className="form-control form-control-sm text-center"
-                            style={{maxWidth: '60px'}}
+                            style={{ maxWidth: '60px' }}
                             value={item.cantidad}
                             readOnly
                           />
@@ -306,7 +478,7 @@ const PaginaVentas = () => {
                             +
                           </button>
                         </div>
-                        <strong className="text-success" style={{fontSize: '1.1rem'}}>
+                        <strong className="text-success" style={{ fontSize: '1.1rem' }}>
                           ${subtotalItem.toLocaleString('es-CO')}
                         </strong>
                       </div>
@@ -315,8 +487,8 @@ const PaginaVentas = () => {
                 })}
               </ul>
 
-              {/* Total y Botón Pagar */}
-              <div className="alert alert-success text-center mb-3" style={{backgroundColor: '#d1e7dd'}}>
+              {/* Total y Botón de Confirmación */}
+              <div className="alert alert-success text-center mb-3" style={{ backgroundColor: '#d1e7dd' }}>
                 <div className="mb-1 text-muted small">Total a Pagar:</div>
                 <h3 className="mb-0 fw-bold text-success">
                   ${totalVenta.toLocaleString('es-CO')}

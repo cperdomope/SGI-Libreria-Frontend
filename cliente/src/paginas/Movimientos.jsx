@@ -1,6 +1,37 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * =====================================================
+ * PÁGINA DE REGISTRO DE MOVIMIENTOS
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Módulo para registrar movimientos de inventario.
+ * Permite registrar entradas (compras) y salidas (ventas)
+ * de libros, actualizando automáticamente el stock.
+ *
+ * @requires react - Hooks useState, useEffect
+ * @requires ../servicios/api - Cliente Axios configurado
+ *
+ * CARACTERÍSTICAS:
+ * - Selector de libros con stock actual visible
+ * - Toggle visual para tipo de movimiento (entrada/salida)
+ * - Actualización automática del stock tras registro
+ * - Alertas de éxito/error con auto-scroll
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
+
+import { useState, useEffect } from 'react';
 import api from '../servicios/api';
 
+/**
+ * Componente para registrar movimientos de inventario.
+ * Actualiza el stock de libros según entradas o salidas.
+ *
+ * @component
+ * @returns {JSX.Element} Formulario de registro de movimientos
+ */
 const Movimientos = () => {
   const [libros, setLibros] = useState([]);
   const [formData, setFormData] = useState({
@@ -11,23 +42,38 @@ const Movimientos = () => {
   });
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
 
-  // Función para cargar libros (la sacamos del useEffect para poder re-usarla)
+  /**
+   * Obtiene el listado de libros con stock desde el backend.
+   * Se re-usa después de cada movimiento para mostrar stock actualizado.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const cargarLibros = async () => {
     try {
       const res = await api.get('/libros');
-      if (Array.isArray(res.data)) {
-        setLibros(res.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const librosData = res.data.datos || res.data;
+      if (Array.isArray(librosData)) {
+        setLibros(librosData);
       }
     } catch (error) {
-      console.error("Error cargando libros", error);
+      if (import.meta.env.DEV) {
+        console.error('[Movimientos] Error cargando libros:', error);
+      }
     }
   };
 
-  // Cargar libros al iniciar la página
+  // Cargar libros al montar el componente
   useEffect(() => {
     cargarLibros();
   }, []);
 
+  /**
+   * Actualiza el estado del formulario cuando cambia un input.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement|HTMLSelectElement>} e - Evento del input
+   */
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -35,6 +81,14 @@ const Movimientos = () => {
     });
   };
 
+  /**
+   * Registra el movimiento de inventario en el backend.
+   * Actualiza el stock del libro y muestra mensaje de éxito/error.
+   *
+   * @async
+   * @param {React.FormEvent} e - Evento del formulario
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje({ texto: '', tipo: '' });
@@ -46,21 +100,22 @@ const Movimientos = () => {
 
     try {
       const res = await api.post('/movimientos', formData);
-      
-      // 1. Mostrar mensaje de éxito (Con respaldo por si el backend no envía 'mensaje')
+
+      // Mostrar mensaje de éxito del backend o genérico
       const textoExito = res.data.mensaje || '¡Movimiento registrado correctamente!';
       setMensaje({ texto: textoExito, tipo: 'success' });
-      
-      // 2. Limpiar cantidad
+
+      // Resetear cantidad para próximo registro
       setFormData({ ...formData, cantidad: 1 });
 
-      // 3. Recargar la lista de libros para ver el stock actualizado en el select
+      // Actualizar lista de libros para reflejar nuevo stock
       await cargarLibros();
 
-      // 4. Subir el scroll para asegurar que el usuario vea la alerta
+      // Scroll al inicio para que el usuario vea el mensaje
       window.scrollTo(0, 0);
 
     } catch (error) {
+      // Mostrar mensaje de error del backend o genérico
       const errorMsg = error.response?.data?.error || 'Error al procesar la solicitud';
       setMensaje({ texto: errorMsg, tipo: 'danger' });
     }

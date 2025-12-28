@@ -24,6 +24,16 @@ const HistorialVentas = () => {
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [detalleVenta, setDetalleVenta] = useState(null);
 
+  // Estado de paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
+
+  // Calcular datos paginados
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina;
+  const indiceFin = indiceInicio + elementosPorPagina;
+  const ventasPaginadas = ventas.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(ventas.length / elementosPorPagina);
+
   useEffect(() => {
     cargarVentas();
   }, []);
@@ -32,11 +42,15 @@ const HistorialVentas = () => {
     try {
       setCargando(true);
       const respuesta = await api.get('/ventas');
-      setVentas(respuesta.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const ventasData = respuesta.data.datos || respuesta.data;
+      setVentas(Array.isArray(ventasData) ? ventasData : []);
       setError(null);
     } catch (err) {
       setError('Error al cargar el historial de ventas');
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error('[HistorialVentas] Error:', err);
+      }
     } finally {
       setCargando(false);
     }
@@ -45,12 +59,16 @@ const HistorialVentas = () => {
   const verDetalleVenta = async (ventaId) => {
     try {
       const respuesta = await api.get(`/ventas/${ventaId}`);
-      setDetalleVenta(respuesta.data);
+      // Extraer datos considerando estructura { exito, datos }
+      const detalleData = respuesta.data.datos || respuesta.data;
+      setDetalleVenta(detalleData);
       setVentaSeleccionada(ventaId);
       setMostrarModal(true);
     } catch (err) {
       alert('Error al cargar detalle de la venta');
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error('[HistorialVentas] Error detalle:', err);
+      }
     }
   };
 
@@ -128,7 +146,7 @@ const HistorialVentas = () => {
                     </td>
                   </tr>
                 ) : (
-                  ventas.map((venta) => (
+                  ventasPaginadas.map((venta) => (
                     <tr key={venta.id}>
                       <td>#{venta.id}</td>
                       <td>{formatearFecha(venta.fecha_venta)}</td>
@@ -151,6 +169,31 @@ const HistorialVentas = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Controles de Paginación */}
+          {!cargando && totalPaginas > 1 && (
+            <nav className="d-flex justify-content-center mt-3">
+              <ul className="pagination pagination-sm">
+                <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1}>
+                    Anterior
+                  </button>
+                </li>
+                {[...Array(totalPaginas)].map((_, i) => (
+                  <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
+                      {i + 1}
+                    </button>
+                  </li>
+                ))}
+                <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas}>
+                    Siguiente
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
 

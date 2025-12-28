@@ -1,124 +1,385 @@
-const pool = require('../configuracion/db'); 
+/**
+ * =====================================================
+ * CONTROLADOR DE CLIENTES
+ * =====================================================
+ * Sistema de Gestión de Inventario - Librería
+ * Proyecto SENA - Tecnólogo en ADSO
+ *
+ * @description Gestiona el CRUD de clientes de la librería.
+ * Los clientes son necesarios para registrar ventas
+ * y mantener historial de compras.
+ *
+ * @requires ../configuracion/db - Pool de conexiones MySQL
+ *
+ * TABLA: mdc_clientes
+ * - id: INT (PK, AUTO_INCREMENT)
+ * - nombre_completo: VARCHAR(100) NOT NULL
+ * - documento: VARCHAR(20) UNIQUE NOT NULL
+ * - email: VARCHAR(100)
+ * - telefono: VARCHAR(20)
+ * - direccion: VARCHAR(200)
+ * - fecha_registro: TIMESTAMP
+ *
+ * @author Equipo de Desarrollo SGI
+ * @version 2.0.0
+ */
 
-// Obtener todos los clientes
+const db = require('../configuracion/db');
+
+// =====================================================
+// CONTROLADORES CRUD
+// =====================================================
+
+/**
+ * Obtiene el listado de todos los clientes.
+ * Ordenados alfabéticamente por nombre.
+ *
+ * @async
+ * @param {Object} req - Request de Express
+ * @param {Object} res - Response de Express
+ * @returns {Promise<void>} JSON con array de clientes
+ */
 const obtenerClientes = async (req, res) => {
-    try {
-        const [filas] = await pool.query('SELECT * FROM clientes ORDER BY nombre_completo ASC');
-        res.json(filas);
-    } catch (error) {
-        console.error('Error al obtener clientes:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor al obtener clientes' });
+  try {
+    const [filas] = await db.query(
+      'SELECT id, nombre_completo, documento, email, telefono, direccion, fecha_registro FROM mdc_clientes ORDER BY nombre_completo ASC'
+    );
+
+    res.json({
+      exito: true,
+      datos: filas,
+      total: filas.length
+    });
+
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Clientes] Error al listar:', error);
     }
+
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al obtener los clientes',
+      codigo: 'CLIENTES_LIST_ERROR'
+    });
+  }
 };
 
-// Obtener un cliente por ID
+/**
+ * Obtiene un cliente específico por su ID.
+ *
+ * @async
+ * @param {Object} req - Request de Express
+ * @param {Object} req.params - Parámetros de ruta
+ * @param {string} req.params.id - ID del cliente
+ * @param {Object} res - Response de Express
+ * @returns {Promise<void>} JSON con datos del cliente
+ */
 const obtenerClientePorId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [filas] = await pool.query('SELECT * FROM clientes WHERE id = ?', [id]);
-        
-        if (filas.length === 0) {
-            return res.status(404).json({ mensaje: 'Cliente no encontrado' });
-        }
-        
-        res.json(filas[0]);
-    } catch (error) {
-        console.error('Error al obtener el cliente:', error);
-        res.status(500).json({ mensaje: 'Error del servidor' });
+  const { id } = req.params;
+
+  // Validar ID
+  if (!id || isNaN(parseInt(id))) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'ID de cliente inválido'
+    });
+  }
+
+  try {
+    const [filas] = await db.query(
+      'SELECT id, nombre_completo, documento, email, telefono, direccion, fecha_registro FROM mdc_clientes WHERE id = ?',
+      [id]
+    );
+
+    if (filas.length === 0) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: 'Cliente no encontrado',
+        codigo: 'CLIENTE_NOT_FOUND'
+      });
     }
+
+    res.json({
+      exito: true,
+      datos: filas[0]
+    });
+
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Clientes] Error al obtener:', error);
+    }
+
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al obtener el cliente',
+      codigo: 'CLIENTE_GET_ERROR'
+    });
+  }
 };
 
-// Crear un nuevo cliente
+/**
+ * Crea un nuevo cliente.
+ * El documento debe ser único en el sistema.
+ *
+ * @async
+ * @param {Object} req - Request de Express
+ * @param {Object} req.body - Datos del cliente
+ * @param {string} req.body.nombre_completo - Nombre completo
+ * @param {string} req.body.documento - Documento de identidad (único)
+ * @param {string} [req.body.email] - Correo electrónico
+ * @param {string} [req.body.telefono] - Teléfono de contacto
+ * @param {string} [req.body.direccion] - Dirección física
+ * @param {Object} res - Response de Express
+ * @returns {Promise<void>} JSON con el cliente creado
+ */
 const crearCliente = async (req, res) => {
-    const { nombre_completo, documento, email, telefono, direccion } = req.body;
+  const { nombre_completo, documento, email, telefono, direccion } = req.body;
 
-    if (!nombre_completo || !documento) {
-        return res.status(400).json({ mensaje: 'El nombre completo y el documento son obligatorios' });
+  // Validaciones
+  if (!nombre_completo || nombre_completo.trim() === '') {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'El nombre completo es obligatorio'
+    });
+  }
+
+  if (!documento || documento.trim() === '') {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'El documento es obligatorio'
+    });
+  }
+
+  try {
+    // Verificar documento duplicado antes de insertar
+    // Esto proporciona un mensaje más claro que el error de UNIQUE
+    const [existeDoc] = await db.query(
+      'SELECT id FROM mdc_clientes WHERE documento = ?',
+      [documento.trim()]
+    );
+
+    if (existeDoc.length > 0) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'Ya existe un cliente con este documento',
+        codigo: 'DOCUMENTO_DUPLICADO'
+      });
     }
 
-    try {
-        const [existeDoc] = await pool.query('SELECT id FROM clientes WHERE documento = ?', [documento]);
-        if (existeDoc.length > 0) {
-            return res.status(400).json({ mensaje: 'Ya existe un cliente con este documento' });
-        }
+    const [resultado] = await db.query(
+      `INSERT INTO mdc_clientes
+       (nombre_completo, documento, email, telefono, direccion)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        nombre_completo.trim(),
+        documento.trim(),
+        email || null,
+        telefono || null,
+        direccion || null
+      ]
+    );
 
-        const [resultado] = await pool.query(
-            'INSERT INTO clientes (nombre_completo, documento, email, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
-            [nombre_completo, documento, email || null, telefono || null, direccion || null]
-        );
+    res.status(201).json({
+      exito: true,
+      mensaje: 'Cliente creado exitosamente',
+      datos: {
+        id: resultado.insertId,
+        nombre_completo: nombre_completo.trim(),
+        documento: documento.trim()
+      }
+    });
 
-        res.status(201).json({
-            id: resultado.insertId,
-            nombre_completo,
-            documento,
-            mensaje: 'Cliente creado exitosamente'
-        });
-
-    } catch (error) {
-        console.error('Error al crear cliente:', error);
-        res.status(500).json({ mensaje: 'Error al registrar el cliente en la base de datos' });
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Clientes] Error al crear:', error);
     }
+
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al crear el cliente',
+      codigo: 'CLIENTE_CREATE_ERROR'
+    });
+  }
 };
 
-// Actualizar un cliente existente
+/**
+ * Actualiza un cliente existente.
+ * Si se cambia el documento, debe seguir siendo único.
+ *
+ * @async
+ * @param {Object} req - Request de Express
+ * @param {Object} req.params - Parámetros de ruta
+ * @param {string} req.params.id - ID del cliente
+ * @param {Object} req.body - Nuevos datos del cliente
+ * @param {Object} res - Response de Express
+ * @returns {Promise<void>} JSON con mensaje de éxito o error
+ */
 const actualizarCliente = async (req, res) => {
-    const { id } = req.params;
-    const { nombre_completo, documento, email, telefono, direccion } = req.body;
+  const { id } = req.params;
+  const { nombre_completo, documento, email, telefono, direccion } = req.body;
 
-    try {
-        const [existe] = await pool.query('SELECT id FROM clientes WHERE id = ?', [id]);
-        if (existe.length === 0) {
-            return res.status(404).json({ mensaje: 'Cliente no encontrado' });
-        }
+  // Validar ID
+  if (!id || isNaN(parseInt(id))) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'ID de cliente inválido'
+    });
+  }
 
-        if (documento) {
-            const [conflicto] = await pool.query('SELECT id FROM clientes WHERE documento = ? AND id != ?', [documento, id]);
-            if (conflicto.length > 0) {
-                return res.status(400).json({ mensaje: 'El documento ya pertenece a otro cliente' });
-            }
-        }
+  // Validaciones básicas
+  if (!nombre_completo || nombre_completo.trim() === '') {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'El nombre completo es obligatorio'
+    });
+  }
 
-        const [resultado] = await pool.query(
-            'UPDATE clientes SET nombre_completo = ?, documento = ?, email = ?, telefono = ?, direccion = ? WHERE id = ?',
-            [nombre_completo, documento, email, telefono, direccion, id]
-        );
+  if (!documento || documento.trim() === '') {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'El documento es obligatorio'
+    });
+  }
 
-        if (resultado.affectedRows === 0) {
-            return res.status(400).json({ mensaje: 'No se pudo actualizar' });
-        }
+  try {
+    // Verificar que el cliente existe
+    const [existe] = await db.query(
+      'SELECT id FROM mdc_clientes WHERE id = ?',
+      [id]
+    );
 
-        res.json({ mensaje: 'Cliente actualizado correctamente', id });
-
-    } catch (error) {
-        console.error('Error al actualizar cliente:', error);
-        res.status(500).json({ mensaje: 'Error interno al actualizar' });
+    if (existe.length === 0) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: 'Cliente no encontrado',
+        codigo: 'CLIENTE_NOT_FOUND'
+      });
     }
+
+    // Verificar documento duplicado en otro cliente
+    const [conflicto] = await db.query(
+      'SELECT id FROM mdc_clientes WHERE documento = ? AND id != ?',
+      [documento.trim(), id]
+    );
+
+    if (conflicto.length > 0) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'El documento ya pertenece a otro cliente',
+        codigo: 'DOCUMENTO_DUPLICADO'
+      });
+    }
+
+    const [resultado] = await db.query(
+      `UPDATE mdc_clientes
+       SET nombre_completo = ?, documento = ?, email = ?, telefono = ?, direccion = ?
+       WHERE id = ?`,
+      [
+        nombre_completo.trim(),
+        documento.trim(),
+        email || null,
+        telefono || null,
+        direccion || null,
+        id
+      ]
+    );
+
+    if (resultado.affectedRows === 0) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'No se pudo actualizar el cliente'
+      });
+    }
+
+    res.json({
+      exito: true,
+      mensaje: 'Cliente actualizado correctamente'
+    });
+
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Clientes] Error al actualizar:', error);
+    }
+
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al actualizar el cliente',
+      codigo: 'CLIENTE_UPDATE_ERROR'
+    });
+  }
 };
 
-// Eliminar cliente
+/**
+ * Elimina un cliente.
+ * No permite eliminar si tiene ventas asociadas.
+ *
+ * @async
+ * @param {Object} req - Request de Express
+ * @param {Object} req.params - Parámetros de ruta
+ * @param {string} req.params.id - ID del cliente a eliminar
+ * @param {Object} res - Response de Express
+ * @returns {Promise<void>} JSON con mensaje de éxito o error
+ */
 const eliminarCliente = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [resultado] = await pool.query('DELETE FROM clientes WHERE id = ?', [id]);
-        
-        if (resultado.affectedRows === 0) {
-            return res.status(404).json({ mensaje: 'Cliente no encontrado' });
-        }
+  const { id } = req.params;
 
-        res.json({ mensaje: 'Cliente eliminado correctamente' });
-    } catch (error) {
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(400).json({ mensaje: 'No se puede eliminar: El cliente tiene registros asociados' });
-        }
-        console.error('Error al eliminar cliente:', error);
-        res.status(500).json({ mensaje: 'Error al eliminar el cliente' });
+  // Validar ID
+  if (!id || isNaN(parseInt(id))) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: 'ID de cliente inválido'
+    });
+  }
+
+  try {
+    const [resultado] = await db.query(
+      'DELETE FROM mdc_clientes WHERE id = ?',
+      [id]
+    );
+
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({
+        exito: false,
+        mensaje: 'Cliente no encontrado',
+        codigo: 'CLIENTE_NOT_FOUND'
+      });
     }
+
+    res.json({
+      exito: true,
+      mensaje: 'Cliente eliminado correctamente'
+    });
+
+  } catch (error) {
+    // FK constraint: cliente tiene ventas asociadas
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'No se puede eliminar: el cliente tiene ventas registradas',
+        codigo: 'CLIENTE_CON_VENTAS'
+      });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Clientes] Error al eliminar:', error);
+    }
+
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al eliminar el cliente',
+      codigo: 'CLIENTE_DELETE_ERROR'
+    });
+  }
 };
+
+// =====================================================
+// EXPORTACIÓN
+// =====================================================
 
 module.exports = {
-    obtenerClientes,
-    obtenerClientePorId,
-    crearCliente,
-    actualizarCliente,
-    eliminarCliente
+  obtenerClientes,
+  obtenerClientePorId,
+  crearCliente,
+  actualizarCliente,
+  eliminarCliente
 };
