@@ -386,10 +386,11 @@ exports.obtenerVentas = async (req, res) => {
  * }
  */
 exports.obtenerDetalleVenta = async (req, res) => {
-  const { id } = req.params;
+  let { id } = req.params;
 
-  // Validar que el ID sea un número válido
-  if (!id || isNaN(parseInt(id))) {
+  // Convertir y validar ID
+  id = parseInt(id, 10);
+  if (isNaN(id) || id <= 0) {
     return res.status(400).json({
       exito: false,
       mensaje: 'ID de venta inválido'
@@ -453,14 +454,17 @@ exports.obtenerDetalleVenta = async (req, res) => {
     });
 
   } catch (error) {
+    // Log del error para debugging
+    console.error('[Venta] Error al obtener detalle de venta #' + id + ':', error.message);
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Venta] Error al obtener detalle:', error);
+      console.error('[Venta] Stack trace:', error.stack);
     }
 
     res.status(500).json({
       exito: false,
       mensaje: 'Error al obtener el detalle de la venta',
-      codigo: 'VENTA_DETAIL_ERROR'
+      codigo: 'VENTA_DETAIL_ERROR',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
