@@ -180,7 +180,7 @@ body {
   border-color: rgba(139, 92, 246, 0.6) !important; /* Toque púrpura premium */
   color: #ffffff !important;
   box-shadow:
-    0 0 0 0.25rem rgba(139, 92, 246, 0.15) !important,
+    0 0 0 0.25rem rgba(139, 92, 246, 0.15),
     0 4px 12px rgba(139, 92, 246, 0.2) !important; /* Glow sutil */
   transform: translateY(-1px);
 }
