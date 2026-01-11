@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Fondo con gradiente profesional -->
+  <defs>
+    <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo circular -->
+  <circle cx="50" cy="50" r="48" fill="url(#bookGradient)"/>
+
+  <!-- Libro abierto -->
+  <path d="M30 35 L30 70 L48 65 L48 30 Z" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M70 35 L70 70 L52 65 L52 30 Z" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- Líneas de páginas -->
+  <line x1="35" y1="40" x2="43" y2="38" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+  <line x1="35" y1="45" x2="43" y2="43" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+  <line x1="35" y1="50" x2="43" y2="48" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+
+  <line x1="57" y1="38" x2="65" y2="40" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5"/>
+  <line x1="57" y1="43" x2="65" y2="45" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5"/>
+  <line x1="57" y1="48" x2="65" y2="50" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Lomo del libro -->
+  <path d="M48 30 L52 30 L52 65 L48 65 Z" fill="#E0E7FF"/>
+</svg>
