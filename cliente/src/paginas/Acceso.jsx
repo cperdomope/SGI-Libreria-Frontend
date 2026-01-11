@@ -275,7 +275,7 @@ const Acceso = () => {
             <Icons.Book />
           </div>
           <h2 className="fw-bold text-dark">Bienvenido</h2>
-          <p className="text-muted">Sistema de Gestión Bibliotecaria</p>
+          <p className="text-muted">Sistema de Gestión Librería el Saber</p>
         </div>
 
         {/* ─────────────────────────────────────────────────
@@ -399,7 +399,7 @@ const Acceso = () => {
             ───────────────────────────────────────────────── */}
         <div className="text-center mt-4">
           <small className="text-muted">
-            Proyecto Tecnólogo SENA &copy; 2025
+            Librería el Saber &copy; 2026
           </small>
         </div>
       </div>
