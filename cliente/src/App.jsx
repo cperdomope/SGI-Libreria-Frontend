@@ -122,7 +122,7 @@ const LayoutPrincipal = ({ children }) => {
       {/* Footer */}
       <footer className="bg-light text-center p-3 mt-auto border-top">
         <small className="text-muted">
-          © 2025 SGI Librería el Saber - Proyecto SENA
+          © 2026 SGI Librería el Saber - Proyecto SENA
         </small>
       </footer>
     </div>

@@ -278,7 +278,7 @@ const HistorialVentas = () => {
                   </table>
 
                   <div className="text-center mt-4 text-muted">
-                    <small>¡Gracias por su compra! - SGI Librería</small>
+                    <small>¡Gracias por su compra! - SGI Librería el Saber</small>
                   </div>
                 </div>
 
