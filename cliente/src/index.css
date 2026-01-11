@@ -16,24 +16,94 @@ body {
   box-sizing: border-box;
 }
 
-/* --- ESTILOS DEL LOGIN (Centrado Perfecto) --- */
+/* --- ESTILOS DEL LOGIN (Centrado Perfecto con Glassmorphism) --- */
 .login-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;     /* Centrar Verticalmente */
   justify-content: center; /* Centrar Horizontalmente */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 15px; /* Margen para celulares */
+
+  /* Imagen de fondo de biblioteca local */
+  background-image: url('/images/libreria-login.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* Efecto parallax sutil */
+
+  /* Overlay profesional con degradado inspirador */
+  position: relative;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Gradiente profesional: oscuro abajo, más claro arriba para sensación de amplitud */
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.75) 0%,      /* Azul oscuro profesional */
+    rgba(30, 41, 59, 0.65) 30%,     /* Azul medio */
+    rgba(51, 65, 85, 0.55) 60%,     /* Azul grisáceo */
+    rgba(71, 85, 105, 0.45) 100%    /* Más claro arriba */
+  );
+  z-index: 1;
+}
+
+/* Overlay adicional con brillo sutil para dar calidez */
+.login-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 50% 20%,
+    rgba(99, 102, 241, 0.08) 0%,    /* Toque de azul índigo sutil */
+    transparent 70%
+  );
+  z-index: 1;
 }
 
 .login-card {
-  background: white;
+  /* Efecto Glassmorphism (vidrio esmerilado) - Profesional */
+  background: rgba(255, 255, 255, 0.12); /* Fondo semi-transparente más sutil */
+  backdrop-filter: blur(24px) saturate(160%); /* Desenfoque premium */
+  -webkit-backdrop-filter: blur(24px) saturate(160%); /* Safari */
+
   padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25); /* Borde delicado */
+
+  /* Sombras elegantes y profundas */
+  box-shadow:
+    0 20px 60px 0 rgba(0, 0, 0, 0.4),          /* Sombra principal profunda */
+    0 8px 16px 0 rgba(0, 0, 0, 0.2),           /* Sombra media */
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),  /* Brillo superior interno */
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.1);       /* Sombra inferior interna */
+
   width: 100%;
-  max-width: 400px; /* ¡ESTO EVITA QUE SE ESTIRE! */
+  max-width: 420px; /* Ligeramente más ancho para comodidad */
+  position: relative;
+  z-index: 10; /* Por encima de todos los overlays */
+
+  /* Transición suave al aparecer */
+  transition: all 0.3s ease;
+}
+
+/* Efecto hover sutil para interactividad */
+.login-card:hover {
+  box-shadow:
+    0 24px 70px 0 rgba(0, 0, 0, 0.45),
+    0 10px 20px 0 rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px); /* Levantamiento sutil */
 }
 
 .login-header {
@@ -41,22 +111,207 @@ body {
   margin-bottom: 2rem;
 }
 
+.login-header h2 {
+  color: #ffffff !important; /* Texto blanco para contraste */
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(139, 92, 246, 0.3),  /* Glow púrpura sutil */
+    0 0 40px rgba(99, 102, 241, 0.2);  /* Glow azul índigo */
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+}
+
+.login-header p {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
 .login-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
   display: inline-flex;
   padding: 15px;
-  background: #e0e7ff;
+  background: rgba(255, 255, 255, 0.25); /* Fondo glassmorphism */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 50%;
-  color: var(--primary);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff; /* Icono blanco */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: breathe 4s ease-in-out infinite; /* Animación de respiración */
+  transition: all 0.3s ease;
 }
 
-/* --- Animaciones --- */
+/* --- Estilos adicionales para legibilidad en glassmorphism --- */
+.login-card .form-label {
+  color: rgba(255, 255, 255, 0.95) !important; /* Labels blancos */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 600 !important;
+}
+
+.login-card .input-group-text {
+  background: rgba(255, 255, 255, 0.2) !important; /* Fondo glassmorphism */
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.login-card .form-control {
+  background: rgba(255, 255, 255, 0.15) !important; /* Fondo glassmorphism mejorado */
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important; /* Texto blanco */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 0.95rem;
+  padding: 0.65rem 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.login-card .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important; /* Placeholder más sutil */
+  font-weight: 300;
+}
+
+.login-card .form-control:focus {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(139, 92, 246, 0.6) !important; /* Toque púrpura premium */
+  color: #ffffff !important;
+  box-shadow:
+    0 0 0 0.25rem rgba(139, 92, 246, 0.15) !important,
+    0 4px 12px rgba(139, 92, 246, 0.2) !important; /* Glow sutil */
+  transform: translateY(-1px);
+}
+
+.login-card .btn-light {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.login-card .btn-light:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* Botón principal - Diseño premium e inspirador */
+.login-card .btn-primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1.5rem !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 15px rgba(99, 102, 241, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de brillo animado al pasar el mouse */
+.login-card .btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.login-card .btn-primary:hover::before {
+  left: 100%;
+}
+
+.login-card .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(109, 112, 251, 0.95) 0%, rgba(149, 102, 256, 1) 100%) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 25px rgba(99, 102, 241, 0.5),
+    0 4px 10px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.login-card .btn-primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 4px 12px rgba(99, 102, 241, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.login-card .btn-primary:disabled {
+  background: rgba(148, 163, 184, 0.5) !important;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.login-card .alert {
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.login-card .alert strong,
+.login-card .alert p,
+.login-card .alert small {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.login-card .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Animaciones Premium --- */
 .fade-in {
-  animation: fadeIn 0.6s ease-out;
+  animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animación sutil de respiración para el ícono */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Efecto de shimmer sutil en el fondo para vida */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
