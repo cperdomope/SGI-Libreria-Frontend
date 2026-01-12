@@ -63,9 +63,49 @@ const configuracionPool = {
   // ─────────────────────────────────────────────────
   // SEGURIDAD SSL (Requerido por Aiven)
   // ─────────────────────────────────────────────────
+  //
+  // ⚠️ ADVERTENCIA DE SEGURIDAD - IMPORTANTE LEER:
+  //
+  // CONFIGURACIÓN ACTUAL (rejectUnauthorized: false):
+  // - VÁLIDA para proyectos académicos y desarrollo
+  // - VÁLIDA para servicios gratuitos sin acceso a certificados
+  // - NO RECOMENDADA para producción comercial
+  //
+  // ¿Por qué está así?
+  // Aiven (servicio gratuito) requiere SSL pero descargar el certificado CA
+  // puede ser complejo en entornos de desarrollo. Esta configuración permite
+  // conexiones SSL sin validar el certificado.
+  //
+  // RIESGO: Sin validación de certificado, hay vulnerabilidad teórica a
+  // ataques Man-in-the-Middle (MITM). Para proyectos académicos con datos
+  // de prueba, este riesgo es aceptable.
+  //
+  // ─────────────────────────────────────────────────
+  // CONFIGURACIÓN ACTUAL (proyecto académico):
   ssl: {
-      rejectUnauthorized: false // Permite conectar sin descargar certificados manuales
+      rejectUnauthorized: false // Permite SSL sin validar certificado
   },
+
+  // ─────────────────────────────────────────────────
+  // CONFIGURACIÓN SEGURA PARA PRODUCCIÓN (comentada):
+  //
+  // Si vas a desplegar en producción REAL con datos reales de clientes:
+  //
+  // 1. Descargar certificado CA de Aiven:
+  //    - Ir a tu proyecto en Aiven Console
+  //    - Descargar "CA Certificate"
+  //    - Guardar como: servidor/configuracion/ca-certificate.crt
+  //
+  // 2. Descomentar esta configuración:
+  /*
+  ssl: {
+      ca: require('fs').readFileSync(__dirname + '/ca-certificate.crt')
+  },
+  */
+  //
+  // 3. Comentar la configuración actual (rejectUnauthorized: false)
+  //
+  // ─────────────────────────────────────────────────
 
   // ─────────────────────────────────────────────────
   // CODIFICACIÓN UTF-8 (Soporte para ñ, tildes, etc.)

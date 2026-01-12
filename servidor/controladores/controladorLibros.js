@@ -29,33 +29,67 @@ const db = require('../configuracion/db');
 // =====================================================
 
 /**
- * Obtiene el listado completo de libros con información relacionada.
+ * Obtiene el listado de libros con información relacionada y paginación opcional.
  * Optimizado para el módulo POS (Punto de Venta).
+ *
+ * PAGINACIÓN (opcional):
+ * - Si NO se envían parámetros: devuelve TODOS los libros (retrocompatible)
+ * - Si se envían pagina/limite: devuelve página específica
  *
  * @async
  * @param {Object} req - Request de Express
+ * @param {Object} req.query - Query parameters
+ * @param {number} [req.query.pagina=1] - Número de página (opcional)
+ * @param {number} [req.query.limite=20] - Registros por página (opcional, máx 100)
  * @param {Object} res - Response de Express
- * @returns {Promise<void>} JSON con array de libros
+ * @returns {Promise<void>} JSON con array de libros y metadata de paginación
  *
  * @example
- * // Response exitoso:
- * [
- *   {
- *     "id": 1,
- *     "isbn": "978-0307474728",
- *     "titulo": "Cien Años de Soledad",
- *     "precio_venta": 45000.00,
- *     "stock_actual": 15,
- *     "autor": "Gabriel García Márquez",
- *     "categoria": "Ficción"
+ * // Request sin paginación (devuelve todos):
+ * GET /api/libros
+ *
+ * @example
+ * // Request con paginación:
+ * GET /api/libros?pagina=1&limite=20
+ *
+ * @example
+ * // Response con paginación:
+ * {
+ *   "exito": true,
+ *   "datos": [...],
+ *   "paginacion": {
+ *     "paginaActual": 1,
+ *     "registrosPorPagina": 20,
+ *     "totalRegistros": 150,
+ *     "totalPaginas": 8
  *   }
- * ]
+ * }
  */
 exports.obtenerLibros = async (req, res) => {
   try {
-    // LEFT JOIN para incluir libros sin autor/categoría asignados
-    // CAST asegura tipos correctos para el frontend
-    const [filas] = await db.query(`
+    // ─────────────────────────────────────────────────
+    // PARÁMETROS DE PAGINACIÓN
+    // Si no se envían, devuelve todos (retrocompatible)
+    // ─────────────────────────────────────────────────
+
+    const usarPaginacion = req.query.pagina || req.query.limite;
+
+    // Parsear y validar parámetros
+    let pagina = parseInt(req.query.pagina) || 1;
+    let limite = parseInt(req.query.limite) || 20;
+
+    // Validaciones de seguridad
+    if (pagina < 1) pagina = 1;
+    if (limite < 1) limite = 20;
+    if (limite > 100) limite = 100; // Máximo 100 registros por página
+
+    const offset = (pagina - 1) * limite;
+
+    // ─────────────────────────────────────────────────
+    // CONSULTA BASE
+    // ─────────────────────────────────────────────────
+
+    const queryBase = `
       SELECT
         l.id,
         l.isbn,
@@ -71,13 +105,41 @@ exports.obtenerLibros = async (req, res) => {
       LEFT JOIN mdc_autores a ON l.autor_id = a.id
       LEFT JOIN mdc_categorias c ON l.categoria_id = c.id
       ORDER BY l.titulo ASC
-    `);
+    `;
 
-    res.json({
-      exito: true,
-      datos: filas,
-      total: filas.length
-    });
+    // ─────────────────────────────────────────────────
+    // EJECUTAR CONSULTAS
+    // ─────────────────────────────────────────────────
+
+    if (usarPaginacion) {
+      // CON PAGINACIÓN: Ejecutar dos queries (datos + count)
+      const queryPaginada = queryBase + ` LIMIT ? OFFSET ?`;
+
+      const [filas] = await db.query(queryPaginada, [limite, offset]);
+      const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM mdc_libros');
+
+      const totalPaginas = Math.ceil(total / limite);
+
+      res.json({
+        exito: true,
+        datos: filas,
+        paginacion: {
+          paginaActual: pagina,
+          registrosPorPagina: limite,
+          totalRegistros: total,
+          totalPaginas: totalPaginas
+        }
+      });
+    } else {
+      // SIN PAGINACIÓN: Comportamiento original (retrocompatible)
+      const [filas] = await db.query(queryBase);
+
+      res.json({
+        exito: true,
+        datos: filas,
+        total: filas.length
+      });
+    }
 
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
@@ -184,16 +246,8 @@ exports.crearLibro = async (req, res) => {
  * @returns {Promise<void>} JSON con mensaje de éxito o error
  */
 exports.actualizarLibro = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; // ID ya validado por middleware validarId
   const { isbn, titulo, autor_id, categoria_id, precio_venta, stock_minimo } = req.body;
-
-  // Validar ID
-  if (!id || isNaN(parseInt(id))) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'ID de libro inválido'
-    });
-  }
 
   // Validaciones básicas
   if (!titulo || titulo.trim() === '') {
@@ -268,15 +322,7 @@ exports.actualizarLibro = async (req, res) => {
  * @returns {Promise<void>} JSON con mensaje de éxito o error
  */
 exports.eliminarLibro = async (req, res) => {
-  const { id } = req.params;
-
-  // Validar ID
-  if (!id || isNaN(parseInt(id))) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'ID de libro inválido'
-    });
-  }
+  const { id } = req.params; // ID ya validado por middleware validarId
 
   try {
     const [resultado] = await db.query(

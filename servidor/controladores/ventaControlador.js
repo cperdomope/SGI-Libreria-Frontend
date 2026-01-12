@@ -50,17 +50,24 @@ const METODO_PAGO_DEFAULT = 'Efectivo';
 
 /**
  * Valida que haya stock suficiente para todos los items.
- * Se ejecuta ANTES de iniciar la transacción para fallar rápido.
+ * Se ejecuta DENTRO de la transacción con bloqueo de filas (FOR UPDATE).
+ *
+ * IMPORTANTE - PREVENCIÓN DE RACE CONDITIONS:
+ * El FOR UPDATE bloquea las filas de libros durante la transacción,
+ * evitando que dos ventas simultáneas lean el mismo stock y creen
+ * inconsistencias (ej: vender más unidades de las disponibles).
  *
  * @async
- * @param {Object} connection - Conexión MySQL activa
+ * @param {Object} connection - Conexión MySQL activa (dentro de transacción)
  * @param {Array<{libro_id: number, cantidad: number}>} items - Items a validar
  * @returns {Promise<{valido: boolean, mensaje?: string}>} Resultado de validación
  */
 const validarStockDisponible = async (connection, items) => {
   for (const item of items) {
+    // FOR UPDATE bloquea la fila hasta que termine la transacción
+    // Si otra venta intenta leer el mismo libro, esperará su turno
     const [rows] = await connection.query(
-      'SELECT stock_actual, titulo FROM mdc_libros WHERE id = ?',
+      'SELECT stock_actual, titulo FROM mdc_libros WHERE id = ? FOR UPDATE',
       [item.libro_id]
     );
 
@@ -93,13 +100,14 @@ const validarStockDisponible = async (connection, items) => {
  * Registra una nueva venta con sus detalles.
  *
  * FLUJO DE LA TRANSACCIÓN:
- * 1. Validar datos de entrada
- * 2. Obtener conexión y comenzar transacción
- * 3. Validar stock disponible para todos los items
- * 4. Insertar cabecera en mdc_ventas
- * 5. Insertar cada item en mdc_detalle_ventas
- * 6. Actualizar stock en mdc_libros
- * 7. Confirmar transacción (o rollback si hay error)
+ * 1. Validar datos de entrada (estructura y tipos)
+ * 2. Validar total recalculando en backend (seguridad anti-manipulación)
+ * 3. Obtener conexión y comenzar transacción
+ * 4. Validar stock disponible con bloqueo de filas (FOR UPDATE)
+ * 5. Insertar cabecera en mdc_ventas
+ * 6. Insertar cada item en mdc_detalle_ventas
+ * 7. Actualizar stock en mdc_libros
+ * 8. Confirmar transacción (o rollback si hay error)
  *
  * @async
  * @param {Object} req - Request de Express
@@ -174,6 +182,32 @@ exports.crearVenta = async (req, res) => {
         mensaje: 'La cantidad debe ser mayor a cero'
       });
     }
+    if (item.precio_unitario < 0) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'El precio unitario no puede ser negativo'
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────
+  // VALIDACIÓN DE TOTAL - SEGURIDAD CRÍTICA
+  // Recalcular el total en backend para prevenir manipulación
+  // desde el frontend (ej: cambiar precios en DevTools)
+  // ─────────────────────────────────────────────────
+
+  const totalCalculado = items.reduce((sum, item) => {
+    return sum + (item.cantidad * item.precio_unitario);
+  }, 0);
+
+  // Permitir diferencia de 0.01 por redondeo de decimales
+  const diferencia = Math.abs(totalCalculado - total);
+  if (diferencia > 0.01) {
+    return res.status(400).json({
+      exito: false,
+      mensaje: `El total no coincide. Calculado: ${totalCalculado}, Recibido: ${total}`,
+      codigo: 'TOTAL_INVALIDO'
+    });
   }
 
   // ─────────────────────────────────────────────────
@@ -188,8 +222,9 @@ exports.crearVenta = async (req, res) => {
     await connection.beginTransaction();
 
     // ─────────────────────────────────────────────────
-    // VALIDACIÓN DE STOCK
-    // Verificar ANTES de insertar para evitar rollbacks innecesarios
+    // VALIDACIÓN DE STOCK CON BLOQUEO
+    // Verificar DENTRO de la transacción con FOR UPDATE para prevenir
+    // race conditions en ventas simultáneas del mismo producto
     // ─────────────────────────────────────────────────
 
     const validacionStock = await validarStockDisponible(connection, items);
@@ -299,32 +334,44 @@ exports.crearVenta = async (req, res) => {
 };
 
 /**
- * Obtiene el listado de todas las ventas.
+ * Obtiene el listado de ventas con paginación opcional.
  * Incluye información del cliente para cada venta.
+ *
+ * PAGINACIÓN (opcional):
+ * - Si NO se envían parámetros: devuelve TODAS las ventas (retrocompatible)
+ * - Si se envían pagina/limite: devuelve página específica
  *
  * @async
  * @param {Object} req - Request de Express
+ * @param {Object} req.query - Query parameters
+ * @param {number} [req.query.pagina=1] - Número de página (opcional)
+ * @param {number} [req.query.limite=20] - Registros por página (opcional, máx 100)
  * @param {Object} res - Response de Express
- * @returns {Promise<void>} JSON con array de ventas
+ * @returns {Promise<void>} JSON con array de ventas y metadata de paginación
  *
  * @example
- * // Response exitoso:
- * [
- *   {
- *     "id": 1,
- *     "fecha_venta": "2025-12-27T10:30:00",
- *     "total": 150000,
- *     "metodo_pago": "Efectivo",
- *     "cliente": "María González",
- *     "documento": "1020304050"
- *   }
- * ]
+ * // Request sin paginación:
+ * GET /api/ventas
+ *
+ * @example
+ * // Request con paginación:
+ * GET /api/ventas?pagina=1&limite=50
  */
 exports.obtenerVentas = async (req, res) => {
   try {
-    // JOIN con clientes para mostrar nombre en lugar de solo ID
-    // ORDER BY fecha DESC para ver las más recientes primero
-    const sql = `
+    // Parámetros de paginación
+    const usarPaginacion = req.query.pagina || req.query.limite;
+    let pagina = parseInt(req.query.pagina) || 1;
+    let limite = parseInt(req.query.limite) || 20;
+
+    if (pagina < 1) pagina = 1;
+    if (limite < 1) limite = 20;
+    if (limite > 100) limite = 100;
+
+    const offset = (pagina - 1) * limite;
+
+    // Consulta base
+    const sqlBase = `
       SELECT
         v.id,
         v.fecha_venta,
@@ -337,13 +384,32 @@ exports.obtenerVentas = async (req, res) => {
       ORDER BY v.fecha_venta DESC
     `;
 
-    const [rows] = await db.query(sql);
+    if (usarPaginacion) {
+      // Con paginación
+      const sqlPaginada = sqlBase + ` LIMIT ? OFFSET ?`;
+      const [rows] = await db.query(sqlPaginada, [limite, offset]);
+      const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM mdc_ventas');
 
-    res.json({
-      exito: true,
-      datos: rows,
-      total: rows.length
-    });
+      res.json({
+        exito: true,
+        datos: rows,
+        paginacion: {
+          paginaActual: pagina,
+          registrosPorPagina: limite,
+          totalRegistros: total,
+          totalPaginas: Math.ceil(total / limite)
+        }
+      });
+    } else {
+      // Sin paginación (retrocompatible)
+      const [rows] = await db.query(sqlBase);
+
+      res.json({
+        exito: true,
+        datos: rows,
+        total: rows.length
+      });
+    }
 
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {

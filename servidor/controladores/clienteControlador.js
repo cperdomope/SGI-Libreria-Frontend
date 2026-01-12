@@ -25,31 +25,52 @@
  */
 
 const db = require('../configuracion/db');
+const { aplicarPaginacion } = require('../utilidades/paginacion');
 
 // =====================================================
 // CONTROLADORES CRUD
 // =====================================================
 
 /**
- * Obtiene el listado de todos los clientes.
+ * Obtiene el listado de clientes con paginación opcional.
  * Ordenados alfabéticamente por nombre.
+ *
+ * PAGINACIÓN (opcional):
+ * - Sin parámetros: devuelve TODOS los clientes (retrocompatible)
+ * - Con pagina/limite: devuelve página específica
  *
  * @async
  * @param {Object} req - Request de Express
+ * @param {Object} req.query - Query parameters
+ * @param {number} [req.query.pagina] - Número de página
+ * @param {number} [req.query.limite] - Registros por página
  * @param {Object} res - Response de Express
- * @returns {Promise<void>} JSON con array de clientes
+ * @returns {Promise<void>} JSON con array de clientes y paginación
+ *
+ * @example
+ * GET /api/clientes?pagina=1&limite=20
  */
 const obtenerClientes = async (req, res) => {
   try {
-    const [filas] = await db.query(
-      'SELECT id, nombre_completo, documento, email, telefono, direccion, fecha_registro FROM mdc_clientes ORDER BY nombre_completo ASC'
+    const respuesta = await aplicarPaginacion(
+      req,
+      (limite, offset) => {
+        // Con paginación
+        if (limite !== undefined) {
+          return db.query(
+            'SELECT id, nombre_completo, documento, email, telefono, direccion, fecha_registro FROM mdc_clientes ORDER BY nombre_completo ASC LIMIT ? OFFSET ?',
+            [limite, offset]
+          );
+        }
+        // Sin paginación
+        return db.query(
+          'SELECT id, nombre_completo, documento, email, telefono, direccion, fecha_registro FROM mdc_clientes ORDER BY nombre_completo ASC'
+        );
+      },
+      () => db.query('SELECT COUNT(*) as total FROM mdc_clientes')
     );
 
-    res.json({
-      exito: true,
-      datos: filas,
-      total: filas.length
-    });
+    res.json(respuesta);
 
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
@@ -75,15 +96,7 @@ const obtenerClientes = async (req, res) => {
  * @returns {Promise<void>} JSON con datos del cliente
  */
 const obtenerClientePorId = async (req, res) => {
-  const { id } = req.params;
-
-  // Validar ID
-  if (!id || isNaN(parseInt(id))) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'ID de cliente inválido'
-    });
-  }
+  const { id } = req.params; // ID ya validado por middleware validarId
 
   try {
     const [filas] = await db.query(
@@ -215,16 +228,8 @@ const crearCliente = async (req, res) => {
  * @returns {Promise<void>} JSON con mensaje de éxito o error
  */
 const actualizarCliente = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; // ID ya validado por middleware validarId
   const { nombre_completo, documento, email, telefono, direccion } = req.body;
-
-  // Validar ID
-  if (!id || isNaN(parseInt(id))) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'ID de cliente inválido'
-    });
-  }
 
   // Validaciones básicas
   if (!nombre_completo || nombre_completo.trim() === '') {
@@ -321,15 +326,7 @@ const actualizarCliente = async (req, res) => {
  * @returns {Promise<void>} JSON con mensaje de éxito o error
  */
 const eliminarCliente = async (req, res) => {
-  const { id } = req.params;
-
-  // Validar ID
-  if (!id || isNaN(parseInt(id))) {
-    return res.status(400).json({
-      exito: false,
-      mensaje: 'ID de cliente inválido'
-    });
-  }
+  const { id } = req.params; // ID ya validado por middleware validarId
 
   try {
     const [resultado] = await db.query(

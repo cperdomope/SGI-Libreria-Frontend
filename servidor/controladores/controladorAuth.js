@@ -32,7 +32,15 @@ if (!process.env.JWT_SECRET) {
 
 /**
  * Almacén en memoria para rastrear intentos de login fallidos.
- * En producción con múltiples instancias, debería usarse Redis.
+ *
+ * NOTA PARA PRODUCCIÓN CON MÚLTIPLES INSTANCIAS:
+ * - Para un solo servidor (proyecto académico/pequeño): este Map funciona bien
+ * - Para múltiples instancias con load balancer: considerar Redis o tabla MySQL
+ *
+ * PREVENCIÓN DE FUGA DE MEMORIA:
+ * - Se limpia automáticamente cada 10 minutos (ver limpiezaPeriodicaBloqueos)
+ * - Las entradas expiradas se eliminan al consultar verificarBloqueo
+ *
  * @type {Map<string, {intentos: number, bloqueadoHasta: Date|null}>}
  */
 const intentosLogin = new Map();
@@ -44,8 +52,61 @@ const intentosLogin = new Map();
 const CONFIG_SEGURIDAD = {
   MAX_INTENTOS: 3,              // Intentos permitidos antes de bloquear
   TIEMPO_BLOQUEO_MINUTOS: 3,    // Duración del bloqueo temporal
+  TIEMPO_LIMPIEZA_MINUTOS: 10,  // Frecuencia de limpieza de memoria
   SALT_ROUNDS: 10               // Complejidad del hash bcrypt
 };
+
+/**
+ * Limpia entradas expiradas del Map de intentos de login.
+ * Esto previene fuga de memoria eliminando registros antiguos.
+ * Se ejecuta automáticamente cada TIEMPO_LIMPIEZA_MINUTOS.
+ */
+const limpiarBloqueosExpirados = () => {
+  const ahora = new Date();
+  let eliminados = 0;
+
+  for (const [email, registro] of intentosLogin.entries()) {
+    // Eliminar si el bloqueo expiró hace más de 1 hora
+    // (dar margen para no eliminar intentos recientes sin bloqueo)
+    if (registro.bloqueadoHasta && ahora > registro.bloqueadoHasta) {
+      const horasExpirado = (ahora - registro.bloqueadoHasta) / (1000 * 60 * 60);
+      if (horasExpirado > 1) {
+        intentosLogin.delete(email);
+        eliminados++;
+      }
+    }
+    // Eliminar intentos sin bloqueo que tengan más de 24 horas
+    else if (!registro.bloqueadoHasta && registro.primeraFecha) {
+      const horasDesdeInicio = (ahora - registro.primeraFecha) / (1000 * 60 * 60);
+      if (horasDesdeInicio > 24) {
+        intentosLogin.delete(email);
+        eliminados++;
+      }
+    }
+  }
+
+  if (process.env.NODE_ENV === 'development' && eliminados > 0) {
+    console.log(`[Auth] Limpieza: ${eliminados} registros de bloqueo expirados eliminados`);
+  }
+};
+
+/**
+ * Inicia el sistema de limpieza periódica de bloqueos.
+ * Se ejecuta automáticamente al cargar el módulo.
+ */
+const iniciarLimpiezaPeriodica = () => {
+  // Ejecutar limpieza cada TIEMPO_LIMPIEZA_MINUTOS
+  setInterval(() => {
+    limpiarBloqueosExpirados();
+  }, CONFIG_SEGURIDAD.TIEMPO_LIMPIEZA_MINUTOS * 60 * 1000);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Auth] Sistema anti-brute force iniciado con limpieza cada ${CONFIG_SEGURIDAD.TIEMPO_LIMPIEZA_MINUTOS} minutos`);
+  }
+};
+
+// Iniciar limpieza automática al cargar el módulo
+iniciarLimpiezaPeriodica();
 
 /**
  * Verifica si un email está bloqueado por exceso de intentos fallidos.
@@ -96,7 +157,8 @@ const registrarIntentoFallido = (email) => {
   // Obtener registro existente o crear uno nuevo
   const registro = intentosLogin.get(email) || {
     intentos: 0,
-    bloqueadoHasta: null
+    bloqueadoHasta: null,
+    primeraFecha: new Date()  // Para limpieza de memoria
   };
 
   registro.intentos += 1;
