@@ -59,6 +59,9 @@ const { limiterAPI } = require('./middlewares/rateLimiter');
 
 const app = express();
 
+// Railway usa un reverse proxy — necesario para que express-rate-limit
+// lea correctamente la IP real del cliente desde X-Forwarded-For.
+app.set('trust proxy', 1);
 
 // ─────────────────────────────────────────────────────────
 // MIDDLEWARE 1: HELMET — Headers de seguridad HTTP
