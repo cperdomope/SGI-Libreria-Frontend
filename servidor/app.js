@@ -59,9 +59,6 @@ const { limiterAPI } = require('./middlewares/rateLimiter');
 
 const app = express();
 
-// Log de diagnóstico — visible en Railway Deploy Logs
-console.log('[CORS] CORS_ORIGIN =', JSON.stringify(process.env.CORS_ORIGIN));
-console.log('[ENV]  NODE_ENV    =', process.env.NODE_ENV);
 
 // ─────────────────────────────────────────────────────────
 // MIDDLEWARE 1: HELMET — Headers de seguridad HTTP
@@ -109,12 +106,21 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // Esta configuración CORS permite exactamente ese origen
 // y los métodos/headers que usa el frontend.
 // En producción, CORS_ORIGIN en el .env sería el dominio real del frontend.
+// Orígenes permitidos: variable de entorno + fallbacks conocidos.
+// Se usa un array para soportar desarrollo local y producción simultáneamente.
+const origenesPermitidos = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://sgi-libreria-el-saber-production.up.railway.app',
+  ...(process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN.trim()] : []),
+].filter(Boolean);
+
 app.use(cors({
-  origin:               (process.env.CORS_ORIGIN || 'http://localhost:5173').trim(),
-  credentials:          true,  // Permite envío de cookies y headers de auth
+  origin:               origenesPermitidos,
+  credentials:          true,
   methods:              ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders:       ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200    // Algunos browsers viejos necesitan 200, no 204
+  optionsSuccessStatus: 200
 }));
 
 // ─────────────────────────────────────────────────────────
