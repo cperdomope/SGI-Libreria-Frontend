@@ -59,6 +59,10 @@ const { limiterAPI } = require('./middlewares/rateLimiter');
 
 const app = express();
 
+// Log de diagnóstico — visible en Railway Deploy Logs
+console.log('[CORS] CORS_ORIGIN =', JSON.stringify(process.env.CORS_ORIGIN));
+console.log('[ENV]  NODE_ENV    =', process.env.NODE_ENV);
+
 // ─────────────────────────────────────────────────────────
 // MIDDLEWARE 1: HELMET — Headers de seguridad HTTP
 // ─────────────────────────────────────────────────────────
