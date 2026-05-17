@@ -46,3 +46,9 @@ desktop.ini
 *.tmp
 .cache/
 .temp/
+
+# Imágenes subidas localmente (en nube van a Cloudinary, no al repo)
+servidor/uploads/portadas/
+
+# Documentos de office y reportes binarios (no van al repo)
+*.docx
