@@ -106,7 +106,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // y los métodos/headers que usa el frontend.
 // En producción, CORS_ORIGIN en el .env sería el dominio real del frontend.
 app.use(cors({
-  origin:               process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin:               (process.env.CORS_ORIGIN || 'http://localhost:5173').trim(),
   credentials:          true,  // Permite envío de cookies y headers de auth
   methods:              ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders:       ['Content-Type', 'Authorization'],
