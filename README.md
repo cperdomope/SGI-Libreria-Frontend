@@ -20,6 +20,26 @@ Todo esto funciona desde el navegador, no necesita instalar nada en el computado
 
 ---
 
+## Aplicación en producción
+
+El sistema está desplegado en **Railway** y es accesible públicamente:
+
+| Servicio | URL |
+|----------|-----|
+| **Frontend** | https://sgi-libreria-el-saber-production.up.railway.app |
+| **Backend (API)** | https://friendly-kindness-production-06fe.up.railway.app |
+| **Base de datos** | autorack.proxy.rlwy.net:39238 — `inventario_libreria` |
+
+### Usuarios de prueba
+
+| Nombre | Correo | Contraseña | Rol |
+|--------|--------|-----------|-----|
+| Luz Darlys | ldarlys@sena.edu.co | Luzd12345 | Administrador |
+| Carlos Ivan Perdomo | cip@sena.edu.co | cip123 | Administrador |
+| Michelle Martínez | michelle@sena.edu.co | vendedor123 | Vendedor |
+
+---
+
 ## ¿Cómo funciona el sistema? (Paso a paso)
 
 ### 1. Iniciar sesión
@@ -60,9 +80,9 @@ Estas son las herramientas y tecnologías que usamos para construir el proyecto.
 
 | Tecnología | ¿Para qué la usamos? |
 |------------|----------------------|
-| **React** | Para crear toda la interfaz del usuario (botones, formularios, tablas, etc.) |
-| **Vite** | Para que el proyecto cargue rápido mientras desarrollamos y para generar la versión final |
-| **Bootstrap** | Para que el diseño se vea bonito y funcione bien en celulares y computadores |
+| **React 19** | Para crear toda la interfaz del usuario (botones, formularios, tablas, etc.) |
+| **Vite 7** | Para que el proyecto cargue rápido mientras desarrollamos y para generar la versión final |
+| **Bootstrap 5** | Para que el diseño se vea bonito y funcione bien en celulares y computadores |
 | **React Router DOM** | Para navegar entre las páginas sin que se recargue toda la aplicación |
 | **Axios** | Para enviar y recibir datos del servidor (como cuando se guarda un libro o se hace una venta) |
 | **react-hook-form** | Para manejar los formularios y validar que el usuario llene bien los campos |
@@ -75,14 +95,17 @@ Estas son las herramientas y tecnologías que usamos para construir el proyecto.
 | Tecnología | ¿Para qué la usamos? |
 |------------|----------------------|
 | **Node.js** | Es el motor que permite correr JavaScript en el servidor |
-| **Express** | Es el framework que usamos para crear las rutas y manejar las peticiones del frontend |
-| **MySQL** | Es la base de datos donde se guarda toda la información (libros, ventas, clientes, etc.) |
+| **Express 5** | Es el framework que usamos para crear las rutas y manejar las peticiones del frontend |
+| **MySQL 8** | Es la base de datos donde se guarda toda la información (libros, ventas, clientes, etc.) |
 | **JWT** | Para manejar la sesión del usuario de forma segura (genera un token cuando inicia sesión) |
 | **bcrypt** | Para guardar las contraseñas encriptadas (nadie puede verlas en la base de datos) |
-| **Multer** | Para subir las imágenes de portada de los libros |
-| **morgan** | Para ver en la consola qué peticiones le llegan al servidor (útil para depurar) |
+| **Multer** | Para recibir y procesar las imágenes de portada enviadas desde el frontend |
+| **Cloudinary** | Para almacenar las imágenes de portada en la nube (producción) |
+| **multer-storage-cloudinary** | Conecta Multer con Cloudinary para subir imágenes directamente sin guardarlas en disco |
+| **Helmet** | Para agregar headers de seguridad HTTP automáticamente (CSP, HSTS, X-Frame-Options, etc.) |
+| **express-rate-limit** | Para limitar la cantidad de peticiones por IP y proteger contra ataques de fuerza bruta |
 | **compression** | Para comprimir las respuestas y que la app cargue más rápido |
-| **PM2** | Para mantener el servidor corriendo en producción sin que se caiga |
+| **morgan** | Para ver en la consola qué peticiones le llegan al servidor (útil para depurar) |
 | **Jest + Supertest** | Para hacer pruebas automatizadas y verificar que todo funcione bien |
 
 ---
@@ -96,17 +119,17 @@ El proyecto tiene 3 partes principales que trabajan juntas:
 │   FRONTEND (React)   │  ← Lo que el usuario ve y toca en el navegador
 │   Carpeta: cliente/  │     (botones, tablas, formularios)
 └──────────┬───────────┘
-           │ Se comunican por internet (peticiones HTTP)
+           │ Se comunican por internet (peticiones HTTP/HTTPS)
            │
-┌──────────▼───────────┐
-│  BACKEND (Express)   │  ← La lógica del negocio, recibe peticiones,
-│  Carpeta: servidor/  │     procesa datos y responde
-└──────────┬───────────┘
+┌──────────▼───────────┐       ┌─────────────────┐
+│  BACKEND (Express)   │──────>│   Cloudinary    │  ← Almacenamiento
+│  Carpeta: servidor/  │       │  (imágenes)     │     de imágenes
+└──────────┬───────────┘       └─────────────────┘
            │ Guarda y consulta datos
            │
 ┌──────────▼───────────┐
 │  BASE DE DATOS       │  ← Donde se almacena toda la información
-│  MySQL               │     (libros, ventas, usuarios, etc.)
+│  MySQL 8             │     (libros, ventas, usuarios, etc.)
 └──────────────────────┘
 ```
 
@@ -114,13 +137,15 @@ El proyecto tiene 3 partes principales que trabajan juntas:
 - El **Frontend** es como la cara del sistema, lo que el usuario ve.
 - El **Backend** es como el cerebro, procesa toda la lógica.
 - La **Base de datos** es como la memoria, guarda todo para que no se pierda.
+- **Cloudinary** almacena las imágenes de portada de los libros en la nube.
 
-### En producción (cuando está en internet):
-- El Frontend se sube a **Vercel** (un servicio gratuito para páginas web)
-- El Backend se sube a **Render** (un servicio para servidores)
-- La Base de datos está en **Aiven Cloud** (MySQL en la nube)
+### En producción (desplegado en Railway):
+- El Frontend, el Backend y la Base de datos están en **Railway**
+- Las imágenes de portada se guardan en **Cloudinary** (servicio externo de almacenamiento de imágenes)
+- Railway sirve el frontend como SPA con `serve -s dist`
+- Railway inyecta el puerto automáticamente (`PORT=8080`) y maneja el HTTPS con sus propios certificados
 
-> Los archivos `.env` con las contraseñas **nunca se suben al repositorio**. Las variables se configuran directamente en los dashboards de Vercel y Render.
+> Los archivos `.env` con las contraseñas **nunca se suben al repositorio**. Las variables se configuran directamente en el dashboard de Railway.
 
 ---
 
@@ -174,16 +199,18 @@ proyecto-inventario/
 │   │   ├── services/api.js           # Conexión con el servidor
 │   │   ├── hooks/usePaginacion.js    # Lógica de paginación
 │   │   └── styles/custom-theme.css   # Estilos personalizados
+│   ├── railway.json                  # Configuración de despliegue en Railway
 │   └── public/
 │
 ├── servidor/                         # Backend (lógica del servidor)
 │   ├── controllers/                  # Donde está la lógica de cada módulo
 │   ├── routes/                       # Las rutas de la API
-│   ├── middlewares/                  # Seguridad (JWT, roles, etc.)
+│   ├── middlewares/                  # Seguridad (JWT, roles, rate limiting, uploads)
 │   ├── config/db.js                  # Conexión a la base de datos
-│   ├── pruebas/                      # Pruebas automatizadas
-│   ├── uploads/portadas/             # Imágenes de portada de libros
-│   ├── app.js                        # Configuración del servidor
+│   ├── pruebas/                      # Pruebas automatizadas (Jest + Supertest)
+│   ├── uploads/portadas/             # Imágenes de portada en modo local (desarrollo)
+│   ├── railway.json                  # Configuración de despliegue en Railway
+│   ├── app.js                        # Configuración del servidor y middlewares
 │   └── index.js                      # Archivo principal que arranca todo
 │
 └── base_datos/
@@ -194,7 +221,7 @@ proyecto-inventario/
 
 ## Base de datos
 
-Usamos **MySQL** para guardar toda la información. La base de datos se llama `inventario_libreria` y tiene 10 tablas. Todas empiezan con el prefijo `mdc_`.
+Usamos **MySQL 8** para guardar toda la información. La base de datos se llama `inventario_libreria` y tiene 10 tablas. Todas empiezan con el prefijo `mdc_`.
 
 ### Tablas principales
 
@@ -202,7 +229,7 @@ Usamos **MySQL** para guardar toda la información. La base de datos se llama `i
 |-------|--------------|
 | `mdc_roles` | Los roles del sistema (Administrador y Vendedor) |
 | `mdc_usuarios` | Las cuentas de los empleados (nombre, correo, contraseña encriptada) |
-| `mdc_libros` | Los libros con su ISBN, precio, stock y portada |
+| `mdc_libros` | Los libros con su ISBN, precio, stock y URL de portada |
 | `mdc_autores` | Los autores de los libros |
 | `mdc_categorias` | Las categorías para clasificar los libros |
 | `mdc_movimientos` | El historial de entradas y salidas de inventario |
@@ -247,8 +274,11 @@ Implementamos varias medidas de seguridad para proteger el sistema:
 - **Control de roles:** cada ruta verifica que el usuario tenga permiso para acceder
 - **Límite de peticiones (Rate Limiting):** el login permite máximo 10 intentos por IP cada 15 minutos; la API general permite 500 peticiones por IP cada 15 minutos
 - **CORS:** solo el frontend autorizado puede comunicarse con el servidor
+- **Headers de seguridad (Helmet):** se aplican automáticamente X-Content-Type-Options, X-Frame-Options, HSTS y Content-Security-Policy
+- **Trust proxy:** configurado para que el rate limiting funcione correctamente detrás del proxy inverso de Railway
 - **Validación doble:** los datos se validan en el frontend Y en el backend
 - **Transacciones:** las operaciones importantes (ventas, movimientos) usan transacciones para que no queden datos a medias
+- **Imágenes validadas:** la subida de portadas valida tanto la extensión como el MIME type real del archivo (evita subir archivos maliciosos con extensión .jpg)
 
 ---
 
@@ -333,7 +363,7 @@ npm run dev                      # La app arranca en http://localhost:5173
 
 ## Variables de entorno
 
-Son valores privados que cada quien configura en su computador. Nunca se suben a GitHub.
+Son valores privados que cada quien configura en su computador o en el dashboard del servicio de despliegue. Nunca se suben a GitHub.
 
 ### `servidor/.env`
 
@@ -348,6 +378,12 @@ DB_SSL=false
 JWT_SECRET=una_clave_secreta_larga
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:5173
+
+# Cloudinary — para almacenar imágenes de portada en la nube
+# Si no se configuran, las imágenes se guardan en disco local (solo para desarrollo)
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
 ```
 
 ### `cliente/.env`
@@ -355,6 +391,10 @@ CORS_ORIGIN=http://localhost:5173
 ```
 VITE_API_URL=http://localhost:3000/api
 ```
+
+### Variables en Railway (producción)
+
+En producción, Railway inyecta automáticamente las variables del plugin MySQL (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`). Las variables de Cloudinary y JWT se configuran manualmente en el panel de Railway del servicio backend.
 
 ---
 
@@ -408,7 +448,9 @@ Este proyecto me enseñó muchas cosas que no se aprenden solo con la teoría:
 
 - **A pensar en el usuario:** El sistema tiene que ser fácil de usar, verse bien en celular y en computador, y dar mensajes claros cuando algo sale mal.
 
-- **A desplegar en internet:** Pasar de "funciona en mi computador" a "funciona en internet" fue todo un reto. Aprendí a usar servicios como Vercel, Render y Aiven.
+- **A desplegar en internet:** Pasar de "funciona en mi computador" a "funciona en internet" fue todo un reto. Aprendí a usar Railway para desplegar el frontend, backend y base de datos, a configurar HTTPS, CORS entre servicios distintos y a depurar problemas que solo ocurren en producción.
+
+- **A integrar servicios externos:** Conectar el sistema con Cloudinary para el almacenamiento de imágenes me enseñó cómo funciona la integración con APIs de terceros y el manejo de credenciales de forma segura.
 
 ---
 
