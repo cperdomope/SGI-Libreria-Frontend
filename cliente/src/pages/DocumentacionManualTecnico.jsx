@@ -1,17 +1,17 @@
 // =====================================================
-// PAGINA: Manual Tecnico (Documentacion SENA)
+// PAGINA: Manual Técnico (Documentación SENA)
 // =====================================================
-// El Manual Tecnico es un documento obligatorio en proyectos SENA que
+// El Manual Técnico es un documento obligatorio en proyectos SENA que
 // describe la arquitectura interna del sistema. A diferencia del Manual
-// de Usuario (que explica COMO usar el sistema), el Manual Tecnico
-// explica COMO esta construido: tecnologias, estructura de carpetas,
+// de Usuario (que explica CÓMO usar el sistema), el Manual Técnico
+// explica CÓMO está construido: tecnologías, estructura de carpetas,
 // base de datos, API, seguridad y despliegue.
 //
-// Audiencia: desarrolladores, instructores tecnicos y jurados SENA
-// que necesitan entender las decisiones tecnicas del proyecto.
+// Audiencia: desarrolladores, instructores técnicos y jurados SENA
+// que necesitan entender las decisiones técnicas del proyecto.
 //
-// Este componente no tiene logica (useState, useEffect, etc.) porque
-// es contenido 100% estatico. Es un componente "presentacional puro":
+// Este componente no tiene lógica (useState, useEffect, etc.) porque
+// es contenido 100% estático. Es un componente "presentacional puro":
 // solo retorna JSX con HTML y clases Bootstrap para dar formato.
 // Se carga con lazy() desde Acceso.jsx (code splitting).
 //
@@ -20,8 +20,8 @@
 //   - Grid system de Bootstrap (row + col-md-4) para layouts responsivos
 //   - Cards de Bootstrap para organizar contenido visualmente
 //   - Template literals multilínea en JSX con {`texto`} dentro de <pre>
-//   - Etiqueta <code> para resaltar nombres tecnicos inline
-//   - Etiqueta <pre> para bloques de codigo con formato preservado
+//   - Etiqueta <code> para resaltar nombres técnicos inline
+//   - Etiqueta <pre> para bloques de código con formato preservado
 // =====================================================
 
 // =====================================================
@@ -34,43 +34,43 @@
 const DocumentacionManualTecnico = () => {
   return (
     <div className="container py-4">
-      <h2 className="fw-bold text-primary mb-1">Manual Tecnico</h2>
+      <h2 className="fw-bold text-primary mb-1">Manual Técnico</h2>
       <p className="text-muted mb-4">
-        Este manual explica como esta construido el sistema por dentro: que tecnologias usamos,
-        como esta organizado el codigo y como funciona cada parte.
+        Este manual explica cómo está construido el sistema por dentro: qué tecnologías usamos,
+        cómo está organizado el código y cómo funciona cada parte.
       </p>
 
-      {/* -- SECCION 1: DESCRIPCION GENERAL --
-          Cada seccion usa el componente Card de Bootstrap 5:
+      {/* -- SECCIÓN 1: DESCRIPCIÓN GENERAL --
+          Cada sección usa el componente Card de Bootstrap 5:
           - card: contenedor con bordes y sombra
           - card-header: encabezado coloreado (bg-primary = azul)
           - card-body: contenido con padding interno
           shadow-sm: sombra sutil para dar profundidad visual */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          1. Descripcion general del sistema
+          1. Descripción general del sistema
         </div>
         <div className="card-body">
           <p>
-            El <strong>SGI Libreria El Saber</strong> es una aplicacion web que sirve para gestionar
-            el inventario, las ventas, los clientes y los proveedores de una libreria.
+            El <strong>SGI Librería El Saber</strong> es una aplicación web que sirve para gestionar
+            el inventario, las ventas, los clientes y los proveedores de una librería.
           </p>
           <p>
             El sistema tiene dos tipos de usuarios:
           </p>
           <ul>
-            <li><strong>Administrador:</strong> puede hacer todo (gestionar inventario, usuarios, ver estadisticas, anular ventas, etc.)</li>
+            <li><strong>Administrador:</strong> puede hacer todo (gestionar inventario, usuarios, ver estadísticas, anular ventas, etc.)</li>
             <li><strong>Vendedor:</strong> puede registrar ventas, ver el inventario y gestionar clientes</li>
           </ul>
           <p className="mb-0">
-            La aplicacion funciona desde el navegador (Chrome, Firefox, Edge, etc.) y se adapta
+            La aplicación funciona desde el navegador (Chrome, Firefox, Edge, etc.) y se adapta
             a celulares, tablets y computadores.
           </p>
         </div>
       </div>
 
-      {/* -- SECCION 2: ARQUITECTURA --
-          Aqui usamos el Grid System de Bootstrap para mostrar 3 cards
+      {/* -- SECCIÓN 2: ARQUITECTURA --
+          Aquí usamos el Grid System de Bootstrap para mostrar 3 cards
           lado a lado. El sistema de grilla divide la pantalla en 12 columnas:
           - col-md-4 = cada card ocupa 4 de 12 columnas (1/3 del ancho)
           - En pantallas menores a "md" (768px), las cards se apilan verticalmente
@@ -79,7 +79,7 @@ const DocumentacionManualTecnico = () => {
           - h-100: hace que todas las cards tengan la misma altura */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          2. Arquitectura del sistema (como esta dividido)
+          2. Arquitectura del sistema (cómo está dividido)
         </div>
         <div className="card-body">
           <p>El proyecto tiene 3 partes principales que trabajan juntas:</p>
@@ -90,7 +90,7 @@ const DocumentacionManualTecnico = () => {
                 <div className="card-body text-center">
                   <h5 className="text-success fw-bold">Frontend</h5>
                   <p className="small mb-1">Carpeta: <code>cliente/</code></p>
-                  <p className="small mb-0">Es lo que el usuario ve y toca en el navegador: botones, formularios, tablas, graficas.</p>
+                  <p className="small mb-0">Es lo que el usuario ve y toca en el navegador: botones, formularios, tablas, gráficas.</p>
                 </div>
               </div>
             </div>
@@ -99,7 +99,7 @@ const DocumentacionManualTecnico = () => {
                 <div className="card-body text-center">
                   <h5 className="text-warning fw-bold">Backend</h5>
                   <p className="small mb-1">Carpeta: <code>servidor/</code></p>
-                  <p className="small mb-0">Es la logica del negocio. Recibe peticiones del frontend, las procesa y responde con datos.</p>
+                  <p className="small mb-0">Es la lógica del negocio. Recibe peticiones del frontend, las procesa y responde con datos.</p>
                 </div>
               </div>
             </div>
@@ -108,24 +108,24 @@ const DocumentacionManualTecnico = () => {
                 <div className="card-body text-center">
                   <h5 className="text-info fw-bold">Base de Datos</h5>
                   <p className="small mb-1">MySQL</p>
-                  <p className="small mb-0">Donde se guarda toda la informacion de forma permanente: libros, ventas, usuarios, etc.</p>
+                  <p className="small mb-0">Donde se guarda toda la información de forma permanente: libros, ventas, usuarios, etc.</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="alert alert-light border">
-            <strong>Flujo basico:</strong> El usuario hace clic en un boton (Frontend) &rarr;
-            Se envia una peticion al servidor (Backend) &rarr; El servidor consulta o guarda datos
+            <strong>Flujo básico:</strong> El usuario hace clic en un botón (Frontend) &rarr;
+            Se envía una petición al servidor (Backend) &rarr; El servidor consulta o guarda datos
             en la base de datos (MySQL) &rarr; El servidor responde &rarr; El frontend muestra el resultado.
           </div>
         </div>
       </div>
 
-      {/* ── SECCION 3: TECNOLOGIAS ── */}
+      {/* ── SECCIÓN 3: TECNOLOGÍAS ── */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          3. Tecnologias utilizadas
+          3. Tecnologías utilizadas
         </div>
         <div className="card-body">
           <h6 className="fw-bold mt-2 mb-2">Frontend (lo que ve el usuario)</h6>
@@ -133,42 +133,43 @@ const DocumentacionManualTecnico = () => {
             <table className="table table-bordered table-sm">
               <thead className="table-light">
                 <tr>
-                  <th>Tecnologia</th>
-                  <th>Para que la usamos</th>
+                  <th>Tecnología</th>
+                  <th>Para qué la usamos</th>
                 </tr>
               </thead>
               <tbody>
                 <tr><td><strong>React</strong></td><td>Para crear la interfaz del usuario (botones, formularios, tablas)</td></tr>
-                <tr><td><strong>Vite</strong></td><td>Para que el proyecto cargue rapido mientras desarrollamos</td></tr>
-                <tr><td><strong>Bootstrap 5</strong></td><td>Para que el diseno se vea bien y funcione en celulares</td></tr>
-                <tr><td><strong>React Router</strong></td><td>Para navegar entre paginas sin recargar toda la app</td></tr>
+                <tr><td><strong>Vite</strong></td><td>Para que el proyecto cargue rápido mientras desarrollamos</td></tr>
+                <tr><td><strong>Bootstrap 5</strong></td><td>Para que el diseño se vea bien y funcione en celulares</td></tr>
+                <tr><td><strong>React Router</strong></td><td>Para navegar entre páginas sin recargar toda la app</td></tr>
                 <tr><td><strong>Axios</strong></td><td>Para enviar y recibir datos del servidor</td></tr>
                 <tr><td><strong>react-hook-form</strong></td><td>Para manejar formularios y validar los campos</td></tr>
-                <tr><td><strong>Recharts</strong></td><td>Para crear las graficas del Dashboard</td></tr>
+                <tr><td><strong>Recharts</strong></td><td>Para crear las gráficas del Dashboard</td></tr>
                 <tr><td><strong>jsPDF</strong></td><td>Para generar tickets de venta en PDF</td></tr>
                 <tr><td><strong>xlsx</strong></td><td>Para exportar datos a archivos de Excel</td></tr>
               </tbody>
             </table>
           </div>
 
-          <h6 className="fw-bold mt-3 mb-2">Backend (la logica del servidor)</h6>
+          <h6 className="fw-bold mt-3 mb-2">Backend (la lógica del servidor)</h6>
           <div className="table-responsive">
             <table className="table table-bordered table-sm">
               <thead className="table-light">
                 <tr>
-                  <th>Tecnologia</th>
-                  <th>Para que la usamos</th>
+                  <th>Tecnología</th>
+                  <th>Para qué la usamos</th>
                 </tr>
               </thead>
               <tbody>
                 <tr><td><strong>Node.js</strong></td><td>Motor que permite correr JavaScript en el servidor</td></tr>
                 <tr><td><strong>Express 5</strong></td><td>Framework para crear las rutas de la API y manejar peticiones</td></tr>
-                <tr><td><strong>MySQL 8</strong></td><td>Base de datos donde se guarda toda la informacion</td></tr>
+                <tr><td><strong>MySQL 8</strong></td><td>Base de datos donde se guarda toda la información</td></tr>
                 <tr><td><strong>JWT</strong></td><td>Para manejar sesiones de forma segura con tokens</td></tr>
-                <tr><td><strong>bcrypt</strong></td><td>Para guardar las contrasenas encriptadas</td></tr>
-                <tr><td><strong>Multer</strong></td><td>Para subir imagenes de portada de los libros</td></tr>
-                <tr><td><strong>morgan</strong></td><td>Para ver en la consola que peticiones llegan al servidor</td></tr>
-                <tr><td><strong>compression</strong></td><td>Para comprimir las respuestas y que cargue mas rapido</td></tr>
+                <tr><td><strong>bcryptjs</strong></td><td>Para guardar las contraseñas encriptadas</td></tr>
+                <tr><td><strong>Multer + Cloudinary</strong></td><td>Para subir imágenes de portada: Multer recibe el archivo y Cloudinary lo almacena en la nube</td></tr>
+                <tr><td><strong>Helmet</strong></td><td>Para aplicar cabeceras de seguridad HTTP automáticamente (CSP, HSTS, X-Frame-Options, etc.)</td></tr>
+                <tr><td><strong>morgan</strong></td><td>Para ver en la consola qué peticiones llegan al servidor</td></tr>
+                <tr><td><strong>compression</strong></td><td>Para comprimir las respuestas y que cargue más rápido</td></tr>
                 <tr><td><strong>Jest + Supertest</strong></td><td>Para hacer pruebas automatizadas</td></tr>
               </tbody>
             </table>
@@ -176,13 +177,13 @@ const DocumentacionManualTecnico = () => {
         </div>
       </div>
 
-      {/* -- SECCION 4: ESTRUCTURA DE CARPETAS --
+      {/* -- SECCIÓN 4: ESTRUCTURA DE CARPETAS --
           Usamos la etiqueta <pre> (preformateado) para mostrar texto con
           formato fijo (monoespaciado). Dentro, usamos un template literal
           multilínea con {`texto`}. Las backticks (`) permiten escribir
-          texto en varias lineas y preservar los saltos de linea y espacios.
+          texto en varias líneas y preservar los saltos de línea y espacios.
           style={{ overflowX: 'auto' }} agrega scroll horizontal si el
-          contenido es mas ancho que la pantalla (importante en moviles). */}
+          contenido es más ancho que la pantalla (importante en móviles). */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
           4. Estructura de carpetas del proyecto
@@ -194,10 +195,10 @@ const DocumentacionManualTecnico = () => {
 |-- cliente/                    (Frontend - React)
 |   |-- src/
 |   |   |-- main.jsx            (Punto de entrada de React)
-|   |   |-- index.css            (Estilos base de la aplicacion)
-|   |   |-- App.jsx              (Componente raiz con las rutas)
+|   |   |-- index.css           (Estilos base de la aplicación)
+|   |   |-- App.jsx             (Componente raíz con las rutas)
 |   |   |
-|   |   |-- pages/              (Paginas de la aplicacion)
+|   |   |-- pages/              (Páginas de la aplicación)
 |   |   |   |-- Acceso.jsx            Login
 |   |   |   |-- Inicio.jsx            Dashboard
 |   |   |   |-- Inventario.jsx        Lista de libros
@@ -205,13 +206,13 @@ const DocumentacionManualTecnico = () => {
 |   |   |   |-- PaginaVentas.jsx      Punto de venta
 |   |   |   |-- HistorialVentas.jsx   Historial de ventas
 |   |   |   |-- PaginaClientes.jsx    Clientes
-|   |   |   |-- AdminUsuarios.jsx     Gestion de usuarios
+|   |   |   |-- AdminUsuarios.jsx     Gestión de usuarios
 |   |   |   |-- PaginaProveedores.jsx Proveedores
 |   |   |   |-- PaginaAutores.jsx     Autores
-|   |   |   |-- PaginaCategorias.jsx  Categorias
+|   |   |   |-- PaginaCategorias.jsx  Categorías
 |   |   |   |-- DocumentacionHistorias.jsx      Historias de usuario
-|   |   |   |-- DocumentacionCriterios.jsx      Criterios de aceptacion
-|   |   |   |-- DocumentacionManualTecnico.jsx  Manual tecnico
+|   |   |   |-- DocumentacionCriterios.jsx      Criterios de aceptación
+|   |   |   |-- DocumentacionManualTecnico.jsx  Manual técnico
 |   |   |   |-- DocumentacionManualUsuario.jsx  Manual de usuario
 |   |   |
 |   |   |-- components/         (Componentes reutilizables)
@@ -221,23 +222,23 @@ const DocumentacionManualTecnico = () => {
 |   |   |   |-- RutaProtegidaPorRol.jsx
 |   |   |   |-- LayoutPrincipal.jsx
 |   |   |
-|   |   |-- context/AuthContext.jsx   (Manejo de sesion y permisos)
-|   |   |-- services/api.js           (Conexion con el servidor)
-|   |   |-- hooks/usePaginacion.js    (Logica de paginacion)
+|   |   |-- context/AuthContext.jsx   (Manejo de sesión y permisos)
+|   |   |-- services/api.js           (Conexión con el servidor)
+|   |   |-- hooks/usePaginacion.js    (Lógica de paginación)
 |   |   |-- styles/custom-theme.css   (Estilos personalizados)
 |
 |-- servidor/                   (Backend - Node.js + Express)
-|   |-- controllers/            (Logica de cada modulo)
+|   |-- controllers/            (Lógica de cada módulo)
 |   |-- routes/                 (Rutas de la API)
 |   |-- middlewares/            (Seguridad: JWT, roles, etc.)
-|   |-- config/db.js            (Conexion a MySQL)
+|   |-- config/db.js            (Conexión a MySQL)
 |   |-- utils/paginacion.js     (Utilidad para paginar resultados)
 |   |-- pruebas/                (Tests automatizados)
 |   |-- scripts/                (Scripts auxiliares de mantenimiento)
-|   |-- uploads/portadas/       (Imagenes de libros)
-|   |-- app.js                  (Configuracion del servidor)
+|   |-- uploads/portadas/       (Imágenes de libros)
+|   |-- app.js                  (Configuración del servidor)
 |   |-- index.js                (Archivo que arranca todo)
-|   |-- pm2.config.js           (Configuracion de PM2 para produccion)
+|   |-- pm2.config.js           (Configuración de PM2 para producción)
 |
 |-- base_datos/
     |-- sgi_libreria_completo.sql   (Script para crear la BD)`}
@@ -245,7 +246,7 @@ const DocumentacionManualTecnico = () => {
         </div>
       </div>
 
-      {/* ── SECCION 5: BASE DE DATOS ── */}
+      {/* ── SECCIÓN 5: BASE DE DATOS ── */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
           5. Base de datos
@@ -263,15 +264,15 @@ const DocumentacionManualTecnico = () => {
               <thead className="table-light">
                 <tr>
                   <th>Tabla</th>
-                  <th>Que guarda</th>
+                  <th>Qué guarda</th>
                 </tr>
               </thead>
               <tbody>
                 <tr><td><code>mdc_roles</code></td><td>Roles: Administrador (1) y Vendedor (2)</td></tr>
-                <tr><td><code>mdc_usuarios</code></td><td>Cuentas de empleados (nombre, email, contrasena encriptada, estado)</td></tr>
-                <tr><td><code>mdc_libros</code></td><td>Libros con ISBN, precio, stock actual, stock minimo y portada</td></tr>
-                <tr><td><code>mdc_autores</code></td><td>Autores con nombre y nacionalidad</td></tr>
-                <tr><td><code>mdc_categorias</code></td><td>Categorias con nombre y descripcion</td></tr>
+                <tr><td><code>mdc_usuarios</code></td><td>Cuentas de empleados (nombre, email, contraseña encriptada, estado)</td></tr>
+                <tr><td><code>mdc_libros</code></td><td>Libros con ISBN, precio, stock actual, stock mínimo y portada</td></tr>
+                <tr><td><code>mdc_autores</code></td><td>Autores con nombre</td></tr>
+                <tr><td><code>mdc_categorias</code></td><td>Categorías con nombre y descripción</td></tr>
                 <tr><td><code>mdc_movimientos</code></td><td>Historial de entradas y salidas de inventario</td></tr>
                 <tr><td><code>mdc_clientes</code></td><td>Datos de los clientes</td></tr>
                 <tr><td><code>mdc_proveedores</code></td><td>Datos de los proveedores</td></tr>
@@ -294,30 +295,30 @@ mdc_proveedores --> mdc_movimientos`}
           </pre>
 
           <p className="mb-0">
-            La base de datos esta normalizada en <strong>Tercera Forma Normal (3NF)</strong>,
-            lo que significa que la informacion no se repite innecesariamente y esta bien organizada.
+            La base de datos está normalizada en <strong>Tercera Forma Normal (3NF)</strong>,
+            lo que significa que la información no se repite innecesariamente y está bien organizada.
           </p>
         </div>
       </div>
 
-      {/* -- SECCION 6: API REST --
+      {/* -- SECCIÓN 6: API REST --
           REST (Representational State Transfer) es un estilo de arquitectura
-          para comunicar sistemas a traves de HTTP. Los 5 metodos principales:
+          para comunicar sistemas a través de HTTP. Los 5 métodos principales:
             GET    = Obtener datos (lectura)
             POST   = Crear un recurso nuevo
             PUT    = Actualizar un recurso completo
             PATCH  = Actualizar parcialmente un recurso
             DELETE = Eliminar un recurso
-          Cada endpoint combina un metodo HTTP + una URL + permisos requeridos. */}
+          Cada endpoint combina un método HTTP + una URL + permisos requeridos. */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          6. API REST (como se comunica el frontend con el backend)
+          6. API REST (cómo se comunica el frontend con el backend)
         </div>
         <div className="card-body">
           <p>
-            El frontend y el backend se comunican a traves de una <strong>API REST</strong>.
-            Esto significa que el frontend envia peticiones HTTP (GET, POST, PUT, DELETE) a
-            URLs especificas del servidor, y el servidor responde con datos en formato JSON.
+            El frontend y el backend se comunican a través de una <strong>API REST</strong>.
+            Esto significa que el frontend envía peticiones HTTP (GET, POST, PUT, DELETE) a
+            URLs específicas del servidor, y el servidor responde con datos en formato JSON.
           </p>
 
           <h6 className="fw-bold mt-3">Principales endpoints (rutas del servidor)</h6>
@@ -325,14 +326,14 @@ mdc_proveedores --> mdc_movimientos`}
             <table className="table table-bordered table-sm small">
               <thead className="table-light">
                 <tr>
-                  <th>Metodo</th>
+                  <th>Método</th>
                   <th>Ruta</th>
-                  <th>Que hace</th>
-                  <th>Quien puede</th>
+                  <th>Qué hace</th>
+                  <th>Quién puede</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><span className="badge bg-success">POST</span></td><td>/api/auth/login</td><td>Iniciar sesion</td><td>Cualquiera</td></tr>
+                <tr><td><span className="badge bg-success">POST</span></td><td>/api/auth/login</td><td>Iniciar sesión</td><td>Cualquiera</td></tr>
                 <tr><td><span className="badge bg-primary">GET</span></td><td>/api/libros</td><td>Ver todos los libros</td><td>Autenticado</td></tr>
                 <tr><td><span className="badge bg-success">POST</span></td><td>/api/libros</td><td>Crear un libro</td><td>Admin</td></tr>
                 <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/libros/:id</td><td>Editar un libro</td><td>Admin</td></tr>
@@ -344,22 +345,39 @@ mdc_proveedores --> mdc_movimientos`}
                 <tr><td><span className="badge bg-info text-dark">PATCH</span></td><td>/api/ventas/:id/anular</td><td>Anular venta</td><td>Admin</td></tr>
                 <tr><td><span className="badge bg-primary">GET</span></td><td>/api/clientes</td><td>Ver clientes</td><td>Autenticado</td></tr>
                 <tr><td><span className="badge bg-success">POST</span></td><td>/api/clientes</td><td>Crear cliente</td><td>Autenticado</td></tr>
-                <tr><td><span className="badge bg-primary">GET</span></td><td>/api/dashboard</td><td>Ver estadisticas</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/clientes/:id</td><td>Editar cliente</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-danger">DELETE</span></td><td>/api/clientes/:id</td><td>Eliminar cliente</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-primary">GET</span></td><td>/api/dashboard</td><td>Ver estadísticas</td><td>Admin</td></tr>
                 <tr><td><span className="badge bg-primary">GET</span></td><td>/api/usuarios</td><td>Ver usuarios</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-success">POST</span></td><td>/api/usuarios</td><td>Crear usuario</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/usuarios/:id</td><td>Editar usuario</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-info text-dark">PATCH</span></td><td>/api/usuarios/:id/estado</td><td>Activar/desactivar usuario</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-primary">GET</span></td><td>/api/proveedores</td><td>Ver proveedores</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-success">POST</span></td><td>/api/proveedores</td><td>Crear proveedor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/proveedores/:id</td><td>Editar proveedor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-danger">DELETE</span></td><td>/api/proveedores/:id</td><td>Eliminar proveedor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-primary">GET</span></td><td>/api/autores</td><td>Ver autores</td><td>Autenticado</td></tr>
+                <tr><td><span className="badge bg-success">POST</span></td><td>/api/autores</td><td>Crear autor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/autores/:id</td><td>Editar autor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-danger">DELETE</span></td><td>/api/autores/:id</td><td>Eliminar autor</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-primary">GET</span></td><td>/api/categorias</td><td>Ver categorías</td><td>Autenticado</td></tr>
+                <tr><td><span className="badge bg-success">POST</span></td><td>/api/categorias</td><td>Crear categoría</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-warning text-dark">PUT</span></td><td>/api/categorias/:id</td><td>Editar categoría</td><td>Admin</td></tr>
+                <tr><td><span className="badge bg-danger">DELETE</span></td><td>/api/categorias/:id</td><td>Eliminar categoría</td><td>Admin</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* -- SECCION 7: SEGURIDAD --
+      {/* -- SECCIÓN 7: SEGURIDAD --
           La seguridad se implementa en CAPAS (defense in depth):
-          1. Frontend: validacion de formularios (UX, no seguridad real)
-          2. Red: CORS limita que dominios pueden hacer peticiones
+          1. Frontend: validación de formularios (UX, no seguridad real)
+          2. Red: CORS limita qué dominios pueden hacer peticiones
           3. Rate limiting: limita peticiones por IP (anti fuerza bruta)
-          4. Autenticacion: JWT verifica que el usuario esta logueado
-          5. Autorizacion: RBAC verifica que tiene permiso para la accion
-          6. Datos: bcrypt encripta contrasenas, transacciones ACID protegen integridad
+          4. Autenticación: JWT verifica que el usuario está logueado
+          5. Autorización: RBAC verifica que tiene permiso para la acción
+          6. Datos: bcrypt encripta contraseñas, transacciones ACID protegen integridad
           Cada capa frena un tipo diferente de ataque. */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
@@ -367,27 +385,29 @@ mdc_proveedores --> mdc_movimientos`}
         </div>
         <div className="card-body">
           <ul className="mb-0">
-            <li className="mb-2"><strong>Contrasenas encriptadas (bcrypt):</strong> Las contrasenas se guardan encriptadas en la base de datos. Nadie puede ver la contrasena real.</li>
-            <li className="mb-2"><strong>Tokens JWT:</strong> Cuando el usuario inicia sesion, se genera un token que lo identifica. Este token se envia en cada peticion para verificar que esta autenticado.</li>
-            <li className="mb-2"><strong>Control de roles (RBAC):</strong> Cada ruta del servidor verifica si el usuario tiene el permiso necesario segun su rol.</li>
-            <li className="mb-2"><strong>Bloqueo de cuenta:</strong> Despues de 3 intentos fallidos de login, la cuenta se bloquea.</li>
-            <li className="mb-2"><strong>Rate limiting:</strong> El servidor limita la cantidad de peticiones por IP para evitar ataques.</li>
+            <li className="mb-2"><strong>Contraseñas encriptadas (bcryptjs):</strong> Las contraseñas se guardan encriptadas en la base de datos. Nadie puede ver la contraseña real.</li>
+            <li className="mb-2"><strong>Tokens JWT:</strong> Cuando el usuario inicia sesión, se genera un token que lo identifica. Este token se envía en cada petición para verificar que está autenticado.</li>
+            <li className="mb-2"><strong>Control de roles (RBAC):</strong> Cada ruta del servidor verifica si el usuario tiene el permiso necesario según su rol.</li>
+            <li className="mb-2"><strong>Bloqueo de cuenta por intentos fallidos:</strong> Después de 3 intentos fallidos de login con el mismo correo, la cuenta se bloquea por 3 minutos.</li>
+            <li className="mb-2"><strong>Rate limiting por IP:</strong> El login permite máximo 10 intentos por IP cada 15 minutos; la API general permite 500 peticiones por IP cada 15 minutos. Protege contra ataques de fuerza bruta.</li>
+            <li className="mb-2"><strong>Cabeceras de seguridad (Helmet):</strong> Se aplican automáticamente cabeceras HTTP como X-Content-Type-Options, X-Frame-Options, HSTS y Content-Security-Policy.</li>
             <li className="mb-2"><strong>CORS:</strong> Solo el frontend autorizado puede comunicarse con el servidor.</li>
-            <li className="mb-2"><strong>Validacion doble:</strong> Los datos se validan tanto en el frontend como en el backend.</li>
-            <li className="mb-0"><strong>Transacciones ACID:</strong> Las operaciones criticas (ventas, movimientos) usan transacciones para que los datos no queden incompletos.</li>
+            <li className="mb-2"><strong>Validación doble:</strong> Los datos se validan tanto en el frontend como en el backend.</li>
+            <li className="mb-2"><strong>Validación de imágenes:</strong> La subida de portadas valida la extensión y el MIME type real del archivo para evitar subir archivos maliciosos con extensión .jpg.</li>
+            <li className="mb-0"><strong>Transacciones ACID:</strong> Las operaciones críticas (ventas, movimientos) usan transacciones para que los datos no queden incompletos.</li>
           </ul>
         </div>
       </div>
 
-      {/* ── SECCION 8: INSTALACION ── */}
+      {/* ── SECCIÓN 8: INSTALACIÓN ── */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          8. Como instalar y correr el proyecto
+          8. Cómo instalar y correr el proyecto
         </div>
         <div className="card-body">
           <h6 className="fw-bold">Requisitos previos</h6>
           <ul>
-            <li>Node.js version 18 o superior</li>
+            <li>Node.js versión 20 o superior</li>
             <li>MySQL 8 instalado</li>
           </ul>
 
@@ -400,8 +420,9 @@ mdc_proveedores --> mdc_movimientos`}
           <h6 className="fw-bold mt-3">Paso 3: Configurar y arrancar el backend</h6>
           <pre className="bg-light p-2 rounded small">
 {`cd servidor
-cp .env.example .env    (editar con los datos de MySQL)
+cp .env.example .env    (editar con los datos de MySQL y Cloudinary)
 npm install
+node scripts/reset_password.js   (solo la primera vez, genera las contraseñas)
 npm start               (arranca en http://localhost:3000)`}
           </pre>
 
@@ -409,6 +430,7 @@ npm start               (arranca en http://localhost:3000)`}
           <pre className="bg-light p-2 rounded small">
 {`cd cliente
 npm install
+# Crear archivo .env con: VITE_API_URL=http://localhost:3000/api
 npm run dev             (arranca en http://localhost:5173)`}
           </pre>
 
@@ -418,18 +440,29 @@ npm run dev             (arranca en http://localhost:5173)`}
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=tu_contrasena
+DB_PASSWORD=tu_contraseña
 DB_NAME=inventario_libreria
 DB_SSL=false
 JWT_SECRET=una_clave_secreta
 JWT_EXPIRY=8h
 NODE_ENV=development
-CORS_ORIGIN=http://localhost:5173`}
+CORS_ORIGIN=http://localhost:5173
+
+# Cloudinary (para almacenar portadas en la nube)
+# Si no se configuran, las imágenes se guardan en disco local (solo desarrollo)
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret`}
+          </pre>
+
+          <h6 className="fw-bold mt-3">Variables de entorno del frontend (cliente/.env)</h6>
+          <pre className="bg-light p-2 rounded small">
+{`VITE_API_URL=http://localhost:3000/api`}
           </pre>
         </div>
       </div>
 
-      {/* ── SECCION 9: PRUEBAS ── */}
+      {/* ── SECCIÓN 9: PRUEBAS ── */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
           9. Pruebas automatizadas
@@ -437,7 +470,7 @@ CORS_ORIGIN=http://localhost:5173`}
         <div className="card-body">
           <p>
             Usamos <strong>Jest</strong> (framework de pruebas) y <strong>Supertest</strong> (para
-            simular peticiones HTTP) para verificar que las funciones mas importantes del backend
+            simular peticiones HTTP) para verificar que las funciones más importantes del backend
             funcionan correctamente.
           </p>
           <div className="table-responsive">
@@ -445,18 +478,18 @@ CORS_ORIGIN=http://localhost:5173`}
               <thead className="table-light">
                 <tr>
                   <th>Archivo</th>
-                  <th>Que prueba</th>
+                  <th>Qué prueba</th>
                 </tr>
               </thead>
               <tbody>
                 <tr><td><code>pruebas/auth.test.js</code></td><td>Login, token JWT, rutas protegidas</td></tr>
                 <tr><td><code>pruebas/libros.test.js</code></td><td>CRUD de libros y permisos por rol</td></tr>
                 <tr><td><code>pruebas/clientes.test.js</code></td><td>CRUD de clientes y permisos por rol</td></tr>
-                <tr><td><code>pruebas/ventas.test.js</code></td><td>Creacion de ventas, validacion de totales y seguridad</td></tr>
+                <tr><td><code>pruebas/ventas.test.js</code></td><td>Creación de ventas, validación de totales y seguridad</td></tr>
                 <tr><td><code>pruebas/movimientos.test.js</code></td><td>Entradas y salidas de inventario (Kardex)</td></tr>
-                <tr><td><code>pruebas/usuarios.test.js</code></td><td>Gestion de usuarios y cambio de contrasena</td></tr>
-                <tr><td><code>pruebas/catalogos.test.js</code></td><td>CRUD de autores, categorias y proveedores</td></tr>
-                <tr><td><code>pruebas/dashboard.test.js</code></td><td>Estadisticas, graficas y datos del dashboard</td></tr>
+                <tr><td><code>pruebas/usuarios.test.js</code></td><td>Gestión de usuarios y cambio de contraseña</td></tr>
+                <tr><td><code>pruebas/catalogos.test.js</code></td><td>CRUD de autores, categorías y proveedores</td></tr>
+                <tr><td><code>pruebas/dashboard.test.js</code></td><td>Estadísticas, gráficas y datos del dashboard</td></tr>
               </tbody>
             </table>
           </div>
@@ -467,18 +500,22 @@ npm test`}
         </div>
       </div>
 
-      {/* ── SECCION 10: DESPLIEGUE ── */}
+      {/* ── SECCIÓN 10: DESPLIEGUE ── */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white fw-bold">
-          10. Despliegue en produccion (como se sube a internet)
+          10. Despliegue en producción (cómo se sube a internet)
         </div>
         <div className="card-body">
+          <div className="alert alert-light border mb-3">
+            Los tres servicios (frontend, backend y base de datos) se despliegan en <strong>Railway</strong>,
+            una plataforma en la nube que permite hospedar aplicaciones Node.js y bases de datos MySQL.
+          </div>
           <div className="row g-3">
             <div className="col-md-4">
               <div className="card h-100 border-success">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-success">Frontend</h6>
-                  <p className="small mb-0">Se sube a <strong>Vercel</strong> (servicio gratuito para paginas web)</p>
+                  <p className="small mb-0">Se despliega en <strong>Railway</strong> como servicio estático (build de Vite)</p>
                 </div>
               </div>
             </div>
@@ -486,7 +523,7 @@ npm test`}
               <div className="card h-100 border-warning">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-warning">Backend</h6>
-                  <p className="small mb-0">Se sube a <strong>Render</strong> (servicio para servidores)</p>
+                  <p className="small mb-0">Se despliega en <strong>Railway</strong> como servicio Node.js</p>
                 </div>
               </div>
             </div>
@@ -494,14 +531,14 @@ npm test`}
               <div className="card h-100 border-info">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-info">Base de Datos</h6>
-                  <p className="small mb-0">Se usa <strong>Aiven Cloud</strong> (MySQL en la nube)</p>
+                  <p className="small mb-0">Se usa el plugin de <strong>MySQL en Railway</strong> (Railway inyecta las variables de conexión automáticamente)</p>
                 </div>
               </div>
             </div>
           </div>
           <div className="alert alert-warning mt-3 mb-0 small">
-            <strong>Importante:</strong> Las variables de entorno con contrasenas y claves secretas
-            se configuran directamente en los dashboards de Vercel y Render, nunca se suben a GitHub.
+            <strong>Importante:</strong> Las variables de entorno con contraseñas y claves secretas
+            (JWT_SECRET, Cloudinary) se configuran directamente en el panel de Railway, nunca se suben a GitHub.
           </div>
         </div>
       </div>
@@ -510,5 +547,5 @@ npm test`}
 };
 
 // Se exporta como default para que lazy() en Acceso.jsx pueda importarlo.
-// Los imports dinamicos (import()) requieren que el modulo tenga un export default.
+// Los imports dinámicos (import()) requieren que el módulo tenga un export default.
 export default DocumentacionManualTecnico;
