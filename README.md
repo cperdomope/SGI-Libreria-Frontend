@@ -70,6 +70,9 @@ Se pueden ver todas las ventas que se han hecho, filtrarlas por fecha o buscar p
 - **Usuarios:** el Admin puede crear cuentas para otros empleados y asignarles un rol.
 - **Cambiar contraseña:** cualquier usuario puede cambiar su contraseña desde la barra de navegación.
 
+### 9. Documentación del proyecto (desde el login)
+En la pantalla de acceso hay un botón **"Documentación del Proyecto"** que abre una ventana con 4 pestañas: Historias de Usuario, Criterios de Aceptación, Manual Técnico y Manual de Usuario. No hace falta iniciar sesión para verla — está pensada para que un instructor o jurado SENA pueda revisarla sin necesitar una cuenta. Cada pestaña se carga solo cuando se abre (`React.lazy` + `Suspense`), para no hacer más pesada la carga inicial del login.
+
 ---
 
 ## Tecnologías que usamos
@@ -89,6 +92,7 @@ Estas son las herramientas y tecnologías que usamos para construir el proyecto.
 | **Recharts** | Para crear las gráficas de barras y de torta en el Dashboard |
 | **jsPDF** | Para generar los tickets de venta en formato PDF |
 | **xlsx** | Para exportar datos a archivos de Excel |
+| **ESLint** | Para mantener un estilo de código consistente y detectar errores comunes |
 
 ### Backend (la lógica del servidor)
 
@@ -107,6 +111,8 @@ Estas son las herramientas y tecnologías que usamos para construir el proyecto.
 | **compression** | Para comprimir las respuestas y que la app cargue más rápido |
 | **morgan** | Para ver en la consola qué peticiones le llegan al servidor (útil para depurar) |
 | **Jest + Supertest** | Para hacer pruebas automatizadas y verificar que todo funcione bien |
+| **PM2** | Gestor de procesos alternativo para producción (`pm2.config.js`): reinicia el servidor automáticamente si falla o supera 200 MB de RAM |
+| **dotenv** | Para cargar las variables de entorno del archivo `.env` sin exponer secretos en el código |
 
 ---
 
@@ -180,7 +186,7 @@ proyecto-inventario/
 ├── cliente/                          # Frontend (lo que ve el usuario)
 │   ├── src/
 │   │   ├── pages/                    # Las páginas de la aplicación
-│   │   │   ├── Acceso.jsx            # Página de login
+│   │   │   ├── Acceso.jsx            # Página de login (incluye el modal de Documentación)
 │   │   │   ├── Inicio.jsx            # Dashboard con gráficas
 │   │   │   ├── Inventario.jsx        # Lista de libros
 │   │   │   ├── Movimientos.jsx       # Entradas y salidas de inventario
@@ -190,31 +196,56 @@ proyecto-inventario/
 │   │   │   ├── AdminUsuarios.jsx     # Gestión de usuarios (solo Admin)
 │   │   │   ├── PaginaProveedores.jsx # Gestión de proveedores
 │   │   │   ├── PaginaAutores.jsx     # Gestión de autores
-│   │   │   └── PaginaCategorias.jsx  # Gestión de categorías
+│   │   │   ├── PaginaCategorias.jsx  # Gestión de categorías
+│   │   │   ├── DocumentacionHistorias.jsx    # Historias de usuario (evidencia SENA)
+│   │   │   ├── DocumentacionCriterios.jsx    # Criterios de aceptación (evidencia SENA)
+│   │   │   ├── DocumentacionManualTecnico.jsx # Manual técnico (evidencia SENA)
+│   │   │   └── DocumentacionManualUsuario.jsx # Manual de usuario (evidencia SENA)
 │   │   ├── components/               # Componentes reutilizables
 │   │   │   ├── BarraNavegacion.jsx   # Menú de navegación
+│   │   │   ├── LayoutPrincipal.jsx   # Estructura visual (navbar + contenido)
 │   │   │   ├── ModalCambiarPassword.jsx
-│   │   │   └── RutaProtegidaPorRol.jsx
-│   │   ├── context/AuthContext.jsx   # Manejo de sesión y permisos
-│   │   ├── services/api.js           # Conexión con el servidor
+│   │   │   ├── RutaProtegida.jsx     # Guard: ¿hay sesión activa?
+│   │   │   └── RutaProtegidaPorRol.jsx # Guard: ¿tiene el permiso RBAC?
+│   │   ├── context/AuthContext.jsx   # Manejo de sesión y permisos (RBAC)
+│   │   ├── services/api.js           # Cliente Axios con interceptores JWT
 │   │   ├── hooks/usePaginacion.js    # Lógica de paginación
 │   │   └── styles/custom-theme.css   # Estilos personalizados
 │   ├── railway.json                  # Configuración de despliegue en Railway
 │   └── public/
 │
 ├── servidor/                         # Backend (lógica del servidor)
-│   ├── controllers/                  # Donde está la lógica de cada módulo
-│   ├── routes/                       # Las rutas de la API
-│   ├── middlewares/                  # Seguridad (JWT, roles, rate limiting, uploads)
-│   ├── config/db.js                  # Conexión a la base de datos
+│   ├── controllers/                  # Lógica de negocio de cada módulo
+│   │   ├── authControlador.js        # Login, registro, anti-fuerza bruta
+│   │   ├── usuarioControlador.js     # CRUD de usuarios, cambio de contraseña
+│   │   ├── librosControlador.js      # CRUD de inventario + portadas
+│   │   ├── movimientosControlador.js # Entradas/salidas de stock (Kardex)
+│   │   ├── ventaControlador.js       # Punto de venta (transacciones ACID)
+│   │   ├── clienteControlador.js     # CRUD de clientes
+│   │   ├── proveedorControlador.js   # CRUD de proveedores
+│   │   ├── autorControlador.js       # CRUD de autores
+│   │   ├── categoriaControlador.js   # CRUD de categorías
+│   │   └── dashboardControlador.js   # Estadísticas del negocio (con caché de 60s)
+│   ├── routes/                       # Un archivo de rutas por módulo (mismo nombre que su controlador)
+│   ├── middlewares/                  # Seguridad y utilidades transversales
+│   │   ├── verificarToken.js         # Autenticación: valida el JWT
+│   │   ├── verificarRol.js           # Autorización: RBAC por rol
+│   │   ├── rateLimiter.js            # Límite de peticiones (login y API general)
+│   │   ├── uploadImagen.js           # Multer: sube portadas a Cloudinary o disco
+│   │   ├── validarParametroId.js     # Valida los :id numéricos de la URL
+│   │   └── errorHandler.js           # Manejo global de errores
+│   ├── utils/paginacion.js           # Helpers reutilizables de paginación
+│   ├── config/db.js                  # Pool de conexiones a la base de datos
 │   ├── pruebas/                      # Pruebas automatizadas (Jest + Supertest)
 │   ├── uploads/portadas/             # Imágenes de portada en modo local (desarrollo)
 │   ├── railway.json                  # Configuración de despliegue en Railway
+│   ├── pm2.config.js                 # Configuración de PM2 (gestor de procesos alternativo)
+│   ├── .env.example                  # Plantilla de variables de entorno
 │   ├── app.js                        # Configuración del servidor y middlewares
-│   └── index.js                      # Archivo principal que arranca todo
+│   └── index.js                      # Archivo principal que arranca todo (graceful shutdown)
 │
 └── base_datos/
-    └── sgi_libreria_completo.sql     # Script para crear la base de datos
+    └── sgi_libreria_completo.sql     # Script para crear la base de datos y datos de ejemplo
 ```
 
 ---
@@ -288,27 +319,35 @@ Esta es la lista de rutas que el backend expone para que el frontend se comuniqu
 
 | Método | Ruta | ¿Qué hace? | ¿Quién puede? |
 |--------|------|-------------|----------------|
-| POST | `/api/auth/login` | Iniciar sesión | Cualquiera |
-| GET | `/api/libros` | Ver todos los libros | Usuario autenticado |
-| POST | `/api/libros` | Agregar un libro | Admin |
+| POST | `/api/auth/login` | Iniciar sesión (máx. 10 intentos/15min por IP) | Cualquiera |
+| POST | `/api/auth/registro` | Crear una cuenta nueva | Admin |
+| GET | `/api/libros` | Ver todos los libros (con autor y categoría) | Admin y Vendedor |
+| POST | `/api/libros` | Agregar un libro (portada opcional) | Admin |
 | PUT | `/api/libros/:id` | Editar un libro | Admin |
-| DELETE | `/api/libros/:id` | Eliminar un libro | Admin |
-| GET | `/api/movimientos` | Ver historial de movimientos | Admin |
+| DELETE | `/api/libros/:id` | Eliminar un libro (si no tiene ventas/movimientos) | Admin |
+| GET | `/api/movimientos` | Ver historial de entradas/salidas (Kardex) | Admin |
 | POST | `/api/movimientos` | Registrar entrada o salida | Admin |
-| GET | `/api/ventas` | Ver ventas | Usuario autenticado |
-| POST | `/api/ventas` | Crear una venta | Usuario autenticado |
-| PATCH | `/api/ventas/:id/anular` | Anular una venta | Admin |
-| GET | `/api/clientes` | Ver clientes | Usuario autenticado |
-| POST | `/api/clientes` | Crear cliente | Usuario autenticado |
+| GET | `/api/ventas` | Ver ventas (con filtros y paginación) | Admin y Vendedor |
+| GET | `/api/ventas/:id` | Ver el detalle completo de una venta | Admin y Vendedor |
+| POST | `/api/ventas` | Crear una venta (transacción con validación de stock) | Admin y Vendedor |
+| PATCH | `/api/ventas/:id/anular` | Anular una venta y revertir el stock | Admin |
+| GET | `/api/clientes` | Ver clientes | Admin y Vendedor |
+| GET | `/api/clientes/:id` | Ver un cliente específico | Admin y Vendedor |
+| POST | `/api/clientes` | Crear cliente | Admin y Vendedor |
 | PUT | `/api/clientes/:id` | Editar cliente | Admin |
 | DELETE | `/api/clientes/:id` | Eliminar cliente | Admin |
-| GET | `/api/dashboard` | Ver estadísticas | Admin |
-| GET/POST/PUT/PATCH | `/api/usuarios` | Gestión de usuarios | Admin |
+| GET | `/api/dashboard` | Ver estadísticas del negocio (caché de 60s) | Admin |
+| GET | `/api/usuarios` | Ver todos los usuarios | Admin |
+| POST | `/api/usuarios` | Crear usuario | Admin |
+| PUT | `/api/usuarios/:id` | Editar un usuario | Admin |
+| PATCH | `/api/usuarios/:id/estado` | Activar/desactivar un usuario | Admin |
+| PATCH | `/api/usuarios/cambiar-password` | Cambiar la contraseña propia | Usuario autenticado |
 | GET/POST/PUT/DELETE | `/api/proveedores` | Gestión de proveedores | Admin |
 | GET | `/api/autores` | Ver autores | Admin y Vendedor |
 | POST/PUT/DELETE | `/api/autores` | Crear/editar/eliminar autores | Admin |
 | GET | `/api/categorias` | Ver categorías | Admin y Vendedor |
 | POST/PUT/DELETE | `/api/categorias` | Crear/editar/eliminar categorías | Admin |
+| GET | `/` | Health check (verifica servidor + conexión a BD) | Público |
 
 ---
 
@@ -316,7 +355,7 @@ Esta es la lista de rutas que el backend expone para que el frontend se comuniqu
 
 ### Lo que necesitas tener instalado
 
-- **Node.js** versión 18 o superior
+- **Node.js** versión 20 o superior
 - **MySQL 8**
 
 ### Paso 1: Clonar el proyecto
@@ -332,13 +371,33 @@ cd SGI-Libreria-el-Saber
 mysql -u root -p < base_datos/sgi_libreria_completo.sql
 ```
 
+> ⚠️ El script deja los usuarios de ejemplo (`ldarlys@...`, `cip@...`, `michelle@...`) con un `password_hash` **placeholder**, no un hash real — hay que generarlos en el Paso 3 antes de poder iniciar sesión.
+
 ### Paso 3: Configurar y arrancar el backend
 
 ```bash
 cd servidor
 cp .env.example .env        # Editar este archivo con tus datos de MySQL
 npm install
-node scripts/reset_password.js  # Solo la primera vez, genera las contraseñas
+```
+
+Genera los hashes bcrypt reales para los usuarios de ejemplo (el script `reset_password.js` que antes hacía esto se eliminó del repositorio por seguridad — contenía contraseñas en texto plano):
+
+```bash
+node -e "const b=require('bcryptjs'); ['Luzd12345','cip123','vendedor123'].forEach(p => console.log(p, '->', b.hashSync(p, 10)))"
+```
+
+Copia cada hash generado y actualízalo en la base de datos:
+
+```sql
+UPDATE mdc_usuarios SET password_hash = '<hash_de_Luzd12345>'   WHERE email = 'ldarlys@sena.edu.co';
+UPDATE mdc_usuarios SET password_hash = '<hash_de_cip123>'      WHERE email = 'cip@sena.edu.co';
+UPDATE mdc_usuarios SET password_hash = '<hash_de_vendedor123>' WHERE email = 'michelle@sena.edu.co';
+```
+
+Luego arranca el servidor:
+
+```bash
 npm start                        # El servidor arranca en http://localhost:3000
 ```
 
@@ -376,6 +435,7 @@ DB_PASSWORD=tu_contraseña_de_mysql
 DB_NAME=inventario_libreria
 DB_SSL=false
 JWT_SECRET=una_clave_secreta_larga
+JWT_EXPIRY=8h
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:5173
 
@@ -456,4 +516,11 @@ Este proyecto me enseñó muchas cosas que no se aprenden solo con la teoría:
 
 ## Autores
 
-Proyecto desarrollado por estudiantes del programa Tecnología en Análisis y Desarrollo de Software — SENA, Centro de Gestión de Mercados, Logística y Tecnologías de la Información.
+Proyecto de grado desarrollado por:
+
+- **Carlos Iván Perdomo Perdomo**
+- **Luz Darlys González Torres**
+
+Programa **Tecnólogo en Análisis y Desarrollo de Software (ADSO)** — Ficha 3118323
+Instructor: **Ing. Jairo Antonio Muñoz Arango**
+**Centro Agropecuario La Granja** — SENA Regional Tolima

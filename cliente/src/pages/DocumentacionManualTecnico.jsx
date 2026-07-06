@@ -510,12 +510,43 @@ npm test`}
             Los tres servicios (frontend, backend y base de datos) se despliegan en <strong>Railway</strong>,
             una plataforma en la nube que permite hospedar aplicaciones Node.js y bases de datos MySQL.
           </div>
-          <div className="row g-3">
+
+          <h6 className="fw-bold mb-2">URLs de producción</h6>
+          <div className="table-responsive mb-3">
+            <table className="table table-bordered table-sm small">
+              <thead className="table-light">
+                <tr>
+                  <th>Servicio</th>
+                  <th>URL / Host</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Frontend</strong></td>
+                  <td><code>https://sgi-libreria-el-saber-production.up.railway.app</code></td>
+                  <td>Interfaz React (build Vite servido con <code>serve</code>)</td>
+                </tr>
+                <tr>
+                  <td><strong>Backend</strong></td>
+                  <td><code>https://friendly-kindness-production-06fe.up.railway.app</code></td>
+                  <td>API Express 5 — puerto interno 8080 (inyectado por Railway)</td>
+                </tr>
+                <tr>
+                  <td><strong>Base de datos</strong></td>
+                  <td><code>autorack.proxy.rlwy.net:39238</code></td>
+                  <td>Plugin MySQL de Railway — BD: <code>inventario_libreria</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="row g-3 mb-3">
             <div className="col-md-4">
               <div className="card h-100 border-success">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-success">Frontend</h6>
-                  <p className="small mb-0">Se despliega en <strong>Railway</strong> como servicio estático (build de Vite)</p>
+                  <p className="small mb-0">Build de Vite desplegado en Railway; usa <code>serve -s dist -l $PORT</code> para SPA routing</p>
                 </div>
               </div>
             </div>
@@ -523,7 +554,7 @@ npm test`}
               <div className="card h-100 border-warning">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-warning">Backend</h6>
-                  <p className="small mb-0">Se despliega en <strong>Railway</strong> como servicio Node.js</p>
+                  <p className="small mb-0">Servicio Node.js en Railway; Root Directory: <code>servidor/</code>, comando: <code>node index.js</code></p>
                 </div>
               </div>
             </div>
@@ -531,14 +562,26 @@ npm test`}
               <div className="card h-100 border-info">
                 <div className="card-body text-center">
                   <h6 className="fw-bold text-info">Base de Datos</h6>
-                  <p className="small mb-0">Se usa el plugin de <strong>MySQL en Railway</strong> (Railway inyecta las variables de conexión automáticamente)</p>
+                  <p className="small mb-0">Plugin MySQL de Railway — las variables de conexión se inyectan automáticamente al backend</p>
                 </div>
               </div>
             </div>
           </div>
-          <div className="alert alert-warning mt-3 mb-0 small">
+
+          <h6 className="fw-bold mb-2">Configuración especial requerida por Railway</h6>
+          <div className="alert alert-info small mb-3">
+            <strong>Trust Proxy:</strong> Railway coloca el backend detrás de un proxy reverso. Para que
+            el rate-limiter (<code>express-rate-limit</code>) pueda leer correctamente la IP real del
+            usuario desde la cabecera <code>X-Forwarded-For</code>, es obligatorio agregar en <code>app.js</code>:
+            <pre className="bg-light p-2 rounded mt-2 mb-0">app.set(&apos;trust proxy&apos;, 1);</pre>
+            Sin esta línea, Express rechaza la cabecera y lanza el error
+            <code> ERR_ERL_UNEXPECTED_X_FORWARDED_FOR</code>.
+          </div>
+
+          <div className="alert alert-warning mb-0 small">
             <strong>Importante:</strong> Las variables de entorno con contraseñas y claves secretas
             (JWT_SECRET, Cloudinary) se configuran directamente en el panel de Railway, nunca se suben a GitHub.
+            El archivo <code>servidor/.env</code> está excluido por <code>.gitignore</code>.
           </div>
         </div>
       </div>
