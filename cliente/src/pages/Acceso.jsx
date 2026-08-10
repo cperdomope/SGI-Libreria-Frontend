@@ -101,6 +101,13 @@ const Icons = {
       <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
     </svg>
   ),
+  // Icono de descarga (botones de manuales PDF en el modal de documentacion)
+  Download: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+    </svg>
+  ),
   // Icono de ojo tachado (ocultar contraseña)
   EyeSlash: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -486,6 +493,39 @@ const Acceso = () => {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              {/* -- BARRA DE DESCARGA DE MANUALES (PDF) --
+                  Visible al abrir el modal, sin importar la pestana activa.
+                  Los PDF viven en cliente/public/manuales/: Vite copia la
+                  carpeta public/ tal cual dentro de dist/, por lo que quedan
+                  disponibles como archivos estaticos en /manuales/*.pdf tanto
+                  en desarrollo (Vite) como en produccion (serve -s dist).
+                  El atributo download del <a> le indica al navegador que
+                  descargue el archivo en lugar de abrirlo en la pestana. */}
+              <div className="w-100 px-3 py-2 bg-light border-bottom d-flex flex-wrap align-items-center gap-2">
+                <small className="fw-bold text-muted me-1">Descargar manuales en PDF:</small>
+                <a
+                  href="/manuales/Manual_de_Usuario_SGI.pdf"
+                  download
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                >
+                  <Icons.Download /> Manual de Usuario
+                </a>
+                <a
+                  href="/manuales/Manual_de_Instalacion_SGI.pdf"
+                  download
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                >
+                  <Icons.Download /> Manual de Instalacion
+                </a>
+                <a
+                  href="/manuales/Manual_Tecnico_SGI.pdf"
+                  download
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                >
+                  <Icons.Download /> Manual Tecnico
+                </a>
               </div>
 
               {/* Contenido de la pestana activa.

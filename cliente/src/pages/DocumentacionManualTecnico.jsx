@@ -272,7 +272,7 @@ const DocumentacionManualTecnico = () => {
                 <tr><td><code>mdc_usuarios</code></td><td>Cuentas de empleados (nombre, email, contraseña encriptada, estado)</td></tr>
                 <tr><td><code>mdc_libros</code></td><td>Libros con ISBN, precio, stock actual, stock mínimo y portada</td></tr>
                 <tr><td><code>mdc_autores</code></td><td>Autores con nombre</td></tr>
-                <tr><td><code>mdc_categorias</code></td><td>Categorías con nombre y descripción</td></tr>
+                <tr><td><code>mdc_categorias</code></td><td>Categorías con nombre único</td></tr>
                 <tr><td><code>mdc_movimientos</code></td><td>Historial de entradas y salidas de inventario</td></tr>
                 <tr><td><code>mdc_clientes</code></td><td>Datos de los clientes</td></tr>
                 <tr><td><code>mdc_proveedores</code></td><td>Datos de los proveedores</td></tr>
@@ -422,7 +422,9 @@ mdc_proveedores --> mdc_movimientos`}
 {`cd servidor
 cp .env.example .env    (editar con los datos de MySQL y Cloudinary)
 npm install
-node scripts/reset_password.js   (solo la primera vez, genera las contraseñas)
+# Generar los hashes bcrypt de las contraseñas de los usuarios de
+# ejemplo (procedimiento detallado en el README y en el Manual de
+# Instalación en PDF, descargable desde este mismo modal)
 npm start               (arranca en http://localhost:3000)`}
           </pre>
 

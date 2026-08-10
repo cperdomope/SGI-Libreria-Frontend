@@ -235,7 +235,7 @@ const DocumentacionManualUsuario = () => {
           <h6 className="fw-bold mt-3">Categorías</h6>
           <ol>
             <li className="mb-1">Ve a <strong>Logística &rarr; Categorías</strong>.</li>
-            <li className="mb-1">Puedes crear una categoría con su nombre y descripción.</li>
+            <li className="mb-1">Puedes crear una categoría indicando su nombre (es único: el sistema no permite repetirlo).</li>
             <li className="mb-1">No se puede eliminar una categoría que tiene libros asociados.</li>
           </ol>
 
