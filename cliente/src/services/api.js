@@ -126,7 +126,14 @@ api.interceptors.response.use(
 
   // Respuestas con error (códigos 4xx, 5xx):
   (error) => {
-    if (error.response?.status === 401) {
+    // EXCEPCIÓN: el login también responde 401 cuando las credenciales
+    // son incorrectas. Ese 401 NO es una sesión expirada: debe llegar a
+    // la página de Acceso para que muestre el mensaje de error y la barra
+    // de intentos restantes. Sin esta excepción, la redirección de abajo
+    // recargaba la página y el mensaje desaparecía al instante.
+    const esPeticionLogin = error.config?.url?.includes('/auth/login');
+
+    if (error.response?.status === 401 && !esPeticionLogin) {
       // 401 = No autorizado. Significa que el token es inválido o expiró.
       // El servidor lo rechazó con el código TOKEN_EXPIRED o TOKEN_INVALID.
 
