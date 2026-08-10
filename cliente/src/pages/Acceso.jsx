@@ -65,11 +65,23 @@ import { useAuth } from '../context/AuthContext';
 // que solo se descarga cuando el usuario abre el modal de documentacion.
 // Esto es importante porque los manuales son pesados y no tiene sentido
 // cargarlos si el usuario solo quiere iniciar sesion.
-// NOTA: los manuales de Usuario, Instalacion y Tecnico ya no son pestanas:
-// se entregan como PDF (la version mas actualizada, con pantallazos) a traves
-// del boton "Descargar PDF" del encabezado del modal de documentacion.
 const DocumentacionHistorias = lazy(() => import('./DocumentacionHistorias'));
 const DocumentacionCriterios = lazy(() => import('./DocumentacionCriterios'));
+
+// -- Pestanas del modal de documentacion --
+// Las dos primeras son componentes React (artefactos de la metodologia agil).
+// Las tres siguientes son los manuales oficiales: se muestran como vista
+// previa del PDF real (unica version vigente, con pantallazos del sistema)
+// y cada una ofrece su descarga con el icono al lado del nombre.
+// Los PDF viven en cliente/public/manuales/ y se sirven como archivos
+// estaticos en /manuales/*.pdf tanto en desarrollo como en produccion.
+const PESTANAS_DOCS = [
+  { key: 'historias', label: 'Historias de Usuario' },
+  { key: 'criterios', label: 'Criterios de Aceptación' },
+  { key: 'usuario',      label: 'Manual de Usuario',     pdf: '/manuales/Manual_de_Usuario_SGI.pdf' },
+  { key: 'instalacion',  label: 'Manual de Instalación',  pdf: '/manuales/Manual_de_Instalacion_SGI.pdf' },
+  { key: 'tecnico',      label: 'Manual Técnico',         pdf: '/manuales/Manual_Tecnico_SGI.pdf' }
+];
 
 // -- Iconos SVG en linea para el formulario --
 // En lugar de usar una libreria de iconos como FontAwesome o react-icons
@@ -469,82 +481,115 @@ const Acceso = () => {
             <div className="modal-content" style={{ maxHeight: '95vh' }}>
               <div className="modal-header bg-primary text-white">
                 <h5 className="modal-title">Documentación del Proyecto — SGI Librería El Saber</h5>
-                {/* -- BOTON DE DESCARGA DE MANUALES (PDF) --
-                    Un unico boton compacto en el encabezado que despliega
-                    las tres opciones. Usa el dropdown nativo de Bootstrap
-                    (data-bs-toggle): funciona porque main.jsx importa
-                    bootstrap.bundle.min.js. Los PDF viven en
-                    cliente/public/manuales/ y se sirven como archivos
-                    estaticos en /manuales/*.pdf tanto en desarrollo (Vite)
-                    como en produccion (serve -s dist). El atributo download
-                    hace que el navegador los descargue en vez de abrirlos. */}
-                <div className="d-flex align-items-center gap-2">
-                  <div className="dropdown">
-                    <button
-                      className="btn btn-sm btn-outline-light dropdown-toggle d-inline-flex align-items-center gap-1"
-                      type="button"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <Icons.Download /> Descargar PDF
-                    </button>
-                    <ul className="dropdown-menu dropdown-menu-end">
-                      <li>
-                        <a className="dropdown-item" href="/manuales/Manual_de_Usuario_SGI.pdf" download>
-                          Manual de Usuario
-                        </a>
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="/manuales/Manual_de_Instalacion_SGI.pdf" download>
-                          Manual de Instalación
-                        </a>
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="/manuales/Manual_Tecnico_SGI.pdf" download>
-                          Manual Técnico
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDocs(false)} />
-                </div>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDocs(false)} />
               </div>
 
               {/* Pestanas de navegacion renderizadas con .map() sobre un array
                   de configuracion. Esto es mas limpio que escribir 4 <li> manuales
                   y facilita agregar o quitar pestanas en el futuro (principio DRY). */}
               <div className="modal-header p-0 border-0">
-                <ul className="nav nav-tabs w-100 border-0">
-                  {[
-                    { key: 'historias', label: 'Historias de Usuario' },
-                    { key: 'criterios', label: 'Criterios de Aceptación' }
-                  ].map(tab => (
+                {/* flex-nowrap + overflow-auto: en pantallas pequenas las
+                    pestanas se desplazan horizontalmente en lugar de
+                    apilarse y romper el diseno del encabezado. */}
+                <ul className="nav nav-tabs w-100 border-0 flex-nowrap" style={{ overflowX: 'auto' }}>
+                  {PESTANAS_DOCS.map(tab => (
                     <li className="nav-item" key={tab.key}>
-                      <button
-                        className={`nav-link ${tabActiva === tab.key ? 'active' : ''}`}
-                        onClick={() => setTabActiva(tab.key)}
-                        type="button"
+                      {/* El contenedor lleva el estilo de pestana (nav-link) y
+                          dentro van dos controles independientes: el boton que
+                          cambia de pestana y, para los manuales, el enlace de
+                          descarga. Se separan porque un <a> no puede anidarse
+                          dentro de un <button> (HTML invalido). */}
+                      <div
+                        className={`nav-link d-flex align-items-center gap-2 ${tabActiva === tab.key ? 'active' : ''}`}
+                        style={{ whiteSpace: 'nowrap' }}
                       >
-                        {tab.label}
-                      </button>
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 border-0 text-decoration-none"
+                          style={{ color: 'inherit', font: 'inherit' }}
+                          onClick={() => setTabActiva(tab.key)}
+                        >
+                          {tab.label}
+                        </button>
+
+                        {/* Icono de descarga: solo en las pestanas de manuales */}
+                        {tab.pdf && (
+                          <a
+                            href={tab.pdf}
+                            download
+                            className="d-inline-flex align-items-center text-decoration-none"
+                            style={{ color: 'inherit', opacity: 0.75 }}
+                            title={`Descargar ${tab.label} en PDF`}
+                            aria-label={`Descargar ${tab.label} en PDF`}
+                          >
+                            <Icons.Download />
+                          </a>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
               </div>
 
               {/* Contenido de la pestana activa.
-                  Solo se renderiza el componente cuya key coincide con tabActiva.
-                  Los demas ni se montan en el DOM (short-circuit evaluation). */}
-              <div className="modal-body" style={{ overflowY: 'auto' }}>
-                <Suspense fallback={
-                  <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status" />
-                    <p className="mt-2 text-muted">Cargando documentación...</p>
+                  Solo se renderiza lo de la pestana seleccionada; el resto ni
+                  se monta en el DOM (short-circuit evaluation). Asi, la vista
+                  previa de un manual solo descarga su PDF cuando se abre esa
+                  pestana, sin penalizar la carga inicial del login. */}
+              <div className="modal-body p-0" style={{ overflowY: 'auto' }}>
+                {/* -- Pestanas de artefactos agiles (componentes React) -- */}
+                {(tabActiva === 'historias' || tabActiva === 'criterios') && (
+                  <Suspense fallback={
+                    <div className="text-center py-5">
+                      <div className="spinner-border text-primary" role="status" />
+                      <p className="mt-2 text-muted">Cargando documentación...</p>
+                    </div>
+                  }>
+                    {tabActiva === 'historias' && <DocumentacionHistorias />}
+                    {tabActiva === 'criterios' && <DocumentacionCriterios />}
+                  </Suspense>
+                )}
+
+                {/* -- Pestanas de manuales: vista previa del PDF --
+                    El <object> muestra el PDF con el visor propio del
+                    navegador (permite leerlo, buscar dentro e imprimirlo).
+                    Si el navegador no puede mostrarlo (algunos moviles no
+                    tienen visor integrado), se despliega el contenido
+                    alternativo con los enlaces para abrirlo o descargarlo. */}
+                {PESTANAS_DOCS.filter(t => t.pdf).map(tab => tabActiva === tab.key && (
+                  <div key={tab.key}>
+                    <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 bg-light border-bottom">
+                      <small className="text-muted">
+                        Vista previa del <strong>{tab.label}</strong> — versión oficial del proyecto.
+                      </small>
+                      <a
+                        href={tab.pdf}
+                        download
+                        className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                      >
+                        <Icons.Download /> Descargar este manual
+                      </a>
+                    </div>
+                    <object
+                      data={tab.pdf}
+                      type="application/pdf"
+                      title={`Vista previa del ${tab.label}`}
+                      style={{ width: '100%', height: '72vh', display: 'block' }}
+                    >
+                      <div className="text-center py-5 px-3">
+                        <p className="text-muted mb-3">
+                          Este navegador no puede mostrar la vista previa del PDF.
+                        </p>
+                        <a href={tab.pdf} target="_blank" rel="noreferrer" className="btn btn-outline-primary me-2">
+                          Abrir en una pestaña nueva
+                        </a>
+                        <a href={tab.pdf} download className="btn btn-primary">
+                          Descargar el manual
+                        </a>
+                      </div>
+                    </object>
                   </div>
-                }>
-                  {tabActiva === 'historias' && <DocumentacionHistorias />}
-                  {tabActiva === 'criterios' && <DocumentacionCriterios />}
-                </Suspense>
+                ))}
               </div>
 
               <div className="modal-footer">
