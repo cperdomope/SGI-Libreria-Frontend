@@ -71,7 +71,7 @@ Se pueden ver todas las ventas que se han hecho, filtrarlas por fecha o buscar p
 - **Cambiar contraseña:** cualquier usuario puede cambiar su contraseña desde la barra de navegación.
 
 ### 9. Documentación del proyecto (desde el login)
-En la pantalla de acceso hay un botón **"Documentación del Proyecto"** que abre una ventana con 4 pestañas: Historias de Usuario, Criterios de Aceptación, Manual Técnico y Manual de Usuario. No hace falta iniciar sesión para verla — está pensada para que un instructor o jurado SENA pueda revisarla sin necesitar una cuenta. Cada pestaña se carga solo cuando se abre (`React.lazy` + `Suspense`), para no hacer más pesada la carga inicial del login.
+En la pantalla de acceso hay un botón **"Documentación del Proyecto"** que abre una ventana con 2 pestañas (Historias de Usuario y Criterios de Aceptación) y un botón **"Descargar PDF"** con los tres manuales oficiales del proyecto — Manual de Usuario, Manual de Instalación y Manual Técnico — en su versión más actualizada, con pantallazos del sistema. No hace falta iniciar sesión para verla — está pensada para que un instructor o jurado SENA pueda revisarla y descargar los manuales sin necesitar una cuenta. Cada pestaña se carga solo cuando se abre (`React.lazy` + `Suspense`), para no hacer más pesada la carga inicial del login.
 
 ---
 
@@ -198,9 +198,7 @@ proyecto-inventario/
 │   │   │   ├── PaginaAutores.jsx     # Gestión de autores
 │   │   │   ├── PaginaCategorias.jsx  # Gestión de categorías
 │   │   │   ├── DocumentacionHistorias.jsx    # Historias de usuario (evidencia SENA)
-│   │   │   ├── DocumentacionCriterios.jsx    # Criterios de aceptación (evidencia SENA)
-│   │   │   ├── DocumentacionManualTecnico.jsx # Manual técnico (evidencia SENA)
-│   │   │   └── DocumentacionManualUsuario.jsx # Manual de usuario (evidencia SENA)
+│   │   │   └── DocumentacionCriterios.jsx    # Criterios de aceptación (evidencia SENA)
 │   │   ├── components/               # Componentes reutilizables
 │   │   │   ├── BarraNavegacion.jsx   # Menú de navegación
 │   │   │   ├── LayoutPrincipal.jsx   # Estructura visual (navbar + contenido)
@@ -213,6 +211,7 @@ proyecto-inventario/
 │   │   └── styles/custom-theme.css   # Estilos personalizados
 │   ├── railway.json                  # Configuración de despliegue en Railway
 │   └── public/
+│       └── manuales/                 # Manuales del proyecto en PDF (descargables desde el login)
 │
 ├── servidor/                         # Backend (lógica del servidor)
 │   ├── controllers/                  # Lógica de negocio de cada módulo

@@ -65,10 +65,11 @@ import { useAuth } from '../context/AuthContext';
 // que solo se descarga cuando el usuario abre el modal de documentacion.
 // Esto es importante porque los manuales son pesados y no tiene sentido
 // cargarlos si el usuario solo quiere iniciar sesion.
+// NOTA: los manuales de Usuario, Instalacion y Tecnico ya no son pestanas:
+// se entregan como PDF (la version mas actualizada, con pantallazos) a traves
+// del boton "Descargar PDF" del encabezado del modal de documentacion.
 const DocumentacionHistorias = lazy(() => import('./DocumentacionHistorias'));
 const DocumentacionCriterios = lazy(() => import('./DocumentacionCriterios'));
-const DocumentacionManualTecnico = lazy(() => import('./DocumentacionManualTecnico'));
-const DocumentacionManualUsuario = lazy(() => import('./DocumentacionManualUsuario'));
 
 // -- Iconos SVG en linea para el formulario --
 // En lugar de usar una libreria de iconos como FontAwesome o react-icons
@@ -516,9 +517,7 @@ const Acceso = () => {
                 <ul className="nav nav-tabs w-100 border-0">
                   {[
                     { key: 'historias', label: 'Historias de Usuario' },
-                    { key: 'criterios', label: 'Criterios de Aceptacion' },
-                    { key: 'tecnico', label: 'Manual Tecnico' },
-                    { key: 'usuario', label: 'Manual de Usuario' }
+                    { key: 'criterios', label: 'Criterios de Aceptacion' }
                   ].map(tab => (
                     <li className="nav-item" key={tab.key}>
                       <button
@@ -545,8 +544,6 @@ const Acceso = () => {
                 }>
                   {tabActiva === 'historias' && <DocumentacionHistorias />}
                   {tabActiva === 'criterios' && <DocumentacionCriterios />}
-                  {tabActiva === 'tecnico' && <DocumentacionManualTecnico />}
-                  {tabActiva === 'usuario' && <DocumentacionManualUsuario />}
                 </Suspense>
               </div>
 
