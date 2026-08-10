@@ -303,8 +303,11 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        // Si JSON.parse falla, el localStorage tiene datos corruptos
-        if (process.env.NODE_ENV === 'development') {
+        // Si JSON.parse falla, el localStorage tiene datos corruptos.
+        // import.meta.env.DEV es la variable de entorno de Vite: vale true
+        // en desarrollo y false en el build de produccion. Se usa en lugar
+        // de process.env porque 'process' no existe en el navegador.
+        if (import.meta.env.DEV) {
           console.error('[Auth] Error recuperando sesion:', error);
         }
         limpiarStorage();
@@ -491,9 +494,9 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   // Si context es undefined, significa que el componente esta fuera
-  // del AuthProvider. Solo mostramos el error en desarrollo para
-  // no exponer informacion interna en produccion.
-  if (process.env.NODE_ENV === 'development' && context === undefined) {
+  // del AuthProvider. Solo mostramos el error en desarrollo (import.meta.env.DEV
+  // de Vite) para no exponer informacion interna en produccion.
+  if (import.meta.env.DEV && context === undefined) {
     console.error('[Auth] useAuth debe usarse dentro de AuthProvider');
   }
 

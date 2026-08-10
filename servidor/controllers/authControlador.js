@@ -22,6 +22,9 @@ const bcrypt = require('bcryptjs');
 // Un token JWT es como un "carné" digital que identifica al usuario
 const jwt = require('jsonwebtoken');
 
+// Validación de formato de correo compartida por todos los controladores
+const { esEmailValido } = require('../utils/validaciones');
+
 // ─────────────────────────────────────────────────────────
 // VALIDACIÓN CRÍTICA AL ARRANCAR EL SERVIDOR
 // ─────────────────────────────────────────────────────────
@@ -213,9 +216,8 @@ exports.registro = async (req, res, next) => {
     const nombreNormalizado = nombre_completo.trim();
     const emailNormalizado  = email.trim().toLowerCase();
 
-    // Validar formato del email con expresión regular
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailNormalizado)) {
+    // Validar formato del email (regla centralizada en utils/validaciones.js)
+    if (!esEmailValido(emailNormalizado)) {
       return res.status(400).json({ error: 'El formato del email no es válido', exito: false });
     }
 

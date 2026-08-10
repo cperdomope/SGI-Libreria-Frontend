@@ -27,6 +27,9 @@
 // Conexion al pool de base de datos MySQL
 const db = require('../config/db');
 
+// Validacion de formato de correo compartida por todos los controladores
+const { esEmailValido } = require('../utils/validaciones');
+
 // ─────────────────────────────────────────────────────────
 // HELPER: Normalizar y validar campos opcionales del proveedor
 // ─────────────────────────────────────────────────────────
@@ -49,8 +52,7 @@ function normalizarCamposProveedor({ nit, nombre_contacto, email, telefono, dire
   let emailNorm = null;
   if (email && email.trim() !== '') {
     emailNorm = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailNorm)) {
+    if (!esEmailValido(emailNorm)) {
       return { valido: false, mensaje: 'El formato del email no es valido' };
     }
   }

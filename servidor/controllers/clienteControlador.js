@@ -31,6 +31,9 @@ const db = require('../config/db');
 // Así no repetimos el mismo código de paginación en todos los controladores
 const { aplicarPaginacion } = require('../utils/paginacion');
 
+// Validación de formato de correo compartida por todos los controladores
+const { esEmailValido } = require('../utils/validaciones');
+
 // =====================================================
 // CONTROLADOR 1: OBTENER TODOS LOS CLIENTES
 // =====================================================
@@ -171,8 +174,7 @@ const crearCliente = async (req, res) => {
   let emailNormalizado = null;
   if (email && email.trim() !== '') {
     emailNormalizado = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailNormalizado)) {
+    if (!esEmailValido(emailNormalizado)) {
       return res.status(400).json({ exito: false, mensaje: 'El formato del email no es válido' });
     }
   }
@@ -282,8 +284,7 @@ const actualizarCliente = async (req, res) => {
   let emailNormalizado = null;
   if (email && email.trim() !== '') {
     emailNormalizado = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailNormalizado)) {
+    if (!esEmailValido(emailNormalizado)) {
       return res.status(400).json({ exito: false, mensaje: 'El formato del email no es válido' });
     }
   }

@@ -200,7 +200,9 @@ const PaginaClientes = () => {
     // Validar teléfono: solo números, exactamente 10 dígitos (si se proporcionó)
     let telefonoLimpio = '';
     if (formDatos.telefono && formDatos.telefono.trim() !== '') {
-      telefonoLimpio = formDatos.telefono.replace(/[\s\-\(\)\.]/g, '');
+      // Dentro de una clase de caracteres [] los paréntesis y el punto
+      // no necesitan escaparse; el guion va al final para que se lea literal.
+      telefonoLimpio = formDatos.telefono.replace(/[\s().-]/g, '');
       if (!/^\d+$/.test(telefonoLimpio)) {
         setError("El teléfono solo debe contener números.");
         return;

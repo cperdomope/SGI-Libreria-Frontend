@@ -24,6 +24,9 @@
 // BONUS: Este middleware además convierte el string a número entero
 // (parseInt) y guarda el resultado en req.params, para que los
 // controladores reciban el ID ya parseado y listo para usar.
+//
+// El archivo expone dos funciones: validarParametroId (la factory
+// genérica) y validarId (el atajo para el caso más común, ':id').
 
 // "validarParametroId es un middleware reutilizable que aplica el
 //  principio DRY: centraliza la validación de IDs en la URL para
@@ -98,57 +101,10 @@ const validarId = (nombreEntidad = 'recurso') => {
   return validarParametroId('id', nombreEntidad);
 };
 
-// ─────────────────────────────────────────────────────────
-// CASO ESPECIAL: validarMultiplesIds
-// ─────────────────────────────────────────────────────────
-// Para rutas que tienen más de un parámetro ID en la URL.
-// Ejemplo: /ventas/:ventaId/detalles/:detalleId
-// En lugar de encadenar dos middlewares, se validan ambos en uno.
-//
-// Uso:
-//   validarMultiplesIds({ ventaId: 'venta', detalleId: 'detalle' })
-//
-// El objeto de configuración mapea: nombre del param → nombre de la entidad
-const validarMultiplesIds = (configuracion) => {
-  return (req, res, next) => {
-    // Iterar sobre cada parámetro configurado
-    for (const [nombreParametro, nombreEntidad] of Object.entries(configuracion)) {
-      const valor = req.params[nombreParametro];
-
-      if (!valor) {
-        return res.status(400).json({
-          exito: false,
-          mensaje: `El parámetro '${nombreParametro}' es requerido`,
-          codigo: 'PARAMETRO_FALTANTE'
-        });
-      }
-
-      const id = parseInt(valor, 10);
-
-      if (isNaN(id) || id <= 0) {
-        return res.status(400).json({
-          exito: false,
-          mensaje: `ID de ${nombreEntidad} inválido. Debe ser un número entero positivo.`,
-          codigo: 'ID_INVALIDO'
-        });
-      }
-
-      // Guardar el ID parseado para este parámetro
-      req.params[nombreParametro] = id;
-    }
-
-    // Todos los IDs son válidos: continuar
-    next();
-  };
-};
-
-// Exportamos las tres variantes para que las rutas
-// puedan importar la que necesiten:
+// Exportamos las dos variantes que usan las rutas del sistema:
 //   validarId           → para rutas con :id (el más común)
-//   validarParametroId  → para rutas con un param de nombre diferente
-//   validarMultiplesIds → para rutas con varios parámetros ID
+//   validarParametroId  → para rutas cuyo parámetro tiene otro nombre
 module.exports = {
   validarParametroId,
-  validarId,
-  validarMultiplesIds
+  validarId
 };

@@ -28,6 +28,9 @@ const db = require('../config/db');
 // bcryptjs: para encriptar y verificar contraseñas
 const bcrypt = require('bcryptjs');
 
+// Validación de formato de correo compartida por todos los controladores
+const { esEmailValido } = require('../utils/validaciones');
+
 // Nivel de complejidad del hash de contraseñas.
 // 10 es el estándar recomendado: seguro y con tiempo de respuesta aceptable.
 const SALT_ROUNDS = 10;
@@ -102,8 +105,7 @@ exports.crearUsuario = async (req, res) => {
 
   // Validar que el email tenga un formato correcto usando expresión regular.
   // La regex verifica: algo@algo.algo (sin espacios, con @, con punto)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(emailNormalizado)) {
+  if (!esEmailValido(emailNormalizado)) {
     return res.status(400).json({ exito: false, mensaje: 'Formato de email inválido' });
   }
 
@@ -181,8 +183,7 @@ exports.actualizarUsuario = async (req, res) => {
   const emailNormalizado = email.trim().toLowerCase();
 
   // Validar formato de email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(emailNormalizado)) {
+  if (!esEmailValido(emailNormalizado)) {
     return res.status(400).json({ exito: false, mensaje: 'Formato de email inválido' });
   }
 
