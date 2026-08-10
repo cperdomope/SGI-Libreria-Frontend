@@ -40,7 +40,7 @@
 // Suspense: componente que muestra un fallback (spinner) mientras el
 //   componente lazy se esta descargando. Es obligatorio envolver
 //   componentes lazy con Suspense; sin el, React lanza un error.
-import { useState, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 
 // react-hook-form: libreria especializada en formularios para React.
 // A diferencia de manejar formularios con useState (controlados), RHF usa
@@ -136,6 +136,12 @@ const Icons = {
 // Al ser constante, se declara en UPPER_SNAKE_CASE por convencion de JavaScript.
 const MAX_INTENTOS = 3;
 
+// -- Tiempo que permanece visible la alerta de intento fallido (ms) --
+// Pasado este tiempo, el mensaje y la barra de intentos se ocultan solos
+// para no dejar la pantalla con un error permanente. El aviso de cuenta
+// bloqueada NO se oculta: el usuario necesita verlo mientras espera.
+const MS_OCULTAR_ERROR = 4000;
+
 // =====================================================
 // COMPONENTE PRINCIPAL: Acceso (pagina de login)
 // =====================================================
@@ -180,12 +186,47 @@ const Acceso = () => {
   // JWT en el estado global + localStorage para persistencia entre recargas.
   const { login } = useAuth();
 
+  // -- Temporizador para ocultar la alerta de error --
+  // useRef guarda un valor que sobrevive a los re-renders SIN provocar uno
+  // nuevo al cambiar (a diferencia de useState). Es lo indicado para
+  // conservar el id de un setTimeout y poder cancelarlo despues.
+  const temporizadorError = useRef(null);
+
+  // Cancela el temporizador pendiente, si existe.
+  // Se llama antes de cada intento para que un temporizador viejo no
+  // borre el mensaje del intento nuevo.
+  const cancelarOcultarError = () => {
+    if (temporizadorError.current) {
+      clearTimeout(temporizadorError.current);
+      temporizadorError.current = null;
+    }
+  };
+
+  // Programa el ocultamiento de la alerta despues de MS_OCULTAR_ERROR.
+  const programarOcultarError = () => {
+    cancelarOcultarError();
+    temporizadorError.current = setTimeout(() => {
+      setErrorServidor('');
+      setMensajeDetallado('');
+      setIntentosRestantes(null);   // null = la barra de intentos se oculta
+      temporizadorError.current = null;
+    }, MS_OCULTAR_ERROR);
+  };
+
+  // Limpieza al desmontar el componente: si el usuario sale de la pagina
+  // antes de que el temporizador se dispare, evitamos actualizar el estado
+  // de un componente ya desmontado (fuga de memoria y advertencia de React).
+  useEffect(() => cancelarOcultarError, []);
+
   // -- Funcion: manejarLogin (se ejecuta al enviar el formulario) --
   // Esta funcion SOLO se llama si react-hook-form valido todos los campos
   // exitosamente. RHF le pasa los valores como objeto: { email, password }.
   // Es async porque necesitamos esperar la respuesta del servidor (await).
   const manejarLogin = async ({ email, password }) => {
-    // Activamos el spinner y limpiamos errores anteriores
+    // Activamos el spinner y limpiamos errores anteriores.
+    // cancelarOcultarError() evita que el temporizador del intento previo
+    // oculte el mensaje que se muestre en este nuevo intento.
+    cancelarOcultarError();
     setLoading(true);
     setErrorServidor('');
 
@@ -231,7 +272,14 @@ const Acceso = () => {
         setBloqueado(false);
       }
 
-      setErrorServidor(errorData?.error || 'Error de autenticacion');
+      setErrorServidor(errorData?.error || 'Error de autenticación');
+
+      // La alerta se oculta sola a los 4 segundos, salvo cuando la cuenta
+      // quedo bloqueada: ese aviso debe seguir visible mientras el usuario
+      // espera a que termine el bloqueo.
+      if (!errorData?.bloqueado) {
+        programarOcultarError();
+      }
     } finally {
       // finally se ejecuta SIEMPRE, sea exito o error.
       // Desactivamos el spinner del boton en cualquier caso.
