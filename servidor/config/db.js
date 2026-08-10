@@ -76,6 +76,13 @@ const configuracionPool = {
   // utf8 "normal" de MySQL solo soporta 3 bytes, no el rango completo.
   charset: 'utf8mb4',
 
+  // Zona horaria de Colombia (UTC-5 fijo, sin horario de verano).
+  // Le indica a mysql2 cómo interpretar las fechas que MySQL devuelve,
+  // para que los TIMESTAMP lleguen correctos al frontend aunque el
+  // servidor de producción (Railway) corra en UTC. Trabaja en pareja
+  // con el SET time_zone que se ejecuta al abrir cada conexión (abajo).
+  timezone: '-05:00',
+
   // waitForConnections: si todas las conexiones están ocupadas,
   // las nuevas peticiones esperan en cola en lugar de fallar inmediatamente.
   waitForConnections: true,
@@ -103,6 +110,21 @@ const configuracionPool = {
 // CREAR EL POOL
 // ─────────────────────────────────────────────────────────
 const pool = mysql.createPool(configuracionPool);
+
+// ─────────────────────────────────────────────────────────
+// ZONA HORARIA DE LA SESIÓN (hora de Colombia)
+// ─────────────────────────────────────────────────────────
+// En producción (Railway) el servidor MySQL corre en UTC, 5 horas
+// adelante de Colombia. Sin este ajuste, una venta hecha un domingo
+// a las 8 p.m. hora colombiana queda fechada el lunes (UTC) y las
+// estadísticas del dashboard (ventas de hoy, ventas por día de la
+// semana, mes) se corren de día entre las 7 p.m. y la medianoche.
+// Este evento se dispara cada vez que el pool abre una conexión
+// nueva: fija la zona horaria de esa sesión para que NOW(), CURDATE()
+// y DAYOFWEEK() calculen siempre en hora local de Colombia.
+pool.on('connection', (conexion) => {
+  conexion.query("SET time_zone = '-05:00'");
+});
 
 // ─────────────────────────────────────────────────────────
 // VERIFICAR CONEXIÓN AL ARRANCAR
