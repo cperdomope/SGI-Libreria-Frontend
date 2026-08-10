@@ -98,7 +98,7 @@ const historias = [
     id: 'HU-08',
     titulo: 'Ver libros con stock bajo',
     como: 'Administrador',
-    quiero: 'ver una tabla con los libros que tienen stock igual o menor al mínimo',
+    quiero: 'ver una tabla con los libros cuyo stock está por debajo del mínimo definido',
     para: 'saber cuáles libros necesito reabastecer',
     prioridad: 'Alta',
     modulo: 'Dashboard'
@@ -109,7 +109,7 @@ const historias = [
     id: 'HU-09',
     titulo: 'Ver lista de libros del inventario',
     como: 'Usuario (Administrador o Vendedor)',
-    quiero: 'ver todos los libros con su imagen, título, autor, categoría, precio y stock',
+    quiero: 'ver todos los libros con su portada, ISBN, título, autor, categoría, precio y stock',
     para: 'conocer qué libros hay disponibles en la librería',
     prioridad: 'Alta',
     modulo: 'Inventario'
@@ -118,7 +118,7 @@ const historias = [
     id: 'HU-10',
     titulo: 'Buscar libros en el inventario',
     como: 'Usuario (Administrador o Vendedor)',
-    quiero: 'buscar libros por título, autor o ISBN escribiendo en un campo de búsqueda',
+    quiero: 'buscar libros por título o ISBN escribiendo en un campo de búsqueda',
     para: 'encontrar rápidamente un libro específico',
     prioridad: 'Alta',
     modulo: 'Inventario'
@@ -127,8 +127,8 @@ const historias = [
     id: 'HU-11',
     titulo: 'Crear un libro nuevo',
     como: 'Administrador',
-    quiero: 'agregar un libro con su título, ISBN, autor, categoría, precio, stock y una imagen de portada',
-    para: 'registrar nuevos libros en el inventario',
+    quiero: 'agregar un libro con su título, ISBN, autor, categoría, precio, stock mínimo y una imagen de portada',
+    para: 'registrar nuevos libros en el inventario (el stock inicial queda en cero y se alimenta con las entradas del Kardex)',
     prioridad: 'Alta',
     modulo: 'Inventario'
   },
@@ -136,7 +136,7 @@ const historias = [
     id: 'HU-12',
     titulo: 'Editar un libro existente',
     como: 'Administrador',
-    quiero: 'modificar los datos de un libro (título, precio, stock, portada, etc.)',
+    quiero: 'modificar los datos de un libro (título, ISBN, autor, categoría, precio, stock mínimo y portada)',
     para: 'corregir o actualizar la información de un libro',
     prioridad: 'Alta',
     modulo: 'Inventario'
@@ -250,7 +250,7 @@ const historias = [
     id: 'HU-24',
     titulo: 'Ver lista de clientes',
     como: 'Usuario (Administrador o Vendedor)',
-    quiero: 'ver todos los clientes registrados con su nombre, documento, teléfono y correo',
+    quiero: 'ver todos los clientes registrados con su documento, nombre, teléfono, correo y dirección',
     para: 'consultar la información de los clientes',
     prioridad: 'Alta',
     modulo: 'Clientes'
@@ -268,7 +268,7 @@ const historias = [
     id: 'HU-26',
     titulo: 'Crear un cliente nuevo',
     como: 'Usuario (Administrador o Vendedor)',
-    quiero: 'registrar un cliente con su nombre, tipo de documento (CC, NIT, CE, Pasaporte), documento, teléfono y correo',
+    quiero: 'registrar un cliente con su documento, nombre completo, teléfono, correo y dirección',
     para: 'tener los datos del cliente para futuras ventas',
     prioridad: 'Alta',
     modulo: 'Clientes'
@@ -319,7 +319,7 @@ const historias = [
     id: 'HU-31',
     titulo: 'Gestionar categorías',
     como: 'Administrador',
-    quiero: 'crear, editar y eliminar categorías con su nombre',
+    quiero: 'crear, editar y eliminar categorías con su nombre (único en el sistema)',
     para: 'poder clasificar los libros por categoría',
     prioridad: 'Media',
     modulo: 'Categorías'
@@ -330,7 +330,7 @@ const historias = [
     id: 'HU-32',
     titulo: 'Ver lista de usuarios del sistema',
     como: 'Administrador',
-    quiero: 'ver todos los usuarios con su nombre, correo, rol, estado y último acceso',
+    quiero: 'ver todos los usuarios con su nombre, correo, rol, estado y fecha del último acceso',
     para: 'saber quienes tienen acceso al sistema',
     prioridad: 'Alta',
     modulo: 'Usuarios'

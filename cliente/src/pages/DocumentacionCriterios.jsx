@@ -82,7 +82,8 @@ const criterios = [
     modulo: 'Dashboard',
     criterios: [
       'Solo los Administradores pueden ver esta página',
-      'Se muestran 4 tarjetas KPI: ventas del día, ventas de la semana, ventas del mes y alertas de stock; además hay 3 métricas secundarias: total de libros, valor del inventario y total de clientes',
+      'Se muestran 4 tarjetas KPI: ventas del día, ventas de la semana, ventas del mes (con el porcentaje de crecimiento frente al mes anterior) y alertas de stock; además hay 3 métricas secundarias: total de libros, valor del inventario y total de clientes',
+      'Las ventas anuladas no se cuentan en los indicadores',
       'Los datos se cargan automáticamente al entrar a la página',
       'Si un Vendedor intenta acceder, se le redirige a la página de ventas'
     ]
@@ -113,9 +114,9 @@ const criterios = [
     titulo: 'Ver libros con stock bajo',
     modulo: 'Dashboard',
     criterios: [
-      'Se muestra una tabla con los libros que tienen stock igual o menor al stock mínimo',
-      'La tabla muestra: título, stock actual y stock mínimo',
-      'Hay un botón o enlace que lleva directamente al módulo de inventario'
+      'Se muestra una tabla con los libros cuyo stock actual está por debajo del stock mínimo',
+      'La tabla muestra: título, autor, stock actual, stock mínimo y las unidades faltantes',
+      'Hay un enlace que lleva directamente al módulo de inventario'
     ]
   },
 
@@ -125,10 +126,10 @@ const criterios = [
     titulo: 'Ver lista de libros del inventario',
     modulo: 'Inventario',
     criterios: [
-      'Se muestra una tabla con todos los libros registrados',
+      'Se muestra una tabla paginada con todos los libros registrados (5 por página)',
       'Cada libro muestra: miniatura de portada, ISBN, título, autor, categoría, precio y stock',
-      'El stock tiene un indicador visual (badge): Disponible, Stock Bajo o Agotado',
-      'La tabla se puede ver en celulares con scroll horizontal'
+      'El stock tiene un indicador visual de color: rojo cuando está en el mínimo o por debajo, verde cuando hay existencias suficientes',
+      'La tabla se puede ver en celulares con desplazamiento horizontal'
     ]
   },
   {
@@ -138,7 +139,7 @@ const criterios = [
     criterios: [
       'Hay un campo de búsqueda en la parte superior de la tabla',
       'Al escribir, la tabla se filtra instantáneamente sin hacer petición al servidor',
-      'Se puede buscar por título, autor o ISBN',
+      'Se puede buscar por título o por ISBN',
       'Si no hay resultados, se muestra un mensaje indicándolo'
     ]
   },
@@ -148,9 +149,11 @@ const criterios = [
     modulo: 'Inventario',
     criterios: [
       'Solo el Administrador ve el botón de "Agregar libro"',
-      'Se abre un formulario para llenar: título, ISBN, autor, categoría, precio, stock actual, stock mínimo y portada',
+      'Se abre un formulario para llenar: título, ISBN, autor, categoría, precio de venta, stock mínimo y portada',
+      'El título y el precio son obligatorios; el precio debe ser mayor a cero',
+      'El stock actual no se digita: el libro nace en cero y su existencia se alimenta con las entradas del Kardex, garantizando la trazabilidad',
       'La portada acepta imágenes JPG, PNG o WebP de máximo 2 MB',
-      'Todos los campos obligatorios se validan antes de enviar',
+      'El ISBN no puede repetirse: si ya existe, el sistema muestra un mensaje claro',
       'Al crear exitosamente, el libro aparece en la tabla sin recargar la página'
     ]
   },
@@ -161,7 +164,8 @@ const criterios = [
     criterios: [
       'Solo el Administrador ve el botón de editar en cada libro',
       'Al hacer clic, se abre el formulario con los datos actuales del libro',
-      'Se pueden modificar todos los campos incluyendo la imagen de portada',
+      'Se pueden modificar todos los campos, incluida la imagen de portada (la anterior se elimina del servidor)',
+      'El stock actual no se modifica desde aquí: solo cambia por movimientos, ventas o anulaciones',
       'Al guardar, los cambios se reflejan en la tabla inmediatamente'
     ]
   },
@@ -173,6 +177,7 @@ const criterios = [
       'Solo el Administrador ve el botón de eliminar',
       'Se muestra una confirmación antes de eliminar',
       'Al eliminar, el libro y su imagen de portada se borran del servidor',
+      'No se puede eliminar un libro que tenga ventas o movimientos registrados: el sistema lo impide para proteger el historial',
       'El libro desaparece de la tabla sin recargar la página'
     ]
   },
@@ -219,12 +224,13 @@ const criterios = [
     modulo: 'Ventas',
     criterios: [
       'Se puede buscar y seleccionar un cliente',
-      'Se pueden agregar varios libros al carrito',
-      'Se puede cambiar la cantidad de cada libro en el carrito',
+      'Se pueden agregar varios libros al carrito buscándolos en el catálogo',
+      'Se puede aumentar o disminuir la cantidad de cada libro en el carrito',
+      'No se permite agregar más unidades de las que hay en existencia',
       'Se puede eliminar un libro del carrito',
       'Se debe elegir un método de pago (Efectivo, Tarjeta, Transferencia o Mixto)',
       'Al confirmar la venta, el stock de cada libro se descuenta automáticamente',
-      'El backend recalcula y valida el total (no confía en el frontend)'
+      'El servidor recalcula y valida el total (no confía en el navegador) y ejecuta todo en una transacción'
     ]
   },
   {
@@ -232,11 +238,11 @@ const criterios = [
     titulo: 'Aplicar descuento a una venta',
     modulo: 'Ventas',
     criterios: [
-      'En la sección de facturación del POS hay un campo para ingresar el porcentaje de descuento (0% a 100%)',
+      'En la sección de facturación del punto de venta hay un campo para ingresar el porcentaje de descuento (0 % a 100 %)',
       'Al cambiar el porcentaje, se muestra automáticamente el subtotal, el monto del descuento y el total final',
-      'El descuento no puede ser negativo ni mayor al 100%',
-      'El backend valida que el descuento no sea mayor al subtotal y recalcula el total por seguridad',
-      'El descuento se guarda en la base de datos y se muestra en el historial de ventas y en el PDF'
+      'El descuento no puede ser negativo ni mayor al 100 %',
+      'El servidor valida que el descuento no sea mayor al subtotal y recalcula el total por seguridad',
+      'El descuento se guarda en la base de datos y se muestra en el historial de ventas y en el ticket PDF'
     ]
   },
   {
@@ -246,8 +252,8 @@ const criterios = [
     criterios: [
       'Se muestra una tabla con todas las ventas realizadas',
       'Cada venta tiene un estado visual: Completada (verde) o Anulada (rojo)',
-      'La tabla tiene paginación de 10 registros por página',
-      'Se puede ver el detalle de cada venta'
+      'La tabla tiene paginación en el servidor de 10 registros por página',
+      'Se puede ver el detalle de cada venta con todos sus productos'
     ]
   },
   {
@@ -257,8 +263,8 @@ const criterios = [
     criterios: [
       'Hay campos de fecha "desde" y "hasta" para filtrar por rango',
       'Hay un campo de búsqueda para buscar por nombre de cliente',
-      'Los filtros se aplican sin recargar la página',
-      'Se pueden combinar los filtros (fecha + cliente)'
+      'La búsqueda espera a que el usuario termine de escribir antes de consultar al servidor',
+      'Los filtros se aplican sin recargar la página y se pueden combinar (fecha + cliente)'
     ]
   },
   {
@@ -269,7 +275,8 @@ const criterios = [
       'Solo el Administrador ve el botón de anular',
       'Se muestra una confirmación antes de anular',
       'Al anular, el stock de cada libro de la venta se devuelve automáticamente',
-      'La venta cambia su estado visual a "Anulada"',
+      'La reversión queda registrada en el Kardex con la observación de la venta anulada (trazabilidad)',
+      'La venta no se borra: cambia su estado visual a "Anulada"',
       'Una venta ya anulada no se puede anular de nuevo'
     ]
   },
@@ -279,8 +286,8 @@ const criterios = [
     modulo: 'Ventas',
     criterios: [
       'Hay un botón de PDF en cada venta del historial',
-      'El PDF se genera con formato de ticket POS (80 mm)',
-      'El ticket incluye los datos de la venta: cliente, productos, cantidades, precios y total',
+      'El PDF se genera en el navegador con formato de ticket de punto de venta (80 mm)',
+      'El ticket incluye los datos de la venta: cliente, productos, cantidades, precios, descuento y total',
       'El archivo se descarga automáticamente al hacer clic'
     ]
   },
@@ -302,9 +309,9 @@ const criterios = [
     titulo: 'Ver lista de clientes',
     modulo: 'Clientes',
     criterios: [
-      'Se muestra una tabla con todos los clientes registrados',
-      'La tabla muestra: nombre, tipo de documento, documento, teléfono y correo',
-      'La tabla se adapta a celulares ocultando columnas menos importantes'
+      'Se muestra una tabla paginada con todos los clientes registrados (5 por página)',
+      'La tabla muestra: documento, nombre completo, teléfono, correo y dirección',
+      'La tabla se adapta a celulares ocultando las columnas menos importantes'
     ]
   },
   {
@@ -324,10 +331,10 @@ const criterios = [
     modulo: 'Clientes',
     criterios: [
       'Tanto el Administrador como el Vendedor pueden crear clientes',
-      'Se piden los campos: nombre, tipo de documento, documento, teléfono y correo',
-      'El tipo de documento puede ser: CC, NIT, CE o Pasaporte',
-      'El número de documento debe ser único (no se puede repetir)',
-      'Al crear exitosamente, el cliente aparece en la tabla'
+      'Se piden los campos: documento, nombre completo, teléfono, correo y dirección',
+      'El documento y el nombre completo son obligatorios',
+      'El número de documento debe ser único (no se puede repetir); admite cédula o NIT',
+      'Al crear exitosamente, el cliente aparece en la tabla y queda disponible en el punto de venta'
     ]
   },
   {
@@ -348,7 +355,8 @@ const criterios = [
     criterios: [
       'Solo el Administrador ve el botón de eliminar',
       'Se muestra una confirmación antes de eliminar',
-      'El cliente se elimina de la base de datos y desaparece de la tabla'
+      'El cliente se elimina de la base de datos y desaparece de la tabla',
+      'No se puede eliminar un cliente que tenga ventas registradas: el sistema lo impide para proteger el historial de facturación'
     ]
   },
 

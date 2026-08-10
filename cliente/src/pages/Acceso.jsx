@@ -269,7 +269,7 @@ const Acceso = () => {
             }}
             onClick={() => setMostrarDocs(true)}
           >
-            Documentacion del Proyecto
+            Documentación del Proyecto
           </button>
         </div>
 
@@ -279,7 +279,7 @@ const Acceso = () => {
             <Icons.Book />
           </div>
           <h2 className="fw-bold text-dark">Bienvenido</h2>
-          <p className="text-muted">Sistema de Gestion Libreria el Saber</p>
+          <p className="text-muted">Sistema de Gestión de Inventario — Librería El Saber</p>
         </div>
 
         {/* -- ALERTA DE ERROR DEL SERVIDOR --
@@ -293,7 +293,7 @@ const Acceso = () => {
             <div className="d-flex align-items-start">
               <div className="flex-grow-1">
                 <strong className="d-block mb-1">
-                  {bloqueado ? 'Cuenta Bloqueada' : 'Error de Autenticacion'}
+                  {bloqueado ? 'Cuenta bloqueada' : 'Error de autenticación'}
                 </strong>
                 <p className="mb-2 small">{mensajeDetallado || errorServidor}</p>
 
@@ -339,7 +339,7 @@ const Acceso = () => {
               en una sola linea visual. has-validation asegura que los bordes
               redondeados se apliquen correctamente cuando hay mensajes de error. */}
           <div className="mb-4">
-            <label className="form-label fw-bold small text-muted">CORREO ELECTRONICO</label>
+            <label className="form-label fw-bold small text-muted">CORREO ELECTRÓNICO</label>
             <div className="input-group has-validation">
               <span className="input-group-text bg-light border-end-0 text-muted">
                 <Icons.User />
@@ -356,10 +356,10 @@ const Acceso = () => {
                 disabled={loading}
                 autoComplete="email"
                 {...register('email', {
-                  required: 'El correo electronico es obligatorio',
+                  required: 'El correo electrónico es obligatorio',
                   pattern: {
                     value: /\S+@\S+\.\S+/,
-                    message: 'El formato del correo no es valido'
+                    message: 'El formato del correo no es válido'
                   }
                 })}
               />
@@ -375,7 +375,7 @@ const Acceso = () => {
               El type alterna entre 'text' y 'password' segun el estado
               mostrarPassword. Esto es lo que permite ver/ocultar la clave. */}
           <div className="mb-4">
-            <label className="form-label fw-bold small text-muted">CONTRASENA</label>
+            <label className="form-label fw-bold small text-muted">CONTRASEÑA</label>
             <div className="input-group has-validation">
               <span className="input-group-text bg-light border-end-0 text-muted">
                 <Icons.Lock />
@@ -390,10 +390,10 @@ const Acceso = () => {
                 disabled={loading}
                 autoComplete="current-password"
                 {...register('password', {
-                  required: 'La contrasena es obligatoria',
+                  required: 'La contraseña es obligatoria',
                   minLength: {
                     value: 8,
-                    message: 'La contrasena debe tener al menos 8 caracteres'
+                    message: 'La contraseña debe tener al menos 8 caracteres'
                   }
                 })}
               />
@@ -404,7 +404,7 @@ const Acceso = () => {
                 className="btn btn-light border border-start-0 text-muted"
                 type="button"
                 onClick={() => setMostrarPassword(!mostrarPassword)}
-                aria-label={mostrarPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {mostrarPassword ? <Icons.EyeSlash /> : <Icons.Eye />}
               </button>
@@ -443,7 +443,7 @@ const Acceso = () => {
 
         {/* -- PIE DE PAGINA -- */}
         <div className="text-center mt-4">
-          <small className="text-muted">Libreria el Saber &copy; 2026</small>
+          <small className="text-muted">Librería El Saber &copy; 2026</small>
         </div>
       </div>
 
@@ -468,7 +468,7 @@ const Acceso = () => {
           <div className="modal-dialog modal-xl modal-dialog-scrollable" style={{ maxWidth: '95vw', maxHeight: '95vh' }}>
             <div className="modal-content" style={{ maxHeight: '95vh' }}>
               <div className="modal-header bg-primary text-white">
-                <h5 className="modal-title">Documentacion del Proyecto — SGI Libreria El Saber</h5>
+                <h5 className="modal-title">Documentación del Proyecto — SGI Librería El Saber</h5>
                 {/* -- BOTON DE DESCARGA DE MANUALES (PDF) --
                     Un unico boton compacto en el encabezado que despliega
                     las tres opciones. Usa el dropdown nativo de Bootstrap
@@ -496,12 +496,12 @@ const Acceso = () => {
                       </li>
                       <li>
                         <a className="dropdown-item" href="/manuales/Manual_de_Instalacion_SGI.pdf" download>
-                          Manual de Instalacion
+                          Manual de Instalación
                         </a>
                       </li>
                       <li>
                         <a className="dropdown-item" href="/manuales/Manual_Tecnico_SGI.pdf" download>
-                          Manual Tecnico
+                          Manual Técnico
                         </a>
                       </li>
                     </ul>
@@ -517,7 +517,7 @@ const Acceso = () => {
                 <ul className="nav nav-tabs w-100 border-0">
                   {[
                     { key: 'historias', label: 'Historias de Usuario' },
-                    { key: 'criterios', label: 'Criterios de Aceptacion' }
+                    { key: 'criterios', label: 'Criterios de Aceptación' }
                   ].map(tab => (
                     <li className="nav-item" key={tab.key}>
                       <button
@@ -539,7 +539,7 @@ const Acceso = () => {
                 <Suspense fallback={
                   <div className="text-center py-5">
                     <div className="spinner-border text-primary" role="status" />
-                    <p className="mt-2 text-muted">Cargando documentacion...</p>
+                    <p className="mt-2 text-muted">Cargando documentación...</p>
                   </div>
                 }>
                   {tabActiva === 'historias' && <DocumentacionHistorias />}
