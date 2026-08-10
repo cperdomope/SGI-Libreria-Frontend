@@ -468,7 +468,45 @@ const Acceso = () => {
             <div className="modal-content" style={{ maxHeight: '95vh' }}>
               <div className="modal-header bg-primary text-white">
                 <h5 className="modal-title">Documentacion del Proyecto — SGI Libreria El Saber</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDocs(false)} />
+                {/* -- BOTON DE DESCARGA DE MANUALES (PDF) --
+                    Un unico boton compacto en el encabezado que despliega
+                    las tres opciones. Usa el dropdown nativo de Bootstrap
+                    (data-bs-toggle): funciona porque main.jsx importa
+                    bootstrap.bundle.min.js. Los PDF viven en
+                    cliente/public/manuales/ y se sirven como archivos
+                    estaticos en /manuales/*.pdf tanto en desarrollo (Vite)
+                    como en produccion (serve -s dist). El atributo download
+                    hace que el navegador los descargue en vez de abrirlos. */}
+                <div className="d-flex align-items-center gap-2">
+                  <div className="dropdown">
+                    <button
+                      className="btn btn-sm btn-outline-light dropdown-toggle d-inline-flex align-items-center gap-1"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <Icons.Download /> Descargar PDF
+                    </button>
+                    <ul className="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <a className="dropdown-item" href="/manuales/Manual_de_Usuario_SGI.pdf" download>
+                          Manual de Usuario
+                        </a>
+                      </li>
+                      <li>
+                        <a className="dropdown-item" href="/manuales/Manual_de_Instalacion_SGI.pdf" download>
+                          Manual de Instalacion
+                        </a>
+                      </li>
+                      <li>
+                        <a className="dropdown-item" href="/manuales/Manual_Tecnico_SGI.pdf" download>
+                          Manual Tecnico
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                  <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDocs(false)} />
+                </div>
               </div>
 
               {/* Pestanas de navegacion renderizadas con .map() sobre un array
@@ -493,39 +531,6 @@ const Acceso = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              {/* -- BARRA DE DESCARGA DE MANUALES (PDF) --
-                  Visible al abrir el modal, sin importar la pestana activa.
-                  Los PDF viven en cliente/public/manuales/: Vite copia la
-                  carpeta public/ tal cual dentro de dist/, por lo que quedan
-                  disponibles como archivos estaticos en /manuales/*.pdf tanto
-                  en desarrollo (Vite) como en produccion (serve -s dist).
-                  El atributo download del <a> le indica al navegador que
-                  descargue el archivo en lugar de abrirlo en la pestana. */}
-              <div className="w-100 px-3 py-2 bg-light border-bottom d-flex flex-wrap align-items-center gap-2">
-                <small className="fw-bold text-muted me-1">Descargar manuales en PDF:</small>
-                <a
-                  href="/manuales/Manual_de_Usuario_SGI.pdf"
-                  download
-                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                >
-                  <Icons.Download /> Manual de Usuario
-                </a>
-                <a
-                  href="/manuales/Manual_de_Instalacion_SGI.pdf"
-                  download
-                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                >
-                  <Icons.Download /> Manual de Instalacion
-                </a>
-                <a
-                  href="/manuales/Manual_Tecnico_SGI.pdf"
-                  download
-                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                >
-                  <Icons.Download /> Manual Tecnico
-                </a>
               </div>
 
               {/* Contenido de la pestana activa.
