@@ -137,16 +137,16 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
     // evitando que se ejecute el codigo posterior.
 
     if (!form.passwordActual) {
-      return setError('Ingrese su contrasena actual');
+      return setError('Ingrese su contraseña actual');
     }
     if (form.passwordNueva.length < 8) {
-      return setError('La nueva contrasena debe tener al menos 8 caracteres');
+      return setError('La nueva contraseña debe tener al menos 8 caracteres');
     }
     if (form.passwordNueva !== form.passwordConfirmacion) {
-      return setError('La nueva contrasena y la confirmacion no coinciden');
+      return setError('La nueva contraseña y la confirmación no coinciden');
     }
     if (form.passwordActual === form.passwordNueva) {
-      return setError('La nueva contrasena debe ser diferente a la actual');
+      return setError('La nueva contraseña debe ser diferente a la actual');
     }
 
     // ---------------------------------------------------------
@@ -173,7 +173,7 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
       });
 
       // Si llegamos aqui sin errores, el cambio fue exitoso
-      setExito('Contrasena actualizada exitosamente');
+      setExito('Contraseña actualizada exitosamente');
 
       // Limpiamos el formulario y cerramos el modal automaticamente
       // despues de 2 segundos para que el usuario alcance a leer
@@ -187,7 +187,7 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
       // Axios lo captura aqui. Extraemos el mensaje de error del backend
       // usando encadenamiento opcional (?.) por si alguna propiedad no existe.
       // El operador || proporciona un mensaje generico como fallback.
-      const mensaje = err.response?.data?.mensaje || 'Error al cambiar la contrasena';
+      const mensaje = err.response?.data?.mensaje || 'Error al cambiar la contraseña';
       setError(mensaje);
     } finally {
       // Rehabilitamos el boton sin importar si hubo exito o error
@@ -242,7 +242,7 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
               indicar precaucion (cambiar la contrasena es una
               accion sensible). btn-close: boton X de Bootstrap. */}
           <div className="modal-header bg-warning text-dark">
-            <h5 className="modal-title">Cambiar Contrasena</h5>
+            <h5 className="modal-title">Cambiar Contraseña</h5>
             <button type="button" className="btn-close" onClick={cerrar} />
           </div>
 
@@ -265,13 +265,13 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
                   autoComplete="current-password" le indica al navegador
                   que puede sugerir la contrasena guardada. */}
               <div className="mb-3">
-                <label className="form-label fw-semibold small">Contrasena Actual *</label>
+                <label className="form-label fw-semibold small">Contraseña Actual *</label>
                 <input
                   type="password"
                   className="form-control form-control-sm"
                   value={form.passwordActual}
                   onChange={(e) => setForm({ ...form, passwordActual: e.target.value })}
-                  placeholder="Tu contrasena actual"
+                  placeholder="Tu contraseña actual"
                   autoComplete="current-password"
                   required
                 />
@@ -281,13 +281,13 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
                   minLength={8} es una validacion HTML5 nativa que
                   complementa nuestra validacion en JavaScript. */}
               <div className="mb-3">
-                <label className="form-label fw-semibold small">Nueva Contrasena *</label>
+                <label className="form-label fw-semibold small">Nueva Contraseña *</label>
                 <input
                   type="password"
                   className="form-control form-control-sm"
                   value={form.passwordNueva}
                   onChange={(e) => setForm({ ...form, passwordNueva: e.target.value })}
-                  placeholder="Minimo 8 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   autoComplete="new-password"
                   minLength={8}
                   required
@@ -299,13 +299,13 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
                   contrasena nueva ayuda al navegador a entender que
                   el usuario esta creando una nueva contrasena. */}
               <div className="mb-2">
-                <label className="form-label fw-semibold small">Confirmar Nueva Contrasena *</label>
+                <label className="form-label fw-semibold small">Confirmar Nueva Contraseña *</label>
                 <input
                   type="password"
                   className="form-control form-control-sm"
                   value={form.passwordConfirmacion}
                   onChange={(e) => setForm({ ...form, passwordConfirmacion: e.target.value })}
-                  placeholder="Repite la nueva contrasena"
+                  placeholder="Repite la nueva contraseña"
                   autoComplete="new-password"
                   required
                 />
@@ -322,7 +322,7 @@ const ModalCambiarPassword = ({ visible, onCerrar }) => {
                 Cancelar
               </button>
               <button type="submit" className="btn btn-sm btn-warning" disabled={guardando}>
-                {guardando ? 'Guardando...' : 'Cambiar Contrasena'}
+                {guardando ? 'Guardando...' : 'Cambiar Contraseña'}
               </button>
             </div>
           </form>
