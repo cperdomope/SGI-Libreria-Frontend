@@ -180,7 +180,7 @@ const BarraNavegacion = () => {
   // botones "Aceptar" y "Cancelar". Retorna true si el usuario
   // acepta y false si cancela. Esto previene cierres accidentales.
   const manejarSalida = () => {
-    if (window.confirm('Desea cerrar sesion?')) {
+    if (window.confirm('¿Desea cerrar sesión?')) {
       logout(); // Limpia el token JWT del localStorage y redirige al login
     }
   };
@@ -331,7 +331,7 @@ const BarraNavegacion = () => {
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  Gestion Comercial
+                  Gestión Comercial
                 </a>
                 <ul className="dropdown-menu shadow-sm border-0">
                   {tienePermiso('registrarVenta') && (
@@ -410,7 +410,7 @@ const BarraNavegacion = () => {
                   {tienePermiso('verCategorias') && (
                     <li>
                       <Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/categorias">
-                        <Icono src={iconoCategorias} /> Categorias
+                        <Icono src={iconoCategorias} /> Categorías
                       </Link>
                     </li>
                   )}

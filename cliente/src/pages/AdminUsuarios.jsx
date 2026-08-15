@@ -229,7 +229,7 @@ const AdminUsuarios = () => {
     // window.confirm() muestra un dialogo nativo del navegador.
     // Retorna true si el usuario acepta, false si cancela.
     // El "!" niega el resultado: si cancela, salimos de la función (return).
-    if (!window.confirm(`Desea ${accion} al usuario "${usuario.nombre_completo}"?`)) return;
+    if (!window.confirm(`¿Desea ${accion} al usuario "${usuario.nombre_completo}"?`)) return;
 
     try {
       // PATCH: metodo HTTP para actualización PARCIAL de un recurso.
@@ -278,7 +278,7 @@ const AdminUsuarios = () => {
             clamp(1rem, 3vw, 1.4rem): funcion CSS que hace el tamaño
             de fuente responsivo, con un minimo de 1rem y maximo de 1.4rem. */}
         <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <h4 className="mb-0" style={{ fontSize: 'clamp(1rem, 3vw, 1.4rem)' }}>Gestion de Usuarios</h4>
+          <h4 className="mb-0" style={{ fontSize: 'clamp(1rem, 3vw, 1.4rem)' }}>Gestión de Usuarios</h4>
           <button className="btn btn-sm btn-light flex-shrink-0" onClick={abrirModalNuevo}>
             + Nuevo Usuario
           </button>
@@ -305,7 +305,7 @@ const AdminUsuarios = () => {
                   <th className="d-none d-md-table-cell">Email</th>
                   <th>Rol</th>
                   <th>Estado</th>
-                  <th className="d-none d-lg-table-cell">Ultimo Acceso</th>
+                  <th className="d-none d-lg-table-cell">Último Acceso</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -492,7 +492,7 @@ const AdminUsuarios = () => {
                       <input
                         type="password"
                         className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                        placeholder="Minimo 8 caracteres"
+                        placeholder="Mínimo 8 caracteres"
                         {...register('password', {
                           required: 'La contraseña es obligatoria',
                           minLength: {

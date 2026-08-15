@@ -232,7 +232,7 @@ const Inicio = () => {
       setError(null);
     } catch (err) {
       if (import.meta.env.DEV) console.error('[Dashboard] Error:', err);
-      setError('Error al cargar estadisticas del dashboard');
+      setError('Error al cargar estadísticas del dashboard');
     } finally {
       // finally SIEMPRE se ejecuta: quita el spinner haya error o no
       setCargando(false);

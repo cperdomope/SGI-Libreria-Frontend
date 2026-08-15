@@ -53,7 +53,7 @@ function normalizarCamposProveedor({ nit, nombre_contacto, email, telefono, dire
   if (email && email.trim() !== '') {
     emailNorm = email.trim().toLowerCase();
     if (!esEmailValido(emailNorm)) {
-      return { valido: false, mensaje: 'El formato del email no es valido' };
+      return { valido: false, mensaje: 'El formato del email no es válido' };
     }
   }
 
@@ -62,10 +62,10 @@ function normalizarCamposProveedor({ nit, nombre_contacto, email, telefono, dire
   if (telefono && telefono.trim() !== '') {
     telefonoNorm = telefono.replace(/[\s\-\(\)\.]/g, '');
     if (!/^\d+$/.test(telefonoNorm)) {
-      return { valido: false, mensaje: 'El telefono solo debe contener numeros' };
+      return { valido: false, mensaje: 'El teléfono solo debe contener números' };
     }
     if (telefonoNorm.length !== 10) {
-      return { valido: false, mensaje: 'El telefono debe tener exactamente 10 digitos' };
+      return { valido: false, mensaje: 'El teléfono debe tener exactamente 10 dígitos' };
     }
   }
 
