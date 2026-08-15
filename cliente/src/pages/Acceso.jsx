@@ -6,7 +6,7 @@
 // estan protegidas por los componentes RutaProtegida y RutaProtegidaPorRol.
 //
 // Flujo de autenticacion completo:
-//   1. El usuario ingresa email y contrasena en el formulario
+//   1. El usuario ingresa email y contraseña en el formulario
 //   2. react-hook-form valida los campos en el frontend (UX inmediata)
 //   3. Si la validacion pasa, se envia POST /api/auth/login al backend
 //   4. El backend verifica las credenciales contra la BD (bcrypt)

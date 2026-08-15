@@ -468,7 +468,7 @@ const BarraNavegacion = () => {
                 {tienePermiso('gestionarUsuarios') && (
                   <li>
                     <Link className="dropdown-item" to="/admin/usuarios">
-                      Gestion de Usuarios
+                      Gestión de Usuarios
                     </Link>
                   </li>
                 )}
@@ -476,7 +476,7 @@ const BarraNavegacion = () => {
                   <li><hr className="dropdown-divider" /></li>
                 )}
 
-                {/* Cambiar contrasena - disponible para todos los roles.
+                {/* Cambiar contraseña - disponible para todos los roles.
                     Usamos un <button> en lugar de <Link> porque no
                     navega a otra pagina, sino que abre un modal. */}
                 <li>
@@ -484,17 +484,17 @@ const BarraNavegacion = () => {
                     className="dropdown-item"
                     onClick={() => setMostrarCambioPassword(true)}
                   >
-                    Cambiar Contrasena
+                    Cambiar Contraseña
                   </button>
                 </li>
 
                 <li><hr className="dropdown-divider" /></li>
 
-                {/* Cerrar sesion - 'text-danger' lo muestra en rojo
+                {/* Cerrar sesión - 'text-danger' lo muestra en rojo
                     como convencion visual de accion destructiva. */}
                 <li>
                   <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={manejarSalida}>
-                    <Icono src={iconoSalir} style={ESTILO_ICONO_SALIR} /> Cerrar Sesion
+                    <Icono src={iconoSalir} style={ESTILO_ICONO_SALIR} /> Cerrar Sesión
                   </button>
                 </li>
               </ul>
@@ -504,7 +504,7 @@ const BarraNavegacion = () => {
       </div>
     </nav>
 
-    {/* Modal de Cambio de Contrasena
+    {/* Modal de Cambio de Contraseña
         Este componente se renderiza siempre en el DOM pero solo se
         muestra visualmente cuando 'visible' es true.
         'onCerrar' es un callback: una funcion que el componente hijo
