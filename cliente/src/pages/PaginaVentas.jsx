@@ -1,12 +1,5 @@
 /**
- * =====================================================
  * PÁGINA DE VENTAS - PUNTO DE VENTA (POS)
- * =====================================================
- * Sistema de Gestión de Inventario - Librería
- * Proyecto SENA - Tecnólogo en ADSO
- *
- * EVIDENCIA: GA7-220501096-AA4-EV03
- * AUTOR: Carlos Ivan Perdomo
  *
  * @description Interfaz de punto de venta para registrar
  * ventas de libros. Incluye catálogo, carrito y facturación.
@@ -25,9 +18,6 @@
  * 3. Ajustar cantidades si es necesario
  * 4. Confirmar venta
  * 5. Se actualiza stock automáticamente
- *
- * @author Equipo de Desarrollo SGI
- * @version 2.0.0
  */
 
 // En React 19 con Vite no es necesario importar React explicitamente.

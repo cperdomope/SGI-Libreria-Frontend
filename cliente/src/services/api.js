@@ -28,14 +28,6 @@
 //     → servidor recibe la petición
 //     → interceptor de RESPONSE (detecta errores 401)
 //     → Componente recibe los datos
-//
-// 🔹 En la sustentación puedo decir:
-// "api.js centraliza toda la comunicación con el backend
-//  usando una instancia configurada de Axios.
-//  Los interceptores agregan el token JWT automáticamente
-//  en cada petición y detectan sesiones expiradas (error 401)
-//  para hacer logout sin que cada componente tenga que
-//  manejar eso por separado. Esto sigue el principio DRY."
 // =====================================================
 
 import axios from 'axios';
