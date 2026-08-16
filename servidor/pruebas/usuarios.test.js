@@ -1,22 +1,22 @@
 // =====================================================
-// PRUEBAS DEL MODULO DE USUARIOS
+// PRUEBAS DEL MÓDULO DE USUARIOS
 // =====================================================
-// Tests de integracion para la gestion de usuarios del sistema.
+// Tests de integración para la gestión de usuarios del sistema.
 //
 // Cobertura:
 //   - Seguridad: sin token (401), vendedor denegado (403)
 //   - RBAC: solo admin puede listar y crear usuarios
-//   - Validacion: campos obligatorios al crear usuario
-//   - Cambio de password: proteccion sin token y sin datos
+//   - Validación: campos obligatorios al crear usuario
+//   - Cambio de password: protección sin token y sin datos
 //   - Seguridad extra: password_hash nunca se expone en la respuesta
 //
-// Este modulo tiene una particularidad: el endpoint /cambiar-password
+// Este módulo tiene una particularidad: el endpoint /cambiar-password
 // es accesible para CUALQUIER usuario autenticado (no solo admin),
 // porque todos necesitan poder cambiar su propia contraseña.
 
-// "La prueba mas importante de este archivo es verificar que
+// "La prueba más importante de este archivo es verificar que
 //  password_hash nunca aparezca en la respuesta del listado.
-//  Exponer hashes seria una vulnerabilidad critica."
+//  Exponer hashes sería una vulnerabilidad critica."
 // =====================================================
 
 // Supertest: peticiones HTTP contra Express sin servidor real
@@ -28,32 +28,28 @@ process.env.NODE_ENV = 'test';
 // App Express para Supertest
 const app = require('../app');
 
-// Credenciales de ambos roles para probar RBAC
-const EMAIL_ADMIN       = process.env.TEST_ADMIN_EMAIL       || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN    = process.env.TEST_ADMIN_PASSWORD    || 'admin123';
-const EMAIL_VENDEDOR    = process.env.TEST_VENDEDOR_EMAIL    || 'michelle@sena.edu.co';
-const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
+// Credenciales de ambos roles para probar RBAC.
+// Las lee el ayudante compartido desde servidor/.env.test.
+const {
+  tokenAdmin:    obtenerTokenAdmin,
+  tokenVendedor: obtenerTokenVendedor
+} = require('./ayudantes/sesion');
 
 // ─────────────────────────────────────────────────────
-// SUITE: Modulo de Usuarios
+// SUITE: Módulo de Usuarios
 // ─────────────────────────────────────────────────────
 describe('Módulo de Usuarios', () => {
 
-  let tokenAdmin    = null;
-  let tokenVendedor = null;
+  let tokenAdmin;
+  let tokenVendedor;
 
-  // Login paralelo de ambos roles
+  // Login paralelo de ambos roles.
+  // Si falla, la suite se detiene con un mensaje que explica que revisar.
   beforeAll(async () => {
-    try {
-      const [resAdmin, resVendedor] = await Promise.all([
-        request(app).post('/api/auth/login').send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN }),
-        request(app).post('/api/auth/login').send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR })
-      ]);
-      tokenAdmin    = resAdmin.body.token    || null;
-      tokenVendedor = resVendedor.body.token || null;
-    } catch {
-      // BD no disponible — tests con token se saltan
-    }
+    [tokenAdmin, tokenVendedor] = await Promise.all([
+      obtenerTokenAdmin(app),
+      obtenerTokenVendedor(app)
+    ]);
   });
 
   // ── Seguridad ────────────────────────────────────
@@ -65,7 +61,6 @@ describe('Módulo de Usuarios', () => {
 
   // RBAC: vendedor autenticado pero sin permiso para gestionar usuarios
   test('Vendedor NO puede listar usuarios (solo Admin)', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .get('/api/usuarios')
@@ -77,7 +72,6 @@ describe('Módulo de Usuarios', () => {
   // ── Funcionalidad con Admin ──────────────────────
 
   test('Admin puede listar usuarios', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .get('/api/usuarios')
@@ -87,7 +81,7 @@ describe('Módulo de Usuarios', () => {
     expect(res.body.exito).toBe(true);
     expect(Array.isArray(res.body.datos)).toBe(true);
 
-    // CRITICO: verificar que el hash de contraseña NUNCA se exponga.
+    // CRÍTICO: verificar que el hash de contraseña NUNCA se exponga.
     // El SELECT del controlador omite password_hash a proposito.
     // Si alguien lo agrega por error, este test lo detecta.
     if (res.body.datos.length > 0) {
@@ -97,9 +91,8 @@ describe('Módulo de Usuarios', () => {
 
   // ── Validaciones al crear usuario ────────────────
 
-  // Body completamente vacio: todos los campos son requeridos
+  // Body completamente vacío: todos los campos son requeridos
   test('Debe rechazar crear usuario sin datos', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/usuarios')
@@ -112,7 +105,6 @@ describe('Módulo de Usuarios', () => {
 
   // Falta email: campo obligatorio individual
   test('Debe rechazar crear usuario sin email', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/usuarios')
@@ -131,7 +123,7 @@ describe('Módulo de Usuarios', () => {
   // Este endpoint es accesible para TODOS los roles autenticados,
   // a diferencia del resto del CRUD que es solo admin.
 
-  // Sin token: verificamos que /cambiar-password tambien esta protegido
+  // Sin token: verificamos que /cambiar-password también está protegido
   test('Debe rechazar cambio de contraseña sin token', async () => {
     const res = await request(app)
       .patch('/api/usuarios/cambiar-password')
@@ -145,7 +137,6 @@ describe('Módulo de Usuarios', () => {
 
   // Sin datos: el controlador exige passwordActual, passwordNueva y passwordConfirmacion
   test('Debe rechazar cambio de contraseña sin datos', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .patch('/api/usuarios/cambiar-password')

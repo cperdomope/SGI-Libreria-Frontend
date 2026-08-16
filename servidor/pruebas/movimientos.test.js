@@ -1,21 +1,21 @@
 // =====================================================
-// PRUEBAS DEL MODULO DE MOVIMIENTOS (KARDEX)
+// PRUEBAS DEL MÓDULO DE MOVIMIENTOS (KARDEX)
 // =====================================================
-// Tests de integracion para entradas y salidas de inventario.
+// Tests de integración para entradas y salidas de inventario.
 //
 // Cobertura:
 //   - Seguridad: sin token (401), vendedor denegado (403)
-//   - Validacion: campos vacios, tipo invalido, cantidad negativa,
+//   - Validación: campos vacíos, tipo inválido, cantidad negativa,
 //     entrada sin proveedor
 //   - Funcional: admin puede listar movimientos
 //
 // El Kardex es exclusivo del administrador porque implica
 // modificar directamente el stock del inventario.
-// Los vendedores solo afectan stock indirectamente via ventas.
+// Los vendedores solo afectan stock indirectamente vía ventas.
 
-// "Este es el archivo de pruebas mas completo del backend
-//  porque el modulo de movimientos tiene muchas reglas de negocio:
-//  tipos validos (ENTRADA/SALIDA/AJUSTE), proveedor obligatorio
+// "Este es el archivo de pruebas más completo del backend
+//  porque el módulo de movimientos tiene muchas reglas de negocio:
+//  tipos válidos (ENTRADA/SALIDA/AJUSTE), proveedor obligatorio
 //  en entradas, cantidades positivas, etc."
 // =====================================================
 
@@ -28,35 +28,31 @@ process.env.NODE_ENV = 'test';
 // App Express para Supertest
 const app = require('../app');
 
-// Credenciales de ambos roles para probar RBAC
-const EMAIL_ADMIN      = process.env.TEST_ADMIN_EMAIL      || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN   = process.env.TEST_ADMIN_PASSWORD   || 'admin123';
-const EMAIL_VENDEDOR   = process.env.TEST_VENDEDOR_EMAIL   || 'michelle@sena.edu.co';
-const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
+// Credenciales de ambos roles para probar RBAC.
+// Las lee el ayudante compartido desde servidor/.env.test.
+const {
+  tokenAdmin:    obtenerTokenAdmin,
+  tokenVendedor: obtenerTokenVendedor
+} = require('./ayudantes/sesion');
 
 // ─────────────────────────────────────────────────────
-// SUITE: Modulo de Movimientos (Kardex)
+// SUITE: Módulo de Movimientos (Kardex)
 // ─────────────────────────────────────────────────────
 describe('Módulo de Movimientos (Kardex)', () => {
 
-  let tokenAdmin    = null;
-  let tokenVendedor = null;
+  let tokenAdmin;
+  let tokenVendedor;
 
-  // Login paralelo de ambos roles antes de los tests
+  // Login paralelo de ambos roles antes de los tests.
+  // Si falla, la suite se detiene con un mensaje que explica que revisar.
   beforeAll(async () => {
-    try {
-      const [resAdmin, resVendedor] = await Promise.all([
-        request(app).post('/api/auth/login').send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN }),
-        request(app).post('/api/auth/login').send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR })
-      ]);
-      tokenAdmin    = resAdmin.body.token    || null;
-      tokenVendedor = resVendedor.body.token || null;
-    } catch {
-      // BD no disponible — tests con token se saltan
-    }
+    [tokenAdmin, tokenVendedor] = await Promise.all([
+      obtenerTokenAdmin(app),
+      obtenerTokenVendedor(app)
+    ]);
   });
 
-  // ── Pruebas de seguridad (autenticacion y autorizacion) ──
+  // ── Pruebas de seguridad (autenticación y autorización) ──
 
   test('Debe rechazar listado de movimientos sin token', async () => {
     const res = await request(app).get('/api/movimientos');
@@ -72,7 +68,6 @@ describe('Módulo de Movimientos (Kardex)', () => {
 
   // RBAC: vendedor autenticado pero sin permiso → 403
   test('Vendedor NO puede acceder a movimientos (solo Admin)', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .get('/api/movimientos')
@@ -81,11 +76,60 @@ describe('Módulo de Movimientos (Kardex)', () => {
     expect(res.status).toBe(403);
   });
 
-  // ── Pruebas de validacion (reglas de negocio) ────
+  // ── Pruebas de paginación del kardex ─────────────
 
-  // Body vacio: el controlador exige libro_id, tipo_movimiento y cantidad
+  // Sin parámetros de paginación, la respuesta mantiene el formato
+  // original { exito, datos, total }. Esto es retrocompatibilidad:
+  // el frontend actual llama a este endpoint sin paginar y debe
+  // seguir funcionando igual que antes.
+  test('Sin parámetros devuelve el listado completo (retrocompatible)', async () => {
+    const res = await request(app)
+      .get('/api/movimientos')
+      .set('Authorization', `Bearer ${tokenAdmin}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.exito).toBe(true);
+    expect(Array.isArray(res.body.datos)).toBe(true);
+    expect(res.body).toHaveProperty('total');
+    expect(res.body).not.toHaveProperty('paginacion');
+  });
+
+  // Con ?pagina y ?limite, la respuesta incluye la metadata de paginación
+  // y como máximo la cantidad de registros solicitada. El kardex crece
+  // indefinidamente, así que sin este limite la respuesta acabaría
+  // devolviendo miles de filas de una sola vez.
+  test('Con ?pagina y ?limite devuelve una página con su metadata', async () => {
+    const res = await request(app)
+      .get('/api/movimientos?pagina=1&limite=5')
+      .set('Authorization', `Bearer ${tokenAdmin}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.exito).toBe(true);
+    expect(Array.isArray(res.body.datos)).toBe(true);
+    expect(res.body.datos.length).toBeLessThanOrEqual(5);
+
+    expect(res.body).toHaveProperty('paginacion');
+    expect(res.body.paginacion.paginaActual).toBe(1);
+    expect(res.body.paginacion.registrosPorPagina).toBe(5);
+    expect(typeof res.body.paginacion.totalRegistros).toBe('number');
+    expect(typeof res.body.paginacion.totalPaginas).toBe('number');
+  });
+
+  // El tope de 100 registros por página evita que alguien pida
+  // ?limite=999999 y vacíe la tabla entera en una sola peticion.
+  test('Un límite excesivo se recorta al máximo permitido', async () => {
+    const res = await request(app)
+      .get('/api/movimientos?pagina=1&limite=999999')
+      .set('Authorization', `Bearer ${tokenAdmin}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.paginacion.registrosPorPagina).toBe(100);
+  });
+
+  // ── Pruebas de validación (reglas de negocio) ────
+
+  // Body vacío: el controlador exige libro_id, tipo_movimiento y cantidad
   test('Debe rechazar movimiento sin datos obligatorios', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/movimientos')
@@ -98,7 +142,6 @@ describe('Módulo de Movimientos (Kardex)', () => {
 
   // Solo se aceptan ENTRADA, SALIDA y AJUSTE (constante TIPOS_MOVIMIENTO)
   test('Debe rechazar movimiento con tipo inválido', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/movimientos')
@@ -111,7 +154,6 @@ describe('Módulo de Movimientos (Kardex)', () => {
 
   // Las cantidades deben ser positivas — el tipo determina si suma o resta
   test('Debe rechazar movimiento con cantidad negativa', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/movimientos')
@@ -123,9 +165,8 @@ describe('Módulo de Movimientos (Kardex)', () => {
   });
 
   // Regla de negocio: toda ENTRADA debe tener un proveedor asociado
-  // porque necesitamos saber de donde viene la mercancia
+  // porque necesitamos saber de donde viene la mercancía
   test('Debe rechazar ENTRADA sin proveedor', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/movimientos')
@@ -145,7 +186,6 @@ describe('Módulo de Movimientos (Kardex)', () => {
   // ── Prueba funcional con BD ──────────────────────
 
   test('Admin puede ver historial de movimientos', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .get('/api/movimientos')

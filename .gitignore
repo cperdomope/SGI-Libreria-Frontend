@@ -9,6 +9,14 @@ cliente/.env
 .env.local
 .env.*.local
 
+# Credenciales de las pruebas automatizadas
+# (la plantilla .env.test.example SÍ se versiona)
+servidor/.env.test
+.env.test
+
+# Reportes de cobertura generados por Jest
+coverage/
+
 # Scripts sensibles
 servidor/scripts/
 

@@ -15,27 +15,25 @@ process.env.NODE_ENV = 'test';
 
 const app = require('../app');
 
-const EMAIL_ADMIN       = process.env.TEST_ADMIN_EMAIL       || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN    = process.env.TEST_ADMIN_PASSWORD    || 'admin123';
-const EMAIL_VENDEDOR    = process.env.TEST_VENDEDOR_EMAIL    || 'michelle@sena.edu.co';
-const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
+// Ayudante compartido: credenciales desde .env.test y login que falla
+// de forma ruidosa si no puede autenticarse.
+const {
+  tokenAdmin:    obtenerTokenAdmin,
+  tokenVendedor: obtenerTokenVendedor
+} = require('./ayudantes/sesion');
 
 describe('Módulo de Autores', () => {
 
-  let tokenAdmin    = null;
-  let tokenVendedor = null;
+  let tokenAdmin;
+  let tokenVendedor;
 
+  // Sin try/catch: si el login falla, la suite debe detenerse con un
+  // error claro en lugar de continuar con tokens vacios.
   beforeAll(async () => {
-    try {
-      const [resAdmin, resVendedor] = await Promise.all([
-        request(app).post('/api/auth/login').send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN }),
-        request(app).post('/api/auth/login').send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR })
-      ]);
-      tokenAdmin    = resAdmin.body.token    || null;
-      tokenVendedor = resVendedor.body.token || null;
-    } catch {
-      // BD no disponible
-    }
+    [tokenAdmin, tokenVendedor] = await Promise.all([
+      obtenerTokenAdmin(app),
+      obtenerTokenVendedor(app)
+    ]);
   });
 
   test('Debe rechazar listado de autores sin token', async () => {
@@ -44,7 +42,6 @@ describe('Módulo de Autores', () => {
   });
 
   test('Vendedor puede VER autores', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .get('/api/autores')
@@ -56,7 +53,6 @@ describe('Módulo de Autores', () => {
   });
 
   test('Vendedor NO puede crear autores (solo Admin)', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .post('/api/autores')
@@ -67,7 +63,6 @@ describe('Módulo de Autores', () => {
   });
 
   test('Debe rechazar crear autor sin nombre', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/autores')
@@ -79,7 +74,6 @@ describe('Módulo de Autores', () => {
   });
 
   test('Admin puede listar autores con datos correctos', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .get('/api/autores')
@@ -98,20 +92,16 @@ describe('Módulo de Autores', () => {
 
 describe('Módulo de Categorías', () => {
 
-  let tokenAdmin    = null;
-  let tokenVendedor = null;
+  let tokenAdmin;
+  let tokenVendedor;
 
+  // Sin try/catch: si el login falla, la suite debe detenerse con un
+  // error claro en lugar de continuar con tokens vacios.
   beforeAll(async () => {
-    try {
-      const [resAdmin, resVendedor] = await Promise.all([
-        request(app).post('/api/auth/login').send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN }),
-        request(app).post('/api/auth/login').send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR })
-      ]);
-      tokenAdmin    = resAdmin.body.token    || null;
-      tokenVendedor = resVendedor.body.token || null;
-    } catch {
-      // BD no disponible
-    }
+    [tokenAdmin, tokenVendedor] = await Promise.all([
+      obtenerTokenAdmin(app),
+      obtenerTokenVendedor(app)
+    ]);
   });
 
   test('Debe rechazar listado de categorías sin token', async () => {
@@ -120,7 +110,6 @@ describe('Módulo de Categorías', () => {
   });
 
   test('Vendedor puede VER categorías', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .get('/api/categorias')
@@ -132,7 +121,6 @@ describe('Módulo de Categorías', () => {
   });
 
   test('Vendedor NO puede crear categorías (solo Admin)', async () => {
-    if (!tokenVendedor) return;
 
     const res = await request(app)
       .post('/api/categorias')
@@ -143,7 +131,6 @@ describe('Módulo de Categorías', () => {
   });
 
   test('Debe rechazar crear categoría sin nombre', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/categorias')
@@ -155,7 +142,6 @@ describe('Módulo de Categorías', () => {
   });
 
   test('Admin puede listar categorías correctamente', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .get('/api/categorias')

@@ -5,12 +5,14 @@ process.env.NODE_ENV = 'test';
 // La app real (con todos sus middlewares y rutas configurados)
 const app = require('../app');
 
-// Credenciales de prueba leídas del entorno.
-// Para ejecutar los tests, asegúrate de que estos usuarios existan en la BD.
-// Puedes configurarlos en .env o sobreescribirlos al ejecutar:
-//   TEST_ADMIN_EMAIL=tu@email.com TEST_ADMIN_PASSWORD=pass npm test
-const EMAIL_ADMIN    = process.env.TEST_ADMIN_EMAIL    || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN = process.env.TEST_ADMIN_PASSWORD || 'admin123';
+// Credenciales de prueba leídas de servidor/.env.test.
+// Esta suite prueba el login en sí mismo, así que no puede usar los
+// ayudantes que ya asumen una sesión iniciada: necesita el correo y la
+// contraseña en crudo para probar los casos de éxito y de fallo.
+// Si falta alguna variable, credenciales() lanza un error explicativo.
+const { credenciales } = require('./ayudantes/sesion');
+
+const { email: EMAIL_ADMIN, password: PASSWORD_ADMIN } = credenciales().admin;
 
 describe('Módulo de Autenticación', () => {
 
@@ -48,16 +50,14 @@ describe('Módulo de Autenticación', () => {
     expect(res.status).toBe(401);
   });
 
+  // Esta prueba es la que sostiene a todas las demás suites: si el login
+  // con credenciales correctas no devuelve un token, ninguna otra prueba
+  // autenticada del proyecto está comprobando nada. Por eso no lleva
+  // ninguna salida anticipada: debe fallar si la BD no está disponible.
   test('Login exitoso retorna token y datos del usuario (requiere BD)', async () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN });
-
-    // Si la BD no está disponible el token será undefined y el test se omite
-    if (!res.body.token) {
-      console.warn('[Test] BD no disponible — omitiendo prueba de login exitoso');
-      return;
-    }
 
     expect(res.status).toBe(200);
     expect(res.body.exito).toBe(true);

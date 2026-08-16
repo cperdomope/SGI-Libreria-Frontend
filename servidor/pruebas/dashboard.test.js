@@ -1,26 +1,26 @@
 // =====================================================
 // PRUEBAS DEL DASHBOARD (PANEL DE CONTROL)
 // =====================================================
-// Tests de integracion para el endpoint de estadisticas.
+// Tests de integración para el endpoint de estadisticas.
 //
-// Que se prueba aqui:
+// Que se prueba aquí:
 //   1. Que sin token se rechace con 401 (no autenticado)
 //   2. Que un vendedor reciba 403 (no autorizado — solo Admin)
 //   3. Que un admin reciba 200 con la estructura de datos esperada
 //
 // Estos tests validan RBAC (Control de Acceso Basado en Roles):
-//   - 401 = "No se quien eres" (falta autenticacion)
-//   - 403 = "Se quien eres, pero no tienes permiso" (falta autorizacion)
+//   - 401 = "No se quien eres" (falta autenticación)
+//   - 403 = "Se quien eres, pero no tienes permiso" (falta autorización)
 //
 // Patron de beforeAll:
 //   Hacemos login de ambos roles EN PARALELO con Promise.all()
-//   antes de ejecutar los tests. Si la BD no esta disponible,
+//   antes de ejecutar los tests. Si la BD no está disponible,
 //   los tokens quedan en null y las pruebas que los necesitan
 //   se saltan con return (skip graceful).
 
 // "El dashboard es exclusivo del administrador porque muestra
-//  informacion sensible del negocio: ventas totales, ingresos,
-//  stock critico, etc. Los vendedores solo necesitan acceso
+//  información sensible del negocio: ventas totales, ingresos,
+//  stock crítico, etc. Los vendedores solo necesitan acceso
 //  a ventas, clientes e inventario."
 // =====================================================
 
@@ -35,11 +35,13 @@ process.env.NODE_ENV = 'test';
 const app = require('../app');
 
 // Credenciales de prueba para ambos roles.
-// Configurables por variables de entorno para CI/CD.
-const EMAIL_ADMIN       = process.env.TEST_ADMIN_EMAIL       || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN    = process.env.TEST_ADMIN_PASSWORD    || 'admin123';
-const EMAIL_VENDEDOR    = process.env.TEST_VENDEDOR_EMAIL    || 'michelle@sena.edu.co';
-const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
+// Viven en servidor/.env.test (fuera del repositorio) y las lee el
+// ayudante compartido, que además falla de forma ruidosa si el login
+// no funciona en lugar de dejar los tokens vacios.
+const {
+  tokenAdmin:    obtenerTokenAdmin,
+  tokenVendedor: obtenerTokenVendedor
+} = require('./ayudantes/sesion');
 
 // ─────────────────────────────────────────────────────
 // SUITE: Dashboard (Estadisticas)
@@ -47,29 +49,23 @@ const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
 describe('Dashboard (Estadísticas)', () => {
 
   // Tokens para cada rol — se obtienen en beforeAll
-  // Inicializamos en null para detectar si la BD no esta disponible
-  let tokenAdmin    = null;
-  let tokenVendedor = null;
+  let tokenAdmin;
+  let tokenVendedor;
 
   // ─── SETUP: Login paralelo de ambos roles ────────
   // beforeAll se ejecuta UNA vez antes de todos los tests del describe.
   // Usamos Promise.all() para hacer ambos logins simultaneamente,
   // reduciendo el tiempo de setup a la mitad.
+  //
+  // No hay try/catch a proposito: si el login falla, Jest marca la suite
+  // completa como fallida con el mensaje del ayudante. Antes se capturaba
+  // el error y las pruebas seguian adelante con tokens en null, lo que
+  // las hacia pasar sin comprobar nada.
   beforeAll(async () => {
-    try {
-      const [resAdmin, resVendedor] = await Promise.all([
-        request(app).post('/api/auth/login').send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN }),
-        request(app).post('/api/auth/login').send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR })
-      ]);
-
-      // Guardamos los tokens — si la BD fallo, quedan en null
-      // El operador || null asegura que undefined se convierta en null
-      tokenAdmin    = resAdmin.body.token    || null;
-      tokenVendedor = resVendedor.body.token || null;
-    } catch {
-      // Si la BD no esta disponible, los tokens quedan null
-      // y los tests que dependen de ellos se saltan gracefully
-    }
+    [tokenAdmin, tokenVendedor] = await Promise.all([
+      obtenerTokenAdmin(app),
+      obtenerTokenVendedor(app)
+    ]);
   });
 
   // ─── TEST 1: Sin token → 401 ────────────────────
@@ -81,11 +77,10 @@ describe('Dashboard (Estadísticas)', () => {
   });
 
   // ─── TEST 2: Vendedor → 403 ─────────────────────
-  // El vendedor esta autenticado (tiene token) pero NO autorizado.
+  // El vendedor está autenticado (tiene token) pero NO autorizado.
   // El middleware verificarRol(soloAdministrador) debe rechazarlo.
   // 403 Forbidden = "Se quien eres, pero no tienes acceso a este recurso"
   test('Vendedor NO puede ver el dashboard (solo Admin)', async () => {
-    if (!tokenVendedor) return; // Skip si BD no disponible
 
     const res = await request(app)
       .get('/api/dashboard')
@@ -99,7 +94,6 @@ describe('Dashboard (Estadísticas)', () => {
   // tenga las propiedades esperadas. Esto protege contra regresiones:
   // si alguien renombra un campo en el controlador, este test falla.
   test('Admin puede ver el dashboard con datos correctos', async () => {
-    if (!tokenAdmin) return; // Skip si BD no disponible
 
     const res = await request(app)
       .get('/api/dashboard')

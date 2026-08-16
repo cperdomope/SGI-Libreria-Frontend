@@ -11,7 +11,8 @@
     "pm2:stop": "pm2 stop sgi-backend",
     "pm2:restart": "pm2 restart sgi-backend",
     "pm2:logs": "pm2 logs sgi-backend",
-    "test": "jest --testPathPatterns=pruebas --forceExit --detectOpenHandles"
+    "test": "jest --testPathPatterns=pruebas --forceExit --detectOpenHandles",
+    "test:cov": "jest --testPathPatterns=pruebas --forceExit --coverage"
   },
   "jest": {
     "testEnvironment": "node",

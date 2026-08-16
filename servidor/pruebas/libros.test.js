@@ -1,19 +1,19 @@
 // =====================================================
-// PRUEBAS DEL MODULO DE LIBROS (INVENTARIO)
+// PRUEBAS DEL MÓDULO DE LIBROS (INVENTARIO)
 // =====================================================
-// Tests de integracion para el CRUD de libros.
+// Tests de integración para el CRUD de libros.
 //
 // Cobertura:
 //   - 3 pruebas de seguridad (sin token → 401)
 //   - 1 prueba de listado autenticado (admin → 200)
-//   - 2 pruebas de validacion (campos obligatorios y precio negativo)
+//   - 2 pruebas de validación (campos obligatorios y precio negativo)
 //
-// A diferencia de dashboard.test.js, aqui solo usamos admin
+// A diferencia de dashboard.test.js, aquí solo usamos admin
 // porque el CRUD de libros requiere rol administrador.
 // Los vendedores solo pueden VER libros, no crearlos.
 
 // "Estas pruebas cubren tanto la capa de seguridad (middleware)
-//  como la capa de validacion (controlador). Si alguien modifica
+//  como la capa de validación (controlador). Si alguien modifica
 //  las validaciones del controlador, estos tests lo detectan."
 // =====================================================
 
@@ -28,32 +28,26 @@ const app = require('../app');
 
 // Credenciales del admin de prueba.
 // Solo necesitamos admin porque crear libros es exclusivo del administrador.
-const EMAIL_ADMIN    = process.env.TEST_ADMIN_EMAIL    || 'ldarlys@sena.edu.co';
-const PASSWORD_ADMIN = process.env.TEST_ADMIN_PASSWORD || 'admin123';
+// Las lee el ayudante compartido desde servidor/.env.test.
+const { tokenAdmin: obtenerTokenAdmin } = require('./ayudantes/sesion');
 
 // ─────────────────────────────────────────────────────
-// SUITE: Modulo de Libros
+// SUITE: Módulo de Libros
 // ─────────────────────────────────────────────────────
 describe('Módulo de Libros (Inventario)', () => {
 
   // Token del admin — se obtiene en beforeAll
-  let tokenAdmin = null;
+  let tokenAdmin;
 
-  // Login antes de todos los tests para obtener JWT
+  // Login antes de todos los tests para obtener JWT.
+  // Si falla, la suite se detiene con un mensaje que explica que revisar.
   beforeAll(async () => {
-    try {
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({ email: EMAIL_ADMIN, password: PASSWORD_ADMIN });
-      tokenAdmin = res.body.token || null;
-    } catch {
-      // BD no disponible — tests con token se saltan
-    }
+    tokenAdmin = await obtenerTokenAdmin(app);
   });
 
   // ── Pruebas de seguridad (no necesitan BD) ──────
 
-  // Verificamos que los 3 metodos HTTP principales esten protegidos
+  // Verificamos que los 3 métodos HTTP principales esten protegidos
   // GET, POST y DELETE deben devolver 401 sin token
 
   test('Debe rechazar listado de libros sin token JWT', async () => {
@@ -73,11 +67,10 @@ describe('Módulo de Libros (Inventario)', () => {
     expect(res.status).toBe(401);
   });
 
-  // ── Pruebas con autenticacion (necesitan BD) ────
+  // ── Pruebas con autenticación (necesitan BD) ────
 
   // Listado: verifica que la respuesta sea un array de libros
   test('Admin puede listar libros con token válido', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .get('/api/libros')
@@ -89,9 +82,8 @@ describe('Módulo de Libros (Inventario)', () => {
     expect(Array.isArray(res.body.datos)).toBe(true);
   });
 
-  // Validacion de campos: el controlador exige titulo como minimo
+  // Validación de campos: el controlador exige titulo como mínimo
   test('Debe rechazar crear libro sin título', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/libros')
@@ -102,9 +94,8 @@ describe('Módulo de Libros (Inventario)', () => {
     expect(res.body.exito).toBe(false);
   });
 
-  // Validacion de negocio: un precio negativo no tiene sentido
+  // Validación de negocio: un precio negativo no tiene sentido
   test('Debe rechazar crear libro con precio negativo', async () => {
-    if (!tokenAdmin) return;
 
     const res = await request(app)
       .post('/api/libros')

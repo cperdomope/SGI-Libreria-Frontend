@@ -1,17 +1,17 @@
 // =====================================================
-// PRUEBAS DEL MODULO DE CLIENTES
+// PRUEBAS DEL MÓDULO DE CLIENTES
 // =====================================================
-// Tests de integracion para los endpoints de clientes.
+// Tests de integración para los endpoints de clientes.
 //
-// Que se prueba aqui:
+// Que se prueba aquí:
 //   1. Que los endpoints rechacen peticiones sin token (401)
 //   2. Que un vendedor autenticado pueda listar clientes
 //
 // Patron de pruebas:
 //   - Las pruebas sin BD son "puras": no dependen de MySQL,
-//     solo verifican que el middleware de autenticacion funcione.
+//     solo verifican que el middleware de autenticación funcione.
 //   - Las pruebas CON BD (login real) se saltan gracefully
-//     si la base de datos no esta disponible.
+//     si la base de datos no está disponible.
 //
 // Herramientas:
 //   - Jest: framework de testing (describe, test, expect)
@@ -19,35 +19,34 @@
 //     sin necesidad de levantar el servidor en un puerto real.
 
 // "Los clientes pueden ser gestionados por Administradores y Vendedores,
-//  a diferencia de otros modulos que son exclusivos del Admin.
+//  a diferencia de otros módulos que son exclusivos del Admin.
 //  Por eso probamos con credenciales de vendedor: si el vendedor
-//  puede acceder, el admin tambien puede (tiene mas permisos)."
+//  puede acceder, el admin también puede (tiene más permisos)."
 // =====================================================
 
-// Supertest: libreria que simula peticiones HTTP contra una app Express
+// Supertest: librería que simula peticiones HTTP contra una app Express
 const request = require('supertest');
 
 // Establecemos el entorno como 'test' para que los errores
-// no muestren detalles internos y el rate limiter sea mas permisivo
+// no muestren detalles internos y el rate limiter sea más permisivo
 process.env.NODE_ENV = 'test';
 
 // Importamos la app de Express (sin levantar servidor)
 // Supertest se encarga de crear un servidor temporal para las pruebas
 const app = require('../app');
 
-// Credenciales del vendedor de prueba.
-// Se pueden configurar por variables de entorno o usar las de desarrollo.
+// Credenciales del vendedor de prueba, leídas de servidor/.env.test
+// por el ayudante compartido.
 // Usamos vendedor (no admin) porque clientes es accesible para ambos roles.
-const EMAIL_VENDEDOR    = process.env.TEST_VENDEDOR_EMAIL    || 'michelle@sena.edu.co';
-const PASSWORD_VENDEDOR = process.env.TEST_VENDEDOR_PASSWORD || 'vendedor123';
+const { tokenVendedor: obtenerTokenVendedor } = require('./ayudantes/sesion');
 
 // ─────────────────────────────────────────────────────
-// SUITE: Modulo de Clientes
+// SUITE: Módulo de Clientes
 // ─────────────────────────────────────────────────────
 describe('Módulo de Clientes', () => {
 
   // ─── TEST 1: GET sin token ───────────────────────
-  // El middleware verificarToken debe bloquear la peticion
+  // El middleware verificarToken debe bloquear la petición
   // antes de que llegue al controlador.
   test('Debe rechazar listado de clientes sin autenticación', async () => {
     const res = await request(app).get('/api/clientes');
@@ -56,7 +55,7 @@ describe('Módulo de Clientes', () => {
 
   // ─── TEST 2: POST sin token ──────────────────────
   // Intentamos crear un cliente sin autenticacion.
-  // Verificamos que la proteccion aplica a todos los metodos HTTP,
+  // Verificamos que la protección aplica a todos los métodos HTTP,
   // no solo a GET.
   test('Debe rechazar crear cliente sin token', async () => {
     const res = await request(app)
@@ -66,27 +65,20 @@ describe('Módulo de Clientes', () => {
   });
 
   // ─── TEST 3: Vendedor autenticado puede listar ───
-  // Esta prueba requiere conexion a MySQL para hacer login real.
-  // Si la BD no esta disponible, el login no devuelve token
-  // y la prueba se salta con un console.warn (skip graceful).
+  // Esta prueba requiere conexión a MySQL para hacer login real.
+  // Si la BD no está disponible, obtenerTokenVendedor lanza un error con
+  // instrucciones y la prueba falla. Antes se saltaba con un console.warn,
+  // pero una prueba que se salta sola no prueba nada: la suite quedaba en
+  // verde mientras el endpoint podia estar roto.
   test('Vendedor puede acceder al listado de clientes (requiere BD)', async () => {
-    // Paso 1: Login real para obtener un JWT valido
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({ email: EMAIL_VENDEDOR, password: PASSWORD_VENDEDOR });
+    // Paso 1: Login real para obtener un JWT válido
+    const token = await obtenerTokenVendedor(app);
 
-    // Si no hay token, la BD no esta disponible — saltamos la prueba
-    // sin marcarla como fallida (patron de degradacion graceful)
-    if (!loginRes.body.token) {
-      console.warn('[Test] BD no disponible — omitiendo prueba de vendedor');
-      return;
-    }
-
-    // Paso 2: Peticion autenticada con el token en el header Authorization
-    // Formato: "Bearer <token>" — estandar JWT
+    // Paso 2: Petición autenticada con el token en el header Authorization
+    // Formato: "Bearer <token>" — estándar JWT
     const res = await request(app)
       .get('/api/clientes')
-      .set('Authorization', `Bearer ${loginRes.body.token}`);
+      .set('Authorization', `Bearer ${token}`);
 
     // Verificamos que el endpoint responde correctamente
     expect(res.status).toBe(200);
