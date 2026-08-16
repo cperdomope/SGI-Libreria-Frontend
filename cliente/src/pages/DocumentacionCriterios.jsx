@@ -230,6 +230,7 @@ const criterios = [
       'Se puede eliminar un libro del carrito',
       'Se debe elegir un método de pago (Efectivo, Tarjeta, Transferencia o Mixto)',
       'Al confirmar la venta, el stock de cada libro se descuenta automáticamente',
+      'Cada libro vendido queda registrado en el Kardex como SALIDA, con el stock anterior y el nuevo (trazabilidad)',
       'El servidor recalcula y valida el total (no confía en el navegador) y ejecuta todo en una transacción'
     ]
   },
