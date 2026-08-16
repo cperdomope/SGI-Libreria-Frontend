@@ -39,7 +39,10 @@ const { validarId } = require('../middlewares/validarParametroId');
 
 // Middleware de Multer que procesa la imagen de portada
 // Solo acepta imágenes (jpg, png, webp) y limita el tamaño a 2 MB
-const { uploadPortada } = require('../middlewares/uploadImagen');
+// validarFirmaImagen comprueba los primeros bytes del archivo ya subido:
+// la extensión y el MIME los declara el cliente y se pueden falsificar,
+// la firma binaria no.
+const { uploadPortada, validarFirmaImagen } = require('../middlewares/uploadImagen');
 
 // ─────────────────────────────────────────────────────────
 // GET /api/libros
@@ -60,6 +63,7 @@ router.post('/',
   verificarToken,
   soloAdministrador,
   uploadPortada.single('portada'),   // Procesa la imagen antes del controlador
+  validarFirmaImagen,                // Verifica que el contenido sea una imagen real
   controladorLibros.crearLibro
 );
 
@@ -75,6 +79,7 @@ router.put('/:id',
   soloAdministrador,
   validarId('libro'),                // Primero validamos el ID
   uploadPortada.single('portada'),   // Luego procesamos la imagen (si viene)
+  validarFirmaImagen,                // Verifica que el contenido sea una imagen real
   controladorLibros.actualizarLibro
 );
 

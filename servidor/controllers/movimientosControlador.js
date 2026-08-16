@@ -31,6 +31,11 @@
 // Conexión al pool de base de datos MySQL
 const db = require('../config/db');
 
+// Helper de paginación reutilizable (utils/paginacion.js).
+// Lo usamos en obtenerMovimientos para no repetir aquí la lógica de
+// validar ?pagina y ?limite, calcular el OFFSET y armar la metadata.
+const { aplicarPaginacion } = require('../utils/paginacion');
+
 // ─────────────────────────────────────────────────────────
 // TIPOS DE MOVIMIENTO VÁLIDOS
 // ─────────────────────────────────────────────────────────
@@ -54,7 +59,7 @@ const TIPOS_MOVIMIENTO = {
 //  para garantizar que si falla el UPDATE del stock,
 //  también se deshace el INSERT del historial,
 //  evitando tener un kardex que no coincide con el inventario real."
-exports.registrarMovimiento = async (req, res) => {
+exports.registrarMovimiento = async (req, res, next) => {
   // Extraemos todos los campos del formulario de movimientos
   let { libro_id, tipo_movimiento, cantidad, observaciones, proveedor_id, costo_compra } = req.body;
 
@@ -177,8 +182,14 @@ exports.registrarMovimiento = async (req, res) => {
     // ─────────────────────────────────────────────────
     // Obtenemos también el stock actual para calcular el nuevo stock
     // y para validar que no quede negativo en una SALIDA.
+    //
+    // FOR UPDATE bloquea la fila del libro hasta que la transacción termine.
+    // Es imprescindible aquí: entre esta lectura y el UPDATE del stock puede
+    // ocurrir una venta del mismo libro. Sin el bloqueo, ambas operaciones
+    // leerían el mismo stock_anterior y el kardex registraría un valor que
+    // ya no corresponde al inventario real.
     const [libroRows] = await connection.query(
-      'SELECT id, stock_actual, titulo FROM mdc_libros WHERE id = ?',
+      'SELECT id, stock_actual, titulo FROM mdc_libros WHERE id = ? FOR UPDATE',
       [libro_id]
     );
 
@@ -309,11 +320,13 @@ exports.registrarMovimiento = async (req, res) => {
     if (process.env.NODE_ENV === 'development') {
       console.error('[Movimiento] Error:', error);
     }
-    res.status(500).json({
-      exito:   false,
-      mensaje: 'Error al procesar el movimiento',
-      codigo:  'MOVIMIENTO_ERROR'
-    });
+
+    // Delegamos al errorHandler global en lugar de responder aquí.
+    // Ese middleware ya sabe traducir los códigos de MySQL a mensajes
+    // claros (duplicados, claves foráneas, conexión perdida) y oculta
+    // los detalles internos en producción. Responder un 500 genérico
+    // desde aquí desperdiciaría todo ese trabajo.
+    next(error);
 
   } finally {
     // Liberamos la conexión pase lo que pase (éxito o error)
@@ -335,7 +348,7 @@ exports.registrarMovimiento = async (req, res) => {
 //  quién hizo cada movimiento, cuándo, el stock antes y después,
 //  y el proveedor en el caso de entradas. Se puede filtrar
 //  por libro para ver el historial de un título específico."
-exports.obtenerMovimientos = async (req, res) => {
+exports.obtenerMovimientos = async (req, res, next) => {
   // Tomamos el filtro opcional de la URL (query string)
   const { libro_id } = req.query;
 
@@ -363,33 +376,60 @@ exports.obtenerMovimientos = async (req, res) => {
       LEFT JOIN mdc_proveedores p ON m.proveedor_id = p.id
     `;
 
-    const params = [];
+    // ─────────────────────────────────────────────────
+    // FILTRO OPCIONAL POR LIBRO
+    // ─────────────────────────────────────────────────
+    // El WHERE se construye con un marcador ? y el valor viaja aparte
+    // en el arreglo de parámetros: nunca concatenamos entrada del usuario
+    // dentro del SQL, que es lo que abriría la puerta a inyección.
+    const params     = [];
+    let whereClause  = '';
 
-    // Si se envió un libro_id en la URL, filtramos solo sus movimientos
     if (libro_id) {
-      sql += ' WHERE m.libro_id = ?';
+      whereClause = ' WHERE m.libro_id = ?';
       params.push(libro_id);
     }
 
     // Ordenamos del más reciente al más antiguo
-    sql += ' ORDER BY m.fecha_movimiento DESC';
+    sql += whereClause + ' ORDER BY m.fecha_movimiento DESC';
 
-    const [rows] = await db.query(sql, params);
+    // ─────────────────────────────────────────────────
+    // PAGINACIÓN EN SERVIDOR
+    // ─────────────────────────────────────────────────
+    // El kardex crece indefinidamente: cada venta, cada entrada y cada
+    // ajuste añaden una fila y nunca se borra nada (esa es justamente su
+    // razón de ser). Sin paginación, con el tiempo esta ruta devolvería
+    // miles de registros en una sola respuesta.
+    //
+    // aplicarPaginacion (utils/paginacion.js) recibe dos funciones:
+    //   - la primera ejecuta la consulta de datos
+    //   - la segunda cuenta el total, para calcular cuántas páginas hay
+    // Si la petición no trae ?pagina ni ?limite, devuelve todo como antes,
+    // así que el frontend actual sigue funcionando sin cambios.
+    const respuesta = await aplicarPaginacion(
+      req,
+      (limite, offset) => (
+        limite !== undefined
+          ? db.query(sql + ' LIMIT ? OFFSET ?', [...params, limite, offset])
+          : db.query(sql, params)
+      ),
+      () => db.query(
+        `SELECT COUNT(*) AS total
+         FROM mdc_movimientos m
+         JOIN mdc_libros   l ON m.libro_id   = l.id
+         JOIN mdc_usuarios u ON m.usuario_id = u.id
+         ${whereClause}`,
+        params
+      )
+    );
 
-    res.json({
-      exito: true,
-      datos:  rows,
-      total:  rows.length
-    });
+    res.json(respuesta);
 
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       console.error('[Movimiento] Error al listar:', error);
     }
-    res.status(500).json({
-      exito:   false,
-      mensaje: 'Error al obtener el historial de movimientos',
-      codigo:  'MOVIMIENTOS_LIST_ERROR'
-    });
+    // Igual que en registrarMovimiento: delegamos al errorHandler global
+    next(error);
   }
 };

@@ -253,22 +253,68 @@ exports.crearVenta = async (req, res, next) => {
     // y descontar del inventario
     // ─────────────────────────────────────────────────
     for (const item of items) {
-      // Calculamos el subtotal aquí también por seguridad
-      const subtotalCalculado = item.cantidad * item.precio_unitario;
+      // Calculamos el subtotal de ESTA línea.
+      // Ojo con el nombre: la variable subtotalCalculado de más arriba es
+      // el subtotal de TODA la venta. Aquí usamos subtotalItem para que no
+      // se confundan al leer el código ni se oculte una con la otra.
+      const subtotalItem = item.cantidad * item.precio_unitario;
 
       // Insertamos una fila en mdc_detalle_ventas por cada libro vendido
       // Esta tabla guarda qué se vendió en cada venta
       await connection.query(
         `INSERT INTO mdc_detalle_ventas (venta_id, libro_id, cantidad, precio_unitario, subtotal)
          VALUES (?, ?, ?, ?, ?)`,
-        [ventaId, item.libro_id, item.cantidad, item.precio_unitario, subtotalCalculado]
+        [ventaId, item.libro_id, item.cantidad, item.precio_unitario, subtotalItem]
       );
+
+      // ─────────────────────────────────────────────────
+      // Leemos el stock ANTES de descontarlo, para el kardex
+      // ─────────────────────────────────────────────────
+      // validarStockDisponible ya bloqueó esta fila con FOR UPDATE al inicio
+      // de la transacción, así que este valor es definitivo: ninguna otra
+      // transacción pudo modificarlo entre aquella validación y esta lectura.
+      // Lo necesitamos porque el kardex guarda stock_anterior y stock_nuevo,
+      // que son las dos columnas que lo hacen auditable.
+      const [[libro]] = await connection.query(
+        'SELECT stock_actual FROM mdc_libros WHERE id = ?',
+        [item.libro_id]
+      );
+
+      const stockAnterior = libro.stock_actual;
+      const stockNuevo    = stockAnterior - item.cantidad;
 
       // Descontamos del inventario la cantidad vendida
       // stock_actual = stock_actual - cantidad_vendida
+      // La resta se hace en MySQL y no en JavaScript para que sea el motor
+      // quien la resuelva sobre el valor real de la fila bloqueada.
       await connection.query(
         'UPDATE mdc_libros SET stock_actual = stock_actual - ? WHERE id = ?',
         [item.cantidad, item.libro_id]
+      );
+
+      // ─────────────────────────────────────────────────
+      // Registramos la SALIDA en el kardex (trazabilidad)
+      // ─────────────────────────────────────────────────
+      // Sin este INSERT el historial de movimientos quedaría incompleto:
+      // al anular una venta se registra una ENTRADA de reversa, y sin la
+      // SALIDA correspondiente el kardex mostraría devoluciones de mercancía
+      // que aparentemente nunca salió del inventario.
+      //
+      // Al estar dentro de la transacción, si cualquier paso posterior falla,
+      // este registro desaparece junto con la venta: kardex e inventario
+      // nunca quedan desincronizados.
+      await connection.query(
+        `INSERT INTO mdc_movimientos
+          (libro_id, usuario_id, tipo_movimiento, cantidad, stock_anterior, stock_nuevo, observaciones)
+         VALUES (?, ?, 'SALIDA', ?, ?, ?, ?)`,
+        [
+          item.libro_id,
+          req.usuario.id,        // Quién registró la venta
+          item.cantidad,
+          stockAnterior,
+          stockNuevo,
+          `Salida por venta #${ventaId}`  // Motivo del movimiento
+        ]
       );
     }
 
@@ -448,7 +494,7 @@ exports.obtenerVentas = async (req, res, next) => {
 //  y otra para los productos. Así obtenemos el detalle completo
 //  para mostrar o exportar como PDF."
 exports.obtenerDetalleVenta = async (req, res, next) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
 
   try {
@@ -530,7 +576,7 @@ exports.obtenerDetalleVenta = async (req, res, next) => {
 //  registrando el movimiento en el kardex para trazabilidad.
 //  Todo esto ocurre en una sola transacción."
 exports.anularVenta = async (req, res, next) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
 
   let connection;
@@ -571,9 +617,15 @@ exports.anularVenta = async (req, res, next) => {
 
     // PASO 4: Por cada libro vendido, devolver el stock y registrar en el kardex
     for (const item of items) {
-      // Consultamos el stock actual del libro antes de la reversión
+      // Consultamos el stock actual del libro antes de la reversión.
+      //
+      // FOR UPDATE bloquea la fila hasta que esta transacción termine.
+      // Sin él, una venta concurrente del mismo libro podría modificar el
+      // stock entre esta lectura y el UPDATE de abajo, y el kardex quedaría
+      // registrando un stock_anterior que ya no era cierto.
+      // Es el mismo mecanismo que usa validarStockDisponible en crearVenta.
       const [libroActual] = await connection.query(
-        'SELECT stock_actual FROM mdc_libros WHERE id = ?',
+        'SELECT stock_actual FROM mdc_libros WHERE id = ? FOR UPDATE',
         [item.libro_id]
       );
 
