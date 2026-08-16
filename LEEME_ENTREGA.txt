@@ -15,12 +15,23 @@
  1. CONTENIDO DE ESTE PAQUETE
 ---------------------------------------------------------------------
 
- /cliente/            Código fuente del frontend (React 19 + Vite 7)
- /servidor/           Código fuente del backend (Node.js + Express 5)
- /base_datos/         sgi_libreria_completo.sql  → script de la BD
- /manuales/           Los tres manuales del proyecto en PDF
- README.md            Documentación general del repositorio
- LEEME_ENTREGA.txt    Este archivo
+ La entrega está organizada así:
+
+ SGI-Libreria-El-Saber/
+  ├── Proyecto/                       Código fuente completo
+  │    ├── cliente/                   Frontend (React 19 + Vite 7)
+  │    ├── servidor/                  Backend (Node.js + Express 5)
+  │    ├── base_datos/                Script SQL de la base de datos
+  │    ├── README.md                  Documentación general
+  │    └── LEEME_ENTREGA.txt          Este archivo
+  ├── sgi_libreria_completo.sql       Script de la BD (copia de acceso directo)
+  ├── Manual_de_Usuario_SGI.pdf       Manual de Usuario
+  ├── Manual_de_Instalacion_SGI.pdf   Manual de Instalación
+  └── Manual_Tecnico_SGI.pdf          Manual Técnico
+
+ Los tres manuales están además dentro de Proyecto/cliente/public/manuales/,
+ porque desde ahí los sirve la propia aplicación: el botón «Documentación
+ del Proyecto» de la pantalla de acceso permite verlos y descargarlos.
 
  NOTA: las carpetas "node_modules" y los archivos ".env" NO se incluyen.
  Las dependencias se instalan con "npm install" y los archivos .env se
@@ -62,7 +73,7 @@
    Administrador : cip@sena.edu.co       / cip123
 
  El detalle completo, con capturas de pantalla y solución de problemas,
- está en el Manual de Instalación (carpeta /manuales/).
+ está en el Manual_de_Instalacion_SGI.pdf, junto a esta carpeta Proyecto.
 
 ---------------------------------------------------------------------
  3. SISTEMA PUBLICADO EN INTERNET
