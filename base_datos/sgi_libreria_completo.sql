@@ -42,14 +42,14 @@
 -- 2. Ejecutar este script completo:
 --    mysql -u root -p < sgi_libreria_completo.sql
 --
--- 3. Regenerar contrasenas ejecutando en el servidor:
---    cd servidor
---    node scripts/reset_password.js
---
--- 4. Credenciales por defecto tras ejecutar reset_password.js:
+-- 3. Listo. Los usuarios de ejemplo ya quedan con sus contrasenas
+--    cifradas con bcrypt, por lo que se puede iniciar sesion de una vez:
 --    - Administrador: ldarlys@sena.edu.co   / Luzd12345
 --    - Vendedor:      michelle@sena.edu.co  / vendedor123
 --    - Administrador: cip@sena.edu.co       / cip123
+--
+--    (Si desea cambiar alguna contrasena, vea la SECCION 7.2 al final
+--     del script, donde se explica como generar un hash nuevo.)
 
 
 -- =====================================================
@@ -417,24 +417,32 @@ INSERT INTO mdc_roles (nombre) VALUES
     ('Vendedor');
 
 -- 7.2 Usuarios del Sistema
--- IMPORTANTE: Las contrasenas aqui son placeholders (textos temporales).
--- Los hashes reales de bcrypt DEBEN generarse ejecutando:
---   cd servidor && node scripts/reset_password.js
+-- Nunca almacenamos contrasenas en texto plano. Lo que se guarda es un
+-- hash bcrypt: un algoritmo disenado especificamente para contrasenas,
+-- que es lento a proposito (para dificultar ataques de fuerza bruta) y
+-- agrega un "salt" aleatorio a cada hash, de modo que dos contrasenas
+-- iguales producen hashes distintos. El proceso es irreversible: al
+-- iniciar sesion, el sistema no descifra el hash, sino que vuelve a
+-- aplicar el algoritmo a lo ingresado y compara los resultados.
 --
--- Nunca almacenamos contrasenas en texto plano. bcrypt es un algoritmo
--- de hashing disenado especificamente para contrasenas: es lento a
--- proposito (para dificultar ataques de fuerza bruta) y agrega un
--- "salt" aleatorio a cada hash, haciendo que dos contrasenas iguales
--- produzcan hashes diferentes.
+-- Los hashes de esta seccion corresponden a las contrasenas de ejemplo
+-- del proyecto y ya estan listos para usar:
+--   ldarlys@sena.edu.co  -> Luzd12345    (Administrador)
+--   michelle@sena.edu.co -> vendedor123  (Vendedor)
+--   cip@sena.edu.co      -> cip123       (Administrador)
 --
--- Credenciales tras ejecutar reset_password.js:
---   ldarlys@sena.edu.co  -> contrasena: Luzd12345
---   michelle@sena.edu.co -> contrasena: vendedor123
---   cip@sena.edu.co      -> contrasena: cip123
+-- COMO CAMBIAR UNA CONTRASENA:
+--   1. Generar el hash nuevo (desde la carpeta servidor/):
+--      node -e "console.log(require('bcryptjs').hashSync('MiClaveNueva', 10))"
+--   2. Actualizarlo en la base de datos:
+--      UPDATE mdc_usuarios SET password_hash = '<hash_generado>'
+--       WHERE email = 'correo@ejemplo.com';
+--   Tambien puede cambiarse desde la propia aplicacion, en el menu de
+--   usuario -> "Cambiar Contrasena".
 INSERT INTO mdc_usuarios (nombre_completo, email, password_hash, rol_id, estado) VALUES
-    ('Luz Darlys',          'ldarlys@sena.edu.co',  '$2b$10$placeholder_debe_regenerarse_ldarlys',  1, 1),
-    ('Michelle Martinez',   'michelle@sena.edu.co', '$2b$10$placeholder_debe_regenerarse_michelle', 2, 1),
-    ('Carlos Ivan Perdomo', 'cip@sena.edu.co',      '$2b$10$placeholder_debe_regenerarse_cip',      1, 1);
+    ('Luz Darlys',          'ldarlys@sena.edu.co',  '$2b$10$45fO1kPRYAJuLJxxZeHVr.r9mrKbsuSJcNEsk/dT3anbdf/KFohUm', 1, 1),
+    ('Michelle Martinez',   'michelle@sena.edu.co', '$2b$10$cTW.JbPZ.0Gdu4EAaWOpfu/xh5f27m4SQTjq5wwxmoN5Rc6X/0p3u', 2, 1),
+    ('Carlos Ivan Perdomo', 'cip@sena.edu.co',      '$2b$10$ESgSWoorbgeIVNuhuXL0xuZsgoIJQIqVmahpu3hYQphOfVoe0XtNe', 1, 1);
 
 -- 7.3 Categorias de Libros
 -- Categorias predefinidas para clasificar el inventario.
@@ -618,27 +626,35 @@ WHERE TABLE_SCHEMA = 'inventario_libreria';
 
 
 -- =====================================================
--- RECORDATORIO POST-INSTALACION
+-- PASOS SIGUIENTES (despues de ejecutar este script)
 -- =====================================================
 --
--- PASO OBLIGATORIO DESPUES DE EJECUTAR ESTE SCRIPT:
+-- La base de datos ya quedo lista y con datos de ejemplo. Para poner
+-- el sistema en marcha (el detalle completo esta en el Manual de
+-- Instalacion y en el README del proyecto):
 --
--- 1. Navegar al directorio del servidor:
---    cd servidor
+-- 1. Configurar el backend:
+--      cd servidor
+--      copy .env.example .env    (completar con los datos de MySQL)
+--      npm install
+--      npm start                 -> http://localhost:3000
 --
--- 2. Ejecutar el script de reset de contrasenas:
---    node scripts/reset_password.js
+-- 2. Configurar el frontend, en otra terminal:
+--      cd cliente
+--      copy .env.example .env    (VITE_API_URL=http://localhost:3000/api)
+--      npm install
+--      npm run dev               -> http://localhost:5173
 --
--- 3. Esto generara hashes bcrypt validos para:
---    - ldarlys@sena.edu.co  (contrasena: Luzd12345)
---    - michelle@sena.edu.co (contrasena: vendedor123)
---    - cip@sena.edu.co      (contrasena: cip123)
+-- 3. Iniciar sesion en http://localhost:5173 con cualquiera de los
+--    usuarios de ejemplo (sus contrasenas ya estan cifradas en la
+--    SECCION 7.2 de este script):
+--      ldarlys@sena.edu.co  / Luzd12345    (Administrador)
+--      michelle@sena.edu.co / vendedor123  (Vendedor)
+--      cip@sena.edu.co      / cip123       (Administrador)
 --
--- 4. Iniciar el servidor:
---    npm run dev
---
--- 5. Acceder a la aplicacion:
---    http://localhost:3000
+-- NOTA: el stock de los libros inicia en el valor sembrado y a partir
+-- de ahi solo cambia por movimientos de inventario, ventas y
+-- anulaciones, para conservar la trazabilidad del Kardex.
 --
 -- =====================================================
 -- FIN DEL SCRIPT

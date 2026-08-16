@@ -287,10 +287,12 @@ La base de datos está **normalizada en Tercera Forma Normal (3NF)**, lo que sig
 
 El script SQL ya trae datos de ejemplo para poder probar el sistema sin tener que cargar todo desde cero:
 
-- 8 categorías (Tecnología, Ficción, Historia, etc.)
-- 8 autores (García Márquez, Isabel Allende, etc.)
-- 10 libros de ejemplo
-- 7 clientes
+- 2 roles (Administrador y Vendedor)
+- 3 usuarios de prueba con su contraseña ya cifrada
+- 7 categorías (Novela Literaria, Programación / Tecnología, Historia, etc.)
+- 8 autores (García Márquez, Álvaro Mutis, Rafael Pombo, etc.)
+- 8 libros de ejemplo
+- 7 clientes (personas naturales y jurídicas)
 - 4 proveedores
 
 ---
@@ -370,7 +372,9 @@ cd SGI-Libreria-el-Saber
 mysql -u root -p < base_datos/sgi_libreria_completo.sql
 ```
 
-> ⚠️ El script deja los usuarios de ejemplo (`ldarlys@...`, `cip@...`, `michelle@...`) con un `password_hash` **placeholder**, no un hash real — hay que generarlos en el Paso 3 antes de poder iniciar sesión.
+> El script crea la base de datos completa: las 10 tablas con sus llaves foráneas e índices, las 3 vistas y los datos de ejemplo. Los usuarios (`ldarlys@...`, `cip@...`, `michelle@...`) quedan listos con su contraseña ya cifrada.
+>
+> ⚠️ El script empieza con `DROP DATABASE IF EXISTS inventario_libreria`: si la base ya existía, la borra y la vuelve a crear desde cero.
 
 ### Paso 3: Configurar y arrancar el backend
 
@@ -380,21 +384,20 @@ cp .env.example .env        # Editar este archivo con tus datos de MySQL
 npm install
 ```
 
-Genera los hashes bcrypt reales para los usuarios de ejemplo (el script `reset_password.js` que antes hacía esto se eliminó del repositorio por seguridad — contenía contraseñas en texto plano):
+> Los usuarios de ejemplo ya vienen con su contraseña cifrada (hash bcrypt) dentro del script SQL, así que **no hay que hacer ningún paso adicional** para poder iniciar sesión.
+>
+> Si quieres cambiar alguna contraseña, genera el hash nuevo y actualízalo en la base de datos:
+>
+> ```bash
+> node -e "console.log(require('bcryptjs').hashSync('MiClaveNueva', 10))"
+> ```
+> ```sql
+> UPDATE mdc_usuarios SET password_hash = '<hash_generado>' WHERE email = 'correo@ejemplo.com';
+> ```
+>
+> También puedes cambiarla desde la propia aplicación, en el menú de usuario → «Cambiar Contraseña».
 
-```bash
-node -e "const b=require('bcryptjs'); ['Luzd12345','cip123','vendedor123'].forEach(p => console.log(p, '->', b.hashSync(p, 10)))"
-```
-
-Copia cada hash generado y actualízalo en la base de datos:
-
-```sql
-UPDATE mdc_usuarios SET password_hash = '<hash_de_Luzd12345>'   WHERE email = 'ldarlys@sena.edu.co';
-UPDATE mdc_usuarios SET password_hash = '<hash_de_cip123>'      WHERE email = 'cip@sena.edu.co';
-UPDATE mdc_usuarios SET password_hash = '<hash_de_vendedor123>' WHERE email = 'michelle@sena.edu.co';
-```
-
-Luego arranca el servidor:
+Arranca el servidor:
 
 ```bash
 npm start                        # El servidor arranca en http://localhost:3000
