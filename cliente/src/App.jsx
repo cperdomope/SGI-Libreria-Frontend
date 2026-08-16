@@ -39,7 +39,15 @@
 // =====================================================
 
 // En React 19 con Vite no es necesario importar React explicitamente.
-// El JSX transform automatico se encarga de eso.
+// El JSX transform automático se encarga de eso.
+
+// lazy: permite importar un componente de forma diferida. En lugar de
+//   incluirlo en el paquete inicial, Vite lo separa en su propio archivo
+//   ("chunk") que el navegador descarga solo cuando hace falta.
+// Suspense: muestra un contenido de respaldo (un spinner) mientras el
+//   componente diferido se está descargando. Es obligatorio envolver
+//   los componentes lazy con Suspense; sin el, React lanza un error.
+import { lazy, Suspense } from 'react';
 
 // BrowserRouter: habilita el enrutamiento SPA (Single Page Application)
 // Routes/Route: definen que componente mostrar en cada URL
@@ -58,21 +66,59 @@ import RutaProtegidaPorRol from './components/RutaProtegidaPorRol';
 import LayoutPrincipal from './components/LayoutPrincipal';
 
 // =====================================================
-// IMPORTACIÓN DE PÁGINAS
+// IMPORTACIÓN DE PÁGINAS (CARGA DIFERIDA)
 // =====================================================
-// Cada página es un componente React independiente
+// Cada página es un componente React independiente.
+//
+// ¿Por qué lazy() en lugar de un import normal?
+//   Con imports estáticos, Vite empaqueta las once páginas en un único
+//   archivo JavaScript que el navegador descarga al abrir la aplicación.
+//   Eso significa que un vendedor que solo usa el punto de venta descarga
+//   igualmente el dashboard con sus gráficas, el kardex y la
+//   administración de usuarios, aunque su rol ni siquiera pueda verlos.
+//
+//   Con lazy(), Vite genera un archivo por página y el navegador descarga
+//   cada uno la primera vez que se visita esa ruta. El arranque es más
+//   rápido y se transfieren menos datos.
+//
+// Es el mismo patrón que ya usa Acceso.jsx para las dos páginas de
+// documentación; aquí lo extendemos a todo el enrutador.
+//
+// Acceso NO se carga de forma diferida a propósito: es la primera
+// pantalla que ve cualquier usuario sin sesión, así que diferirla
+// añadiría un parpadeo de spinner justo en el arranque.
+import Acceso from './pages/Acceso';                    // Login (carga inmediata)
 
-import Inicio from './pages/Inicio';                    // Dashboard con gráficas
-import Inventario from './pages/Inventario';            // CRUD de libros
-import Movimientos from './pages/Movimientos';          // Kardex (entradas/salidas)
-import PaginaClientes from './pages/PaginaClientes';    // CRUD de clientes
-import PaginaVentas from './pages/PaginaVentas';        // Punto de venta (POS)
-import HistorialVentas from './pages/HistorialVentas';  // Consulta de ventas
-import PaginaProveedores from './pages/PaginaProveedores'; // CRUD de proveedores
-import PaginaAutores from './pages/PaginaAutores';      // CRUD de autores
-import PaginaCategorias from './pages/PaginaCategorias'; // CRUD de categorías
-import Acceso from './pages/Acceso';                    // Login
-import AdminUsuarios from './pages/AdminUsuarios';      // CRUD de usuarios
+const Inicio            = lazy(() => import('./pages/Inicio'));            // Dashboard con gráficas
+const Inventario        = lazy(() => import('./pages/Inventario'));        // CRUD de libros
+const Movimientos       = lazy(() => import('./pages/Movimientos'));       // Kardex (entradas/salidas)
+const PaginaClientes    = lazy(() => import('./pages/PaginaClientes'));    // CRUD de clientes
+const PaginaVentas      = lazy(() => import('./pages/PaginaVentas'));      // Punto de venta (POS)
+const HistorialVentas   = lazy(() => import('./pages/HistorialVentas'));   // Consulta de ventas
+const PaginaProveedores = lazy(() => import('./pages/PaginaProveedores')); // CRUD de proveedores
+const PaginaAutores     = lazy(() => import('./pages/PaginaAutores'));     // CRUD de autores
+const PaginaCategorias  = lazy(() => import('./pages/PaginaCategorias'));  // CRUD de categorías
+const AdminUsuarios     = lazy(() => import('./pages/AdminUsuarios'));     // CRUD de usuarios
+
+// =====================================================
+// INDICADOR DE CARGA PARA SUSPENSE
+// =====================================================
+// Se muestra durante los milisegundos que tarda en descargarse el
+// archivo de la página solicitada. Usa las clases de Bootstrap 5 que
+// ya emplea el resto de la interfaz, para que no desentone.
+const CargandoPagina = () => (
+  <div
+    className="d-flex justify-content-center align-items-center"
+    style={{ minHeight: '60vh' }}
+  >
+    {/* role="status" y el texto oculto hacen que los lectores de
+        pantalla anuncien la carga: sin ellos, un usuario con
+        lector de pantalla no percibe que algo está ocurriendo. */}
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Cargando página...</span>
+    </div>
+  </div>
+);
 
 // =====================================================
 // IMPORTACIÓN DEL CONTEXTO DE AUTENTICACIÓN
@@ -104,6 +150,12 @@ function App() {
     <AuthProvider>
       {/* BrowserRouter habilita el sistema de rutas de React */}
       <BrowserRouter>
+        {/* Suspense envuelve TODAS las rutas: cuando el usuario navega a
+            una página cuyo archivo todavía no se ha descargado, React
+            muestra CargandoPagina hasta que termina la descarga.
+            Un solo Suspense alrededor de <Routes> basta para cubrir
+            todas las páginas diferidas. */}
+        <Suspense fallback={<CargandoPagina />}>
         <Routes>
 
           {/* ══════════════════════════════════════════
@@ -263,6 +315,7 @@ function App() {
           <Route path="*" element={<Navigate to="/ventas" replace />} />
 
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
