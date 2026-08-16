@@ -1,0 +1,123 @@
+=====================================================================
+ SGI — SISTEMA DE GESTIÓN DE INVENTARIO «LIBRERÍA EL SABER»
+ Entrega del proyecto final
+=====================================================================
+
+ Aprendices  : Carlos Iván Perdomo Perdomo
+               Luz Darlys González Torres
+ Instructor  : Ing. Jairo Antonio Muñoz Arango
+ Programa    : Tecnólogo en Análisis y Desarrollo de Software (ADSO)
+ Ficha       : 3118323
+ Centro      : Centro Agropecuario La Granja — SENA Regional Tolima
+ Fecha       : Agosto de 2026
+
+---------------------------------------------------------------------
+ 1. CONTENIDO DE ESTE PAQUETE
+---------------------------------------------------------------------
+
+ /cliente/            Código fuente del frontend (React 19 + Vite 7)
+ /servidor/           Código fuente del backend (Node.js + Express 5)
+ /base_datos/         sgi_libreria_completo.sql  → script de la BD
+ /manuales/           Los tres manuales del proyecto en PDF
+ README.md            Documentación general del repositorio
+ LEEME_ENTREGA.txt    Este archivo
+
+ NOTA: las carpetas "node_modules" y los archivos ".env" NO se incluyen.
+ Las dependencias se instalan con "npm install" y los archivos .env se
+ crean a partir de las plantillas ".env.example" incluidas. Esto sigue
+ la práctica estándar de no versionar dependencias ni credenciales.
+
+---------------------------------------------------------------------
+ 2. PUESTA EN MARCHA RÁPIDA (5 pasos)
+---------------------------------------------------------------------
+
+ Requisitos: Node.js 20 o superior y MySQL 8.
+
+ PASO 1 — Crear la base de datos
+   mysql -u root -p < base_datos/sgi_libreria_completo.sql
+
+   El script crea la base "inventario_libreria" con sus 10 tablas,
+   3 vistas, índices y datos de ejemplo. Los usuarios ya quedan con su
+   contraseña cifrada: NO hay que ejecutar ningún paso adicional.
+
+ PASO 2 — Configurar el backend
+   cd servidor
+   copy .env.example .env      (completar DB_USER, DB_PASSWORD y JWT_SECRET)
+   npm install
+
+ PASO 3 — Arrancar el backend
+   npm start                   → http://localhost:3000
+   (debe responder: {"estado":"OK","bd":"conectada", ...})
+
+ PASO 4 — Configurar y arrancar el frontend (en otra terminal)
+   cd cliente
+   copy .env.example .env      (VITE_API_URL=http://localhost:3000/api)
+   npm install
+   npm run dev                 → http://localhost:5173
+
+ PASO 5 — Iniciar sesión en http://localhost:5173
+
+   Administrador : ldarlys@sena.edu.co   / Luzd12345
+   Vendedor      : michelle@sena.edu.co  / vendedor123
+   Administrador : cip@sena.edu.co       / cip123
+
+ El detalle completo, con capturas de pantalla y solución de problemas,
+ está en el Manual de Instalación (carpeta /manuales/).
+
+---------------------------------------------------------------------
+ 3. SISTEMA PUBLICADO EN INTERNET
+---------------------------------------------------------------------
+
+ El proyecto también está desplegado y puede probarse sin instalar nada:
+
+   https://sgi-libreria-el-saber-production.up.railway.app
+
+ Con las mismas credenciales del punto anterior.
+
+ En la pantalla de acceso, el botón «Documentación del Proyecto» abre
+ las historias de usuario, los criterios de aceptación y los tres
+ manuales, que además pueden descargarse en PDF desde allí.
+
+---------------------------------------------------------------------
+ 4. DOCUMENTACIÓN INCLUIDA
+---------------------------------------------------------------------
+
+ Manual de Usuario      — Guía paso a paso de cada interfaz, con 24
+                          capturas de pantalla del sistema.
+ Manual de Instalación  — Cómo habilitar y ejecutar el proyecto desde
+                          cero: requisitos, base de datos, variables de
+                          entorno, verificación, pruebas y despliegue.
+ Manual Técnico         — Arquitectura y lógica del sistema: tabla de
+                          requerimientos, 35 historias de usuario con
+                          sus criterios, diagramas UML (casos de uso,
+                          clases, paquetes, secuencia y despliegue),
+                          modelo entidad-relación, modelo relacional,
+                          diccionario de datos, API REST, seguridad y
+                          documentación del código.
+
+ ACLARACIÓN: la sección 8.3 del Manual de Instalación describe cómo
+ generar los hashes de las contraseñas. Ese procedimiento quedó como
+ OPCIONAL —solo si se desea cambiar una contraseña—, porque el script
+ SQL entregado ya incluye las contraseñas cifradas de los usuarios de
+ ejemplo y permite iniciar sesión de inmediato.
+
+---------------------------------------------------------------------
+ 5. VERIFICACIÓN DEL PROYECTO
+---------------------------------------------------------------------
+
+ Pruebas automatizadas del backend (Jest + Supertest):
+
+   cd servidor
+   npm test        → 8 suites, 47 casos de prueba
+
+ Cubren: autenticación y validez del token, permisos por rol, las
+ operaciones de cada módulo, las validaciones de negocio y el control
+ anti-fraude del total de la venta.
+
+---------------------------------------------------------------------
+ 6. REPOSITORIO
+---------------------------------------------------------------------
+
+ https://github.com/cperdomope/SGI-Libreria-el-Saber  (rama main)
+
+=====================================================================
