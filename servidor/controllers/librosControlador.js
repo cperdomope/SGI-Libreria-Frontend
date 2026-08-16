@@ -212,7 +212,7 @@ exports.crearLibro = async (req, res) => {
   try {
     // Insertamos el libro en la base de datos.
     // stock_actual = 0 porque el inventario inicial se agrega por movimientos.
-    // stock_minimo || 5 → si no se especifica, usamos 5 como umbral de alerta.
+    // stock_minimo || 5 → si no se específica, usamos 5 como umbral de alerta.
     const [resultado] = await db.query(
       `INSERT INTO mdc_libros
        (isbn, portada, titulo, autor_id, categoria_id, precio_venta, stock_minimo, stock_actual)
@@ -221,8 +221,8 @@ exports.crearLibro = async (req, res) => {
         isbn         || null,  // null si no se ingresó ISBN
         portadaFilename,       // null si no se subió imagen
         titulo.trim(),         // Eliminamos espacios al inicio y al final
-        autor_id     || null,  // null si no se seleccionó autor
-        categoria_id || null,  // null si no se seleccionó categoría
+        autor_id     || null,  // null si no se selecciónó autor
+        categoria_id || null,  // null si no se selecciónó categoría
         precio_venta,
         stock_minimo || 5      // Valor por defecto: alertar cuando queden menos de 5
       ]

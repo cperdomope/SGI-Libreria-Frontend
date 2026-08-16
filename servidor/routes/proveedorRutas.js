@@ -28,9 +28,9 @@ const router = express.Router();
 const proveedorControlador = require('../controllers/proveedorControlador');
 
 // Importamos los middlewares de seguridad
-const verificarToken = require('../middlewares/verificarToken');       // Verifica autenticacion JWT
+const verificarToken = require('../middlewares/verificarToken');       // Verifica autenticación JWT
 const { soloAdministrador } = require('../middlewares/verificarRol');  // Solo Admin (rol_id = 1)
-const { validarId } = require('../middlewares/validarParametroId'); // Valida que :id sea un numero entero valido
+const { validarId } = require('../middlewares/validarParametroId'); // Valida que :id sea un número entero válido
 
 // ─────────────────────────────────────────────────────
 // RUTA GET: Listar todos los proveedores
@@ -40,7 +40,7 @@ router.get('/', verificarToken, soloAdministrador, proveedorControlador.obtenerP
 // ─────────────────────────────────────────────────────
 // RUTA POST: Registrar un proveedor nuevo
 // ─────────────────────────────────────────────────────
-// Body esperado: { nombre_empresa, nit?, nombre_contacto?, email?, telefono?, direccion? }
+// Body esperado: { nombre_empresa, nit?, nombre_contacto?, email?, telefono?, dirección? }
 router.post('/', verificarToken, soloAdministrador, proveedorControlador.crearProveedor);
 
 // ─────────────────────────────────────────────────────

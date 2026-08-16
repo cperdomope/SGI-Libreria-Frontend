@@ -40,7 +40,7 @@ const IconoEliminar = () => (
   </svg>
 );
 
-// Cuantas categorias mostrar por pagina en la tabla
+// Cuántas categorías mostrar por página en la tabla
 const ELEMENTOS_POR_PAGINA = 5;
 
 // =====================================================
@@ -48,10 +48,10 @@ const ELEMENTOS_POR_PAGINA = 5;
 // =====================================================
 const PaginaCategorias = () => {
 
-  // ── Verificacion de permisos (RBAC) ──
+  // ── Verificación de permisos (RBAC) ──
   const { tienePermiso } = useAuth();
 
-  // useRef para cerrar el modal programaticamente despues de guardar.
+  // useRef para cerrar el modal programáticamente después de guardar.
   // Preferimos useRef sobre document.getElementById() porque es la
   // forma idiomatica de React para referenciar elementos del DOM.
   const cerrarModalRef = useRef(null);
@@ -60,10 +60,10 @@ const PaginaCategorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   // datosCategoria: formulario del modal
-  // id=null → crear nueva | id=numero → editar existente
+  // id=null → crear nueva | id=número → editar existente
   const [datosCategoria, setDatosCategoria] = useState({ id: null, nombre: '' });
 
-  // ── PAGINACION (lado del cliente) ──
+  // ── PAGINACIÓN (lado del cliente) ──
   const [paginaActual, setPaginaActual] = useState(1);
 
   // Calculamos qué categorías mostrar en la página actual

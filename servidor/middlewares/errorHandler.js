@@ -32,7 +32,7 @@
  *  el logging para facilitar el diagnóstico."
  *
  * @author Equipo de Desarrollo SGI
- * @version 1.0.0
+ * @versión 1.0.0
  */
 
 // =====================================================

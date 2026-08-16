@@ -118,7 +118,7 @@ exports.crearCategoria = async (req, res) => {
 // que la tienen asignada reflejan el cambio automáticamente
 // (porque usan el ID, no el texto de la categoría).
 exports.actualizarCategoria = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id }     = req.params;
   const { nombre } = req.body;
 
@@ -177,7 +177,7 @@ exports.actualizarCategoria = async (req, res) => {
 // Primero consultamos cuántos libros la usan y damos un mensaje
 // descriptivo antes de que MySQL genere el error de FK.
 exports.eliminarCategoria = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
 
   try {

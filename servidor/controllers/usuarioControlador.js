@@ -170,7 +170,7 @@ exports.crearUsuario = async (req, res) => {
 // flujos distintos con requisitos de seguridad diferentes.
 // El cambio de contraseña requiere verificar la contraseña actual.
 exports.actualizarUsuario = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const id = parseInt(req.params.id, 10);
   const { nombre_completo, email, rol_id } = req.body;
 
@@ -237,10 +237,10 @@ exports.actualizarUsuario = async (req, res) => {
 //  El login verifica el estado y rechaza usuarios inactivos.
 //  Esto preserva el historial de ventas asociado al usuario."
 exports.cambiarEstado = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const id = parseInt(req.params.id, 10);
 
-  // Proteccion importante: el administrador no puede desactivarse a si mismo.
+  // Protección importante: el administrador no puede desactivarse a si mismo.
   // req.usuario.id viene del token JWT, identificando quién hace la petición.
   // Si se desactivara a sí mismo, quedaría bloqueado del sistema sin poder revertirlo.
   if (id === req.usuario.id) {

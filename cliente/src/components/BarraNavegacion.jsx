@@ -1,54 +1,54 @@
 // =====================================================
-// COMPONENTE: BARRA DE NAVEGACION PRINCIPAL
+// COMPONENTE: BARRA DE NAVEGACIÓN PRINCIPAL
 // =====================================================
-// Este componente renderiza el menu de navegacion superior que
-// aparece en TODAS las paginas del sistema cuando hay un usuario
+// Este componente renderiza el menu de navegación superior que
+// aparece en TODAS las páginas del sistema cuando hay un usuario
 // autenticado. Es el punto de acceso principal a todos los modulos.
 //
 // Se conecta con el AuthContext para obtener:
 //   - Los datos del usuario logueado (nombre, rol)
-//   - La funcion tienePermiso() para mostrar/ocultar opciones segun el rol
-//   - La funcion logout() para cerrar sesion
+//   - La función tienePermiso() para mostrar/ocultar opciones según el rol
+//   - La función logout() para cerrar sesión
 //
 // El menu se adapta al rol del usuario mediante renderizado condicional:
 //   {tienePermiso('verDashboard') && (<Link>Dashboard</Link>)}
 //   Esto significa: "solo renderiza este Link si el usuario tiene
-//   el permiso 'verDashboard'". Los permisos estan definidos en la
+//   el permiso 'verDashboard'". Los permisos están definidos en la
 //   matriz PERMISOS del AuthContext.
 //
 // Secciones del menu:
 //   - Dashboard: solo Admin (vista panoramica del negocio)
-//   - Gestion Comercial: Ventas, Historial, Clientes
-//   - Logistica: Inventario, Movimientos, Autores, Categorias, Proveedores
-//   - Usuario: Cambiar contrasena, Gestion usuarios (Admin), Cerrar sesion
+//   - Gestión Comercial: Ventas, Historial, Clientes
+//   - Logistica: Inventario, Movimientos, Autores, Categorías, Proveedores
+//   - Usuario: Cambiar contraseña, Gestión usuarios (Admin), Cerrar sesión
 //
-// Conceptos de React aplicados aqui:
-//   - useState: para controlar la visibilidad del modal de contrasena
-//   - useLocation (React Router): para saber en que pagina estamos
-//     y resaltar la opcion activa del menu
+// Conceptos de React aplicados aquí:
+//   - useState: para controlar la visibilidad del modal de contraseña
+//   - useLocation (React Router): para saber en que página estamos
+//     y resaltar la opción activa del menu
 //   - Renderizado condicional: operador && para mostrar/ocultar
-//     elementos segun permisos del rol
-//   - Componentes reutilizables: Icono() es un componente generico
+//     elementos según permisos del rol
+//   - Componentes reutilizables: Icono() es un componente genérico
 //     que recibe props para renderizar cualquier icono SVG
 // =====================================================
 
 // useState: hook de React para manejar estado local del componente.
-// Un hook es una funcion especial de React que permite "enganchar"
+// Un hook es una función especial de React que permite "enganchar"
 // funcionalidades (estado, efectos, contexto) dentro de componentes
 // funcionales. Antes de los hooks, esto solo era posible con clases.
 import { useState } from 'react';
 
-// React Router: libreria de enrutamiento para aplicaciones SPA.
-// Link: crea enlaces que navegan sin recargar la pagina completa
+// React Router: librería de enrutamiento para aplicaciones SPA.
+// Link: crea enlaces que navegan sin recargar la página completa
 //   (a diferencia de <a href> que recarga todo el navegador).
 // useLocation: hook que retorna la ruta actual del navegador
 //   (ej: { pathname: '/ventas' }). Lo usamos para resaltar
-//   la opcion activa del menu.
+//   la opción activa del menu.
 import { Link, useLocation } from 'react-router-dom';
 
 // useAuth: hook personalizado que creamos en AuthContext.jsx.
-// Nos da acceso al estado global de autenticacion sin necesidad
-// de pasar props por multiples niveles de componentes (evita
+// Nos da acceso al estado global de autenticación sin necesidad
+// de pasar props por múltiples niveles de componentes (evita
 // el problema conocido como "prop drilling").
 import { useAuth } from '../context/AuthContext';
 
@@ -62,9 +62,9 @@ import ModalCambiarPassword from './ModalCambiarPassword';
 // IMPORTACION DE ICONOS SVG
 // ---------------------------------------------------------
 // SVG (Scalable Vector Graphics) es un formato de imagen vectorial.
-// A diferencia de PNG o JPG (imagenes de pixeles), los SVG son
+// A diferencia de PNG o JPG (imágenes de pixeles), los SVG son
 // archivos de texto que describen formas geometricas, por lo que
-// se pueden escalar a cualquier tamano sin perder calidad.
+// se pueden escalar a cualquier tamaño sin perder calidad.
 // Vite los importa como URLs que podemos usar en etiquetas <img>.
 
 import iconoLibro from '../assets/icons/icono-libro.svg';
@@ -83,19 +83,19 @@ import iconoSalir from '../assets/icons/icono-salir.svg';
 // COMPONENTE REUTILIZABLE: Icono
 // ---------------------------------------------------------
 // En lugar de crear 10 componentes casi identicos (IconoVentas,
-// IconoClientes, etc.), creamos un UNICO componente generico
+// IconoClientes, etc.), creamos un ÚNICO componente genérico
 // que recibe la fuente (src) y el estilo como props.
 //
 // Esto aplica el principio DRY (Don't Repeat Yourself / No Te
-// Repitas): si necesitamos cambiar el tamano o el estilo de todos
+// Repitas): si necesitamos cambiar el tamaño o el estilo de todos
 // los iconos, solo modificamos este componente en un solo lugar.
 //
 // Props (propiedades):
 //   - src: la ruta al archivo SVG importado
-//   - size: tamano en pixeles (por defecto 18)
+//   - size: tamaño en pixeles (por defecto 18)
 //   - style: estilos CSS adicionales (por defecto ninguno)
 //
-// La desestructuracion ({ src, size = 18, style }) extrae las
+// La desestructuración ({ src, size = 18, style }) extrae las
 // props directamente como variables. "size = 18" es un valor
 // por defecto: si no se pasa la prop, usa 18.
 const Icono = ({ src, size = 18, style }) => (
@@ -111,7 +111,7 @@ const Icono = ({ src, size = 18, style }) => (
 
 // Estilos CSS-in-JS para iconos que necesitan un color especial.
 // Estos filtros CSS transforman el color del SVG sin modificar el
-// archivo original. Es una tecnica comun cuando los SVG se cargan
+// archivo original. Es una técnica comun cuando los SVG se cargan
 // como <img> y no se puede acceder a su contenido interno.
 const ESTILO_ICONO_LIBRO = {
   filter: 'brightness(0) saturate(100%) invert(27%) sepia(89%) saturate(1046%) hue-rotate(178deg) brightness(93%) contrast(91%)'
@@ -125,32 +125,32 @@ const ESTILO_ICONO_SALIR = {
 // COMPONENTE PRINCIPAL: BarraNavegacion
 // =====================================================
 // Este es un componente funcional de React. En React, un componente
-// funcional es simplemente una funcion de JavaScript que retorna JSX
+// funcional es simplemente una función de JavaScript que retorna JSX
 // (la sintaxis similar a HTML que React transforma en elementos del DOM).
-// Los componentes funcionales son el estandar moderno de React, ya que
+// Los componentes funcionales son el estándar moderno de React, ya que
 // con los hooks pueden hacer todo lo que antes requeria clases.
 
 const BarraNavegacion = () => {
 
-  // -- Extraemos datos y funciones del contexto de autenticacion --
-  // Usamos desestructuracion de objetos para extraer solo lo que
+  // -- Extraemos datos y funciones del contexto de autenticación --
+  // Usamos desestructuración de objetos para extraer solo lo que
   // necesitamos del contexto. Esto es equivalente a:
   //   const auth = useAuth();
   //   const usuario = auth.usuario;
   //   const logout = auth.logout;
   //   ... etc.
-  // Pero la desestructuracion es mas concisa y legible.
+  // Pero la desestructuración es más concisa y legible.
   const { usuario, logout, tienePermiso, nombreRol } = useAuth();
 
-  // useLocation() retorna un objeto con informacion de la URL actual.
+  // useLocation() retorna un objeto con información de la URL actual.
   // Usamos location.pathname para comparar con las rutas del menu
-  // y determinar cual opcion debe mostrarse como "activa".
+  // y determinar cual opción debe mostrarse como "activa".
   const location = useLocation();
 
   // -- Estado local del componente --
   // useState retorna un array con dos elementos:
   //   [0] El valor actual del estado (mostrarCambioPassword)
-  //   [1] La funcion para actualizarlo (setMostrarCambioPassword)
+  //   [1] La función para actualizarlo (setMostrarCambioPassword)
   // Inicializamos en false porque el modal empieza cerrado.
   // Cuando llamamos setMostrarCambioPassword(true), React re-renderiza
   // el componente y el modal se muestra.
@@ -160,14 +160,14 @@ const BarraNavegacion = () => {
   // Usamos el operador de encadenamiento opcional (?.) para acceder
   // de forma segura a usuario.nombre_completo. Si 'usuario' es null
   // o undefined, en vez de lanzar un error, retorna undefined.
-  // Luego, el operador || (OR logico) proporciona un valor por defecto
+  // Luego, el operador || (OR lógico) proporciona un valor por defecto
   // ('Usuario') en caso de que el resultado sea undefined o vacio.
   const nombreUsuario = usuario?.nombre_completo || 'Usuario';
 
   // -- Inicial del avatar --
-  // Tomamos el primer caracter del nombre y lo convertimos a mayuscula
+  // Tomamos el primer carácter del nombre y lo convertimos a mayuscula
   // para mostrarlo dentro del circulo del avatar.
-  // [0] accede al primer caracter del string (indice 0).
+  // [0] accede al primer carácter del string (índice 0).
   const inicialAvatar = nombreUsuario[0].toUpperCase();
 
 
@@ -175,7 +175,7 @@ const BarraNavegacion = () => {
   // FUNCIONES AUXILIARES
   // ---------------------------------------------------------
 
-  // Cierra sesion con confirmacion previa.
+  // Cierra sesión con confirmación previa.
   // window.confirm() muestra un dialogo nativo del navegador con
   // botones "Aceptar" y "Cancelar". Retorna true si el usuario
   // acepta y false si cancela. Esto previene cierres accidentales.
@@ -190,27 +190,27 @@ const BarraNavegacion = () => {
   // FUNCIONES DE ESTILOS DINAMICOS
   // ---------------------------------------------------------
   // Estas funciones generan las clases CSS de Bootstrap de forma
-  // dinamica segun la ruta actual del navegador. Esto permite
-  // resaltar visualmente la opcion del menu en la que el usuario
+  // dinámica según la ruta actual del navegador. Esto permite
+  // resaltar visualmente la opción del menu en la que el usuario
   // se encuentra actualmente (patron de UI llamado "active state").
 
-  // Compara si la ruta dada coincide con la pagina actual.
+  // Compara si la ruta dada coincide con la página actual.
   // Retorna true o false (valor booleano).
   const esRutaActiva = (ruta) => location.pathname === ruta;
 
   // Para los dropdowns (menus desplegables): verifica si ALGUNA
-  // de las rutas hijas esta activa. Recibe un array de rutas y
-  // usa .includes() para buscar si la ruta actual esta en ese array.
-  // Ejemplo: si estoy en '/ventas', el dropdown "Gestion Comercial"
+  // de las rutas hijas está activa. Recibe un array de rutas y
+  // usa .includes() para buscar si la ruta actual está en ese array.
+  // Ejemplo: si estoy en '/ventas', el dropdown "Gestión Comercial"
   // se resalta porque ['/ventas', '/historial-ventas', '/clientes']
   // incluye '/ventas'.
   const dropdownActivo = (rutas) => rutas.includes(location.pathname);
 
   // Genera las clases CSS para un enlace normal del menu.
   // Usa template literals (comillas invertidas ``) para construir
-  // el string de clases dinamicamente con interpolacion ${}.
-  // Si la ruta esta activa: fondo blanco semitransparente + negrita
-  // Si no esta activa: texto blanco con opacidad reducida
+  // el string de clases dinámicamente con interpolacion ${}.
+  // Si la ruta está activa: fondo blanco semitransparente + negrita
+  // Si no está activa: texto blanco con opacidad reducida
   const claseLink = (ruta) => {
     const base = 'nav-link d-flex align-items-center gap-2 px-3 mx-1';
     return esRutaActiva(ruta)
@@ -234,13 +234,13 @@ const BarraNavegacion = () => {
   // ---------------------------------------------------------
   // El return de un componente funcional contiene el JSX que
   // React convertira en elementos HTML reales del DOM.
-  // <> y </> son Fragments: permiten retornar multiples elementos
+  // <> y </> son Fragments: permiten retornar múltiples elementos
   // sin agregar un div contenedor innecesario al DOM.
 
   return (
     <>
     {/* =====================================================
-        BARRA DE NAVEGACION (Bootstrap Navbar)
+        BARRA DE NAVEGACIÓN (Bootstrap Navbar)
         La clase 'navbar-expand-lg' hace que el menu se muestre
         horizontal en pantallas grandes (>=992px) y se colapse
         en un boton hamburguesa en pantallas pequenas.
@@ -252,10 +252,10 @@ const BarraNavegacion = () => {
 
         {/* -------------------------------------------------
             LOGO Y MARCA
-            Link to="/" navega a la pagina principal (Dashboard).
+            Link to="/" navega a la página principal (Dashboard).
             'd-none d-sm-inline' oculta el texto en pantallas
             muy pequenas (<576px) y muestra solo "SGI" como
-            version compacta.
+            versión compacta.
             ------------------------------------------------- */}
         <Link
           className="navbar-brand d-flex align-items-center gap-2 fw-bold"
@@ -278,7 +278,7 @@ const BarraNavegacion = () => {
             Al hacer clic, Bootstrap toglea la visibilidad del
             div con id="menuNavegacion" usando JavaScript.
             Los atributos aria-* son para accesibilidad: ayudan
-            a lectores de pantalla a entender la funcion del boton.
+            a lectores de pantalla a entender la función del boton.
             ------------------------------------------------- */}
         <button
           className="navbar-toggler border-0"
@@ -297,7 +297,7 @@ const BarraNavegacion = () => {
             Este div contiene todas las opciones del menu.
             La clase 'collapse navbar-collapse' lo hace colapsable
             en dispositivos moviles. Bootstrap lo muestra/oculta
-            automaticamente al presionar el boton hamburguesa.
+            automáticamente al presionar el boton hamburguesa.
             ------------------------------------------------- */}
         <div className="collapse navbar-collapse py-2 py-lg-0" id="menuNavegacion">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
@@ -315,7 +315,7 @@ const BarraNavegacion = () => {
             )}
 
             {/* -------------------------------------------------
-                DROPDOWN: GESTION COMERCIAL
+                DROPDOWN: GESTIÓN COMERCIAL
                 Agrupa las opciones de Ventas, Historial y Clientes.
                 Los dropdowns de Bootstrap funcionan con el atributo
                 data-bs-toggle="dropdown" que activa el menu al clic.
@@ -366,7 +366,7 @@ const BarraNavegacion = () => {
 
             {/* -------------------------------------------------
                 DROPDOWN: LOGISTICA
-                Agrupa Inventario, Movimientos, Autores, Categorias
+                Agrupa Inventario, Movimientos, Autores, Categorías
                 y Proveedores. Se muestra si el usuario tiene al
                 menos uno de los permisos relacionados.
                 ------------------------------------------------- */}
@@ -431,11 +431,11 @@ const BarraNavegacion = () => {
           </ul>
 
           {/* -------------------------------------------------
-              SECCION DE USUARIO (esquina derecha)
+              SECCIÓN DE USUARIO (esquina derecha)
               Muestra el nombre, rol y avatar del usuario logueado
               con un dropdown para acciones de cuenta.
-              'border-start' agrega una linea divisoria vertical
-              que separa visualmente esta seccion del menu principal.
+              'border-start' agrega una línea divisoria vertical
+              que separa visualmente esta sección del menu principal.
               ------------------------------------------------- */}
           <div className="d-flex align-items-center text-white border-start border-white border-opacity-25 ps-lg-4 ms-lg-2 mt-3 mt-lg-0">
             <div className="dropdown">
@@ -444,7 +444,7 @@ const BarraNavegacion = () => {
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                {/* Info del usuario - oculta en movil (d-none d-lg-block) */}
+                {/* Info del usuario - oculta en móvil (d-none d-lg-block) */}
                 <div className="lh-1 text-end d-none d-lg-block me-2">
                   <div className="fw-bold">{nombreUsuario}</div>
                   <div className="small text-white-50">{nombreRol()}</div>
@@ -464,7 +464,7 @@ const BarraNavegacion = () => {
                   'dropdown-menu-end' alinea el menu a la derecha
                   para que no se salga de la pantalla. */}
               <ul className="dropdown-menu dropdown-menu-end shadow">
-                {/* Gestion de Usuarios - solo visible para Admin */}
+                {/* Gestión de Usuarios - solo visible para Admin */}
                 {tienePermiso('gestionarUsuarios') && (
                   <li>
                     <Link className="dropdown-item" to="/admin/usuarios">
@@ -478,7 +478,7 @@ const BarraNavegacion = () => {
 
                 {/* Cambiar contraseña - disponible para todos los roles.
                     Usamos un <button> en lugar de <Link> porque no
-                    navega a otra pagina, sino que abre un modal. */}
+                    navega a otra página, sino que abre un modal. */}
                 <li>
                   <button
                     className="dropdown-item"
@@ -491,7 +491,7 @@ const BarraNavegacion = () => {
                 <li><hr className="dropdown-divider" /></li>
 
                 {/* Cerrar sesión - 'text-danger' lo muestra en rojo
-                    como convencion visual de accion destructiva. */}
+                    como convención visual de acción destructiva. */}
                 <li>
                   <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={manejarSalida}>
                     <Icono src={iconoSalir} style={ESTILO_ICONO_SALIR} /> Cerrar Sesión
@@ -507,9 +507,9 @@ const BarraNavegacion = () => {
     {/* Modal de Cambio de Contraseña
         Este componente se renderiza siempre en el DOM pero solo se
         muestra visualmente cuando 'visible' es true.
-        'onCerrar' es un callback: una funcion que el componente hijo
-        ejecuta cuando el usuario cierra el modal. Aqui le pasamos
-        una funcion que cambia el estado a false. */}
+        'onCerrar' es un callback: una función que el componente hijo
+        ejecuta cuando el usuario cierra el modal. Aquí le pasamos
+        una función que cambia el estado a false. */}
     <ModalCambiarPassword
       visible={mostrarCambioPassword}
       onCerrar={() => setMostrarCambioPassword(false)}

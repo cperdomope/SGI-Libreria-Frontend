@@ -110,7 +110,7 @@ exports.crearAutor = async (req, res) => {
 // Al actualizar el autor, todos sus libros reflejan el cambio
 // automáticamente porque usan el autor_id (no el texto).
 exports.actualizarAutor = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id }     = req.params;
   const { nombre } = req.body;
 
@@ -167,7 +167,7 @@ exports.actualizarAutor = async (req, res) => {
 // La base de datos tiene una restricción de FK que lo impide.
 // Aquí lo verificamos primero para dar un mensaje más claro.
 exports.eliminarAutor = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
 
   try {

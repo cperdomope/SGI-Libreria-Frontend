@@ -220,8 +220,8 @@ const Inicio = () => {
   const [cargando, setCargando]         = useState(true);  // ¿Está cargando?
   const [error, setError]               = useState(null);  // ¿Hubo error?
 
-  // ── FUNCION QUE PIDE LOS DATOS AL BACKEND ──
-  // useCallback con dependencias vacias [] memoriza la funcion para que
+  // ── FUNCIÓN QUE PIDE LOS DATOS AL BACKEND ──
+  // useCallback con dependencias vacías [] memoriza la función para que
   // se cree una sola vez. Esto es necesario para poder incluirla como
   // dependencia del useEffect sin causar re-ejecuciones infinitas.
   const cargarEstadisticas = useCallback(async () => {
@@ -242,7 +242,7 @@ const Inicio = () => {
   // ── CARGAR DATOS AL MONTAR EL COMPONENTE ──
   // Incluimos cargarEstadisticas en las dependencias para cumplir
   // la regla exhaustive-deps del linter de React Hooks.
-  // Como cargarEstadisticas esta envuelta en useCallback([]),
+  // Como cargarEstadisticas está envuelta en useCallback([]),
   // su referencia nunca cambia y el efecto solo se ejecuta una vez.
   useEffect(() => {
     cargarEstadisticas();

@@ -534,8 +534,8 @@ const Inventario = () => {
                 {datosLibro.id ? 'Editar Libro' : 'Registrar Nuevo Libro'}
               </h5>
               {/* ref={cerrarModalRef} conecta este boton con el useRef.
-                  Asi cerrarModalRef.current.click() cierra el modal
-                  programaticamente despues de guardar un libro */}
+                  Así cerrarModalRef.current.click() cierra el modal
+                  programáticamente después de guardar un libro */}
               <button
                 ref={cerrarModalRef}
                 type="button"

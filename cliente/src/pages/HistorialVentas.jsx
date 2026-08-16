@@ -17,7 +17,7 @@
 //
 // PAGINACIÓN DEL SERVIDOR:
 // No traemos todas las ventas de una vez (podría ser miles).
-// El backend recibe `pagina` y `limite` y devuelve solo esa página.
+// El backend recibe `página` y `limite` y devuelve solo esa página.
 // Así la respuesta es siempre pequeña y rápida.
 //
 // DEBOUNCE:
@@ -66,16 +66,16 @@ const IconoOjo = () => (
   </svg>
 );
 
-// Cuantas ventas mostrar por pagina en la tabla
+// Cuántas ventas mostrar por página en la tabla
 const ELEMENTOS_POR_PAGINA = 10;
 
 // ─────────────────────────────────────────────────────────
 // UTILIDADES DE FORMATO
 // ─────────────────────────────────────────────────────────
-// Estas funciones estan FUERA del componente porque no dependen
-// de ningun estado (props ni state). Asi se crean una sola vez
-// cuando el modulo se carga, en lugar de recrearse en cada render.
-// Regla general: si una funcion no usa variables del componente,
+// Estas funciones están FUERA del componente porque no dependen
+// de ningun estado (props ni state). Así se crean una sola vez
+// cuando el módulo se carga, en lugar de recrearse en cada render.
+// Regla general: si una función no usa variables del componente,
 // se puede (y se debe) extraer fuera para evitar trabajo innecesario.
 
 // Fecha con hora en formato colombiano: dd/mm/aaaa hh:mm
@@ -87,14 +87,14 @@ const formatearFecha = (fecha) =>
 
 // Precio con simbolo de peso colombiano: $1.234.567
 // Intl.NumberFormat es la API nativa del browser para internacionalizacion
-// de numeros. Con 'es-CO' y currency: 'COP' formatea automaticamente
-// con punto como separador de miles (estandar colombiano).
+// de numeros. Con 'es-CO' y currency: 'COP' formatea automáticamente
+// con punto como separador de miles (estándar colombiano).
 const formatearPrecio = (precio) =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency', currency: 'COP', minimumFractionDigits: 0
   }).format(precio || 0);
 
-// Numero formateado sin simbolo de moneda: 1.234.567
+// Número formateado sin simbolo de moneda: 1.234.567
 const formatearNumero = (n) =>
   new Intl.NumberFormat('es-CO').format(n || 0);
 
@@ -181,10 +181,10 @@ const HistorialVentas = () => {
   }, [cargarVentas]);
 
   // ─────────────────────────────────────────────────────
-  // CALCULO DE PAGINACION
+  // CALCULO DE PAGINACIÓN
   // ─────────────────────────────────────────────────────
-  // Math.ceil redondea hacia arriba: 21 registros / 10 = 3 paginas
-  // Math.max(1, ...) garantiza minimo 1 pagina aunque no haya registros
+  // Math.ceil redondea hacia arriba: 21 registros / 10 = 3 páginas
+  // Math.max(1, ...) garantiza mínimo 1 página aunque no haya registros
   const totalPaginas = Math.max(1, Math.ceil(totalRegistros / ELEMENTOS_POR_PAGINA));
 
   // ─────────────────────────────────────────────────────
@@ -214,6 +214,8 @@ const HistorialVentas = () => {
     }
   };
 
+  // Cierra el modal de detalle y descarta la venta cargada, para que
+  // al abrir otra no se vean por un instante los datos de la anterior.
   const cerrarModal = () => {
     setMostrarModal(false);
     setDetalleVenta(null);
@@ -248,7 +250,7 @@ const HistorialVentas = () => {
 
     const anchoDoc = 80;
     const margen   = 5;
-    let y = 8;  // Posicion vertical actual en mm
+    let y = 8;  // Posición vertical actual en mm
 
     // Funciones auxiliares para dibujar texto en el PDF:
     // lineaCentrada: texto centrado horizontalmente
@@ -389,7 +391,7 @@ const HistorialVentas = () => {
 
       alert(`Venta #${ventaId} anulada exitosamente.`);
       cerrarModal();
-      // Refrescar la lista manteniendo la pagina actual (no volver a pagina 1)
+      // Refrescar la lista manteniendo la página actual (no volver a página 1)
       cargarVentas(paginaActual);
     } catch (err) {
       // El backend devuelve un mensaje específico si la venta ya estaba anulada
@@ -491,7 +493,7 @@ const HistorialVentas = () => {
 
           {/* Contador de resultados de la búsqueda actual */}
           {/* totalRegistros viene del servidor y refleja el total real,
-              no solo los elementos de la pagina actual */}
+              no solo los elementos de la página actual */}
           <p className="text-muted small mb-2">
             {totalRegistros} {totalRegistros === 1 ? 'venta encontrada' : 'ventas encontradas'}
             {hayFiltrosActivos && ' (filtrada)'}

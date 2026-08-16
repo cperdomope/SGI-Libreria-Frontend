@@ -31,7 +31,7 @@ const autorControlador = require('../controllers/autorControlador');
 const verificarToken = require('../middlewares/verificarToken');
 const { soloAdministrador, administradorOVendedor } = require('../middlewares/verificarRol');
 
-// Valida que el parametro :id sea un numero entero positivo
+// Valida que el parámetro :id sea un número entero positivo
 const { validarId } = require('../middlewares/validarParametroId');
 
 // ─────────────────────────────────────────────────────

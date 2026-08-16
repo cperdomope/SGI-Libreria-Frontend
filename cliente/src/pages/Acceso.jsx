@@ -1,66 +1,66 @@
 // =====================================================
-// PAGINA: ACCESO (LOGIN) - Punto de entrada del sistema
+// PÁGINA: ACCESO (LOGIN) - Punto de entrada del sistema
 // =====================================================
-// Esta es la pagina de inicio de sesion (login) del SGI Libreria El Saber.
-// Es la UNICA ruta publica de toda la aplicacion; todas las demas rutas
-// estan protegidas por los componentes RutaProtegida y RutaProtegidaPorRol.
+// Esta es la página de inicio de sesión (login) del SGI Librería El Saber.
+// Es la ÚNICA ruta pública de toda la aplicación; todas las demas rutas
+// están protegidas por los componentes RutaProtegida y RutaProtegidaPorRol.
 //
-// Flujo de autenticacion completo:
+// Flujo de autenticación completo:
 //   1. El usuario ingresa email y contraseña en el formulario
 //   2. react-hook-form valida los campos en el frontend (UX inmediata)
-//   3. Si la validacion pasa, se envia POST /api/auth/login al backend
+//   3. Si la validación pasa, se envía POST /api/auth/login al backend
 //   4. El backend verifica las credenciales contra la BD (bcrypt)
 //   5. Si son correctas, genera un token JWT y lo devuelve con los datos
 //   6. Llamamos a login() del AuthContext para guardar usuario + token
-//   7. Se redirige al usuario a la pagina principal del sistema
+//   7. Se redirige al usuario a la página principal del sistema
 //
 // Seguridad implementada:
 //   - Bloqueo de cuenta: tras 3 intentos fallidos consecutivos, el backend
 //     bloquea la cuenta y responde con { bloqueado: true }
-//   - Barra visual de intentos: muestra cuantos intentos le quedan al usuario
-//   - Validacion dual: frontend (UX) + backend (seguridad real)
+//   - Barra visual de intentos: muestra cuántos intentos le quedan al usuario
+//   - Validación dual: frontend (UX) + backend (seguridad real)
 //
 // Conceptos clave aplicados:
-//   - react-hook-form: libreria que simplifica el manejo de formularios
+//   - react-hook-form: librería que simplifica el manejo de formularios
 //     en React. En lugar de manejar cada campo con useState + onChange,
 //     react-hook-form usa "register" para conectar inputs directamente
 //     y "handleSubmit" para validar antes de enviar.
-//   - lazy() + Suspense: carga diferida de componentes pesados (documentacion)
+//   - lazy() + Suspense: carga diferida de componentes pesados (documentación)
 //     para que no afecten la velocidad de carga inicial del login.
 //   - SVG inline: los iconos se definen como componentes JSX en lugar de
-//     importar una libreria de iconos completa, reduciendo el bundle size.
+//     importar una librería de iconos completa, reduciendo el bundle size.
 // =====================================================
 
 // useState: estado local para controlar la UI (loading, errores, etc.)
-// lazy: funcion de React para importar componentes de forma diferida.
+// lazy: función de React para importar componentes de forma diferida.
 //   En lugar de cargar el componente inmediatamente con "import X from Y",
 //   lazy() lo carga SOLO cuando se necesita renderizar por primera vez.
-//   Esto se llama "code splitting" (division de codigo) y reduce el
-//   tamano del bundle inicial que descarga el navegador.
+//   Esto se llama "code splitting" (división de código) y reduce el
+//   tamaño del bundle inicial que descarga el navegador.
 // Suspense: componente que muestra un fallback (spinner) mientras el
-//   componente lazy se esta descargando. Es obligatorio envolver
+//   componente lazy se está descargando. Es obligatorio envolver
 //   componentes lazy con Suspense; sin el, React lanza un error.
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 
-// react-hook-form: libreria especializada en formularios para React.
+// react-hook-form: librería especializada en formularios para React.
 // A diferencia de manejar formularios con useState (controlados), RHF usa
 // refs internamente (no controlados), lo que reduce los re-renders y mejora
 // el rendimiento. Nos da:
-//   - register: funcion que conecta un input con sus reglas de validacion
-//   - handleSubmit: wrapper que valida todo antes de llamar nuestra funcion
-//   - formState.errors: objeto con los errores de validacion por campo
+//   - register: función que conecta un input con sus reglas de validación
+//   - handleSubmit: wrapper que valida todo antes de llamar nuestra función
+//   - formState.errors: objeto con los errores de validación por campo
 import { useForm } from 'react-hook-form';
 
 // api: instancia de Axios preconfigurada con la URL base del servidor
-// y un interceptor que agrega automaticamente el token JWT en cada peticion.
+// y un interceptor que agrega automáticamente el token JWT en cada peticion.
 import api from '../services/api';
 
 // useAuth: hook personalizado que nos da acceso al contexto global de
-// autenticacion. De aqui usamos la funcion login() para guardar la sesion.
+// autenticacion. De aquí usamos la función login() para guardar la sesion.
 import { useAuth } from '../context/AuthContext';
 
-// -- Componentes de documentacion (carga diferida) --
-// Cada lazy() recibe una funcion que retorna un import() dinamico.
+// -- Componentes de documentación (carga diferida) --
+// Cada lazy() recibe una función que retorna un import() dinamico.
 // Webpack/Vite crean un "chunk" separado para cada uno de estos componentes,
 // que solo se descarga cuando el usuario abre el modal de documentacion.
 // Esto es importante porque los manuales son pesados y no tiene sentido
@@ -68,10 +68,10 @@ import { useAuth } from '../context/AuthContext';
 const DocumentacionHistorias = lazy(() => import('./DocumentacionHistorias'));
 const DocumentacionCriterios = lazy(() => import('./DocumentacionCriterios'));
 
-// -- Pestanas del modal de documentacion --
-// Las dos primeras son componentes React (artefactos de la metodologia agil).
+// -- Pestanas del modal de documentación --
+// Las dos primeras son componentes React (artefactos de la metodología agil).
 // Las tres siguientes son los manuales oficiales: se muestran como vista
-// previa del PDF real (unica version vigente, con pantallazos del sistema)
+// previa del PDF real (única versión vigente, con pantallazos del sistema)
 // y cada una ofrece su descarga con el icono al lado del nombre.
 // Los PDF viven en cliente/public/manuales/ y se sirven como archivos
 // estaticos en /manuales/*.pdf tanto en desarrollo como en produccion.
@@ -83,8 +83,8 @@ const PESTANAS_DOCS = [
   { key: 'tecnico',      label: 'Manual Técnico',         pdf: '/manuales/Manual_Tecnico_SGI.pdf' }
 ];
 
-// -- Iconos SVG en linea para el formulario --
-// En lugar de usar una libreria de iconos como FontAwesome o react-icons
+// -- Iconos SVG en línea para el formulario --
+// En lugar de usar una librería de iconos como FontAwesome o react-icons
 // (que agregarian peso al bundle), definimos los iconos directamente como
 // componentes funcionales que retornan SVG. Cada SVG usa "fill=currentColor"
 // para heredar el color del texto del elemento padre (CSS inheritance).
@@ -114,7 +114,7 @@ const Icons = {
       <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
     </svg>
   ),
-  // Icono de descarga (botones de manuales PDF en el modal de documentacion)
+  // Icono de descarga (botones de manuales PDF en el modal de documentación)
   Download: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
       <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
@@ -131,9 +131,9 @@ const Icons = {
   )
 };
 
-// -- Constante: maximo de intentos antes del bloqueo --
+// -- Constante: máximo de intentos antes del bloqueo --
 // Se define fuera del componente porque es un valor fijo que no cambia.
-// Al ser constante, se declara en UPPER_SNAKE_CASE por convencion de JavaScript.
+// Al ser constante, se declara en UPPER_SNAKE_CASE por convención de JavaScript.
 const MAX_INTENTOS = 3;
 
 // -- Tiempo que permanece visible la alerta de intento fallido (ms) --
@@ -143,22 +143,22 @@ const MAX_INTENTOS = 3;
 const MS_OCULTAR_ERROR = 4000;
 
 // =====================================================
-// COMPONENTE PRINCIPAL: Acceso (pagina de login)
+// COMPONENTE PRINCIPAL: Acceso (página de login)
 // =====================================================
 // Es un componente funcional (arrow function). En React moderno,
-// los componentes funcionales son el estandar; los componentes de
+// los componentes funcionales son el estándar; los componentes de
 // clase (class Component) ya casi no se usan desde la llegada de los Hooks.
 
 const Acceso = () => {
 
   // -- react-hook-form: inicializacion del formulario --
-  // useForm() retorna un objeto con multiples utilidades. Usamos
-  // desestructuracion para extraer solo las 3 que necesitamos:
-  //   - register: conecta cada <input> con sus reglas de validacion
-  //   - handleSubmit: funcion que valida todo ANTES de llamar nuestra funcion
+  // useForm() retorna un objeto con múltiples utilidades. Usamos
+  // desestructuración para extraer solo las 3 que necesitamos:
+  //   - register: conecta cada <input> con sus reglas de validación
+  //   - handleSubmit: función que valida todo ANTES de llamar nuestra función
   //   - formState.errors: objeto con los errores activos por campo
   //
-  // mode: 'onTouched' significa que la validacion se ejecuta cuando el
+  // mode: 'onTouched' significa que la validación se ejecuta cuando el
   // usuario SALE del campo (evento blur), no mientras escribe. Esto evita
   // mostrar errores prematuros que confundan al usuario.
   // Otros modos posibles: 'onChange' (al escribir), 'onSubmit' (solo al enviar),
@@ -172,8 +172,8 @@ const Acceso = () => {
   // -- Estados locales de la interfaz --
   // Estos estados controlan aspectos visuales que react-hook-form no maneja.
   // Cada useState retorna un par [valor, funcion_para_cambiar_valor].
-  const [mostrarPassword, setMostrarPassword] = useState(false);     // Toggle ver/ocultar contrasena
-  const [loading, setLoading]                 = useState(false);     // Spinner del boton de envio
+  const [mostrarPassword, setMostrarPassword] = useState(false);     // Toggle ver/ocultar contraseña
+  const [loading, setLoading]                 = useState(false);     // Spinner del boton de envío
   const [intentosRestantes, setIntentosRestantes] = useState(null);  // null = no mostrar barra
   const [bloqueado, setBloqueado]             = useState(false);     // true = cuenta bloqueada por intentos
   const [errorServidor, setErrorServidor]     = useState('');        // Mensaje principal de error
@@ -181,8 +181,8 @@ const Acceso = () => {
   const [mostrarDocs, setMostrarDocs]         = useState(false);     // Controla visibilidad del modal docs
   const [tabActiva, setTabActiva]             = useState('historias'); // Pestana activa en modal docs
 
-  // -- Hook de autenticacion global --
-  // login() es la funcion del AuthContext que guarda el usuario y el token
+  // -- Hook de autenticación global --
+  // login() es la función del AuthContext que guarda el usuario y el token
   // JWT en el estado global + localStorage para persistencia entre recargas.
   const { login } = useAuth();
 
@@ -202,7 +202,7 @@ const Acceso = () => {
     }
   };
 
-  // Programa el ocultamiento de la alerta despues de MS_OCULTAR_ERROR.
+  // Programa el ocultamiento de la alerta después de MS_OCULTAR_ERROR.
   const programarOcultarError = () => {
     cancelarOcultarError();
     temporizadorError.current = setTimeout(() => {
@@ -213,13 +213,13 @@ const Acceso = () => {
     }, MS_OCULTAR_ERROR);
   };
 
-  // Limpieza al desmontar el componente: si el usuario sale de la pagina
+  // Limpieza al desmontar el componente: si el usuario sale de la página
   // antes de que el temporizador se dispare, evitamos actualizar el estado
   // de un componente ya desmontado (fuga de memoria y advertencia de React).
   useEffect(() => cancelarOcultarError, []);
 
-  // -- Funcion: manejarLogin (se ejecuta al enviar el formulario) --
-  // Esta funcion SOLO se llama si react-hook-form valido todos los campos
+  // -- Función: manejarLogin (se ejecuta al enviar el formulario) --
+  // Esta función SOLO se llama si react-hook-form válido todos los campos
   // exitosamente. RHF le pasa los valores como objeto: { email, password }.
   // Es async porque necesitamos esperar la respuesta del servidor (await).
   const manejarLogin = async ({ email, password }) => {
@@ -231,43 +231,43 @@ const Acceso = () => {
     setErrorServidor('');
 
     try {
-      // POST /api/auth/login: envia las credenciales al backend.
+      // POST /api/auth/login: envía las credenciales al backend.
       // api.post() es un wrapper de Axios que ya tiene configurada
       // la URL base del servidor (ej: http://localhost:3001/api).
       const res = await api.post('/auth/login', { email, password });
 
-      // Si llega aqui, la autenticacion fue exitosa.
+      // Si llega aquí, la autenticación fue exitosa.
       // El backend responde con { usuario: {...}, token: "jwt..." }
       // Guardamos ambos en el AuthContext para uso global.
       login(res.data.usuario, res.data.token);
 
-      // Redirigimos a la pagina principal con recarga completa.
+      // Redirigimos a la página principal con recarga completa.
       // Usamos window.location.href en lugar de navigate() de React Router
       // para forzar una recarga completa del DOM, asegurando que todos
-      // los componentes lean el nuevo estado de autenticacion desde cero.
+      // los componentes lean el nuevo estado de autenticación desde cero.
       window.location.href = '/';
 
     } catch (err) {
       // -- Manejo de errores del backend --
       // err.response?.data usa encadenamiento opcional (?.) porque si el
-      // servidor esta caido, err.response sera undefined y sin ?. lanzaria
+      // servidor está caído, err.response será undefined y sin ?. lanzaría
       // "Cannot read properties of undefined".
       const errorData = err.response?.data;
 
       if (errorData?.bloqueado) {
-        // Caso 1: Cuenta bloqueada (supero el maximo de intentos)
+        // Caso 1: Cuenta bloqueada (supero el máximo de intentos)
         setBloqueado(true);
         setIntentosRestantes(0);
         setMensajeDetallado(errorData.error);
       } else if (errorData?.intentosRestantes !== undefined) {
         // Caso 2: Credenciales incorrectas pero aun tiene intentos.
         // Usamos !== undefined (no solo truthy) porque intentosRestantes
-        // podria ser 0, que es falsy pero es un valor valido.
+        // podría ser 0, que es falsy pero es un valor valido.
         setIntentosRestantes(errorData.intentosRestantes);
         setMensajeDetallado(errorData.mensaje || errorData.error);
         setBloqueado(false);
       } else {
-        // Caso 3: Error de conexion u otro error inesperado
+        // Caso 3: Error de conexión u otro error inesperado
         setMensajeDetallado(errorData?.error || 'No se pudo conectar al servidor. Intente mas tarde.');
         setBloqueado(false);
       }
@@ -290,22 +290,22 @@ const Acceso = () => {
   // =====================================================
   // RENDERIZADO (JSX)
   // =====================================================
-  // Todo lo que retorna el componente es JSX, una extension de sintaxis
+  // Todo lo que retorna el componente es JSX, una extensión de sintaxis
   // que permite escribir HTML dentro de JavaScript. JSX se compila a
   // llamadas React.createElement() por el bundler (Vite en este caso).
 
   return (
     <div className="login-container">
       {/* login-card y fade-in son clases CSS personalizadas definidas
-          en los estilos globales. fade-in aplica una animacion de entrada. */}
+          en los estilos globales. fade-in aplica una animación de entrada. */}
       <div className="login-card fade-in">
 
-        {/* -- BOTON DOCUMENTACION (parte superior) --
-            type="button" es importante aqui: sin el, un boton dentro de
+        {/* -- BOTON DOCUMENTACIÓN (parte superior) --
+            type="button" es importante aquí: sin el, un boton dentro de
             un formulario se comporta como type="submit" por defecto,
             lo que enviaria el formulario al hacer clic.
-            Los estilos inline (style={{}}) se usan aqui porque son
-            especificos de este unico boton y no se reutilizan. */}
+            Los estilos inline (style={{}}) se usan aquí porque son
+            específicos de este único boton y no se reutilizan. */}
         <div className="text-center mb-3">
           <button
             type="button"
@@ -343,7 +343,7 @@ const Acceso = () => {
         </div>
 
         {/* -- ALERTA DE ERROR DEL SERVIDOR --
-            Renderizado condicional: {condicion && <JSX>} es un patron comun
+            Renderizado condicional: {condición && <JSX>} es un patron comun
             en React. Si errorServidor es "" (falsy), React no renderiza nada.
             Si tiene texto (truthy), renderiza la alerta.
             role="alert" es un atributo ARIA que indica a los lectores de
@@ -359,7 +359,7 @@ const Acceso = () => {
 
                 {/* Barra visual de intentos restantes.
                     El ancho se calcula como porcentaje: (restantes / total) * 100.
-                    El color cambia segun la urgencia:
+                    El color cambia según la urgencia:
                       2 intentos = verde, 1 = amarillo, 0 = rojo.
                     Esto es UX: el usuario percibe visualmente el peligro. */}
                 {intentosRestantes !== null && !bloqueado && (
@@ -384,19 +384,19 @@ const Acceso = () => {
         )}
 
         {/* -- FORMULARIO DE LOGIN --
-            handleSubmit es la funcion de react-hook-form que:
-              1. Ejecuta las reglas de validacion de cada campo registrado
-              2. Si hay errores, los pone en formState.errors y NO llama nuestra funcion
+            handleSubmit es la función de react-hook-form que:
+              1. Ejecuta las reglas de validación de cada campo registrado
+              2. Si hay errores, los pone en formState.errors y NO llama nuestra función
               3. Si todo pasa, llama manejarLogin({ email, password })
 
-            noValidate: desactiva la validacion HTML5 nativa del navegador
+            noValidate: desactiva la validación HTML5 nativa del navegador
             (los tooltips del navegador). Usamos la de react-hook-form porque
-            es mas personalizable y consistente entre navegadores. */}
+            es más personalizable y consistente entre navegadores. */}
         <form onSubmit={handleSubmit(manejarLogin)} noValidate>
 
           {/* -- CAMPO: EMAIL --
               input-group de Bootstrap permite agrupar un icono + input + feedback
-              en una sola linea visual. has-validation asegura que los bordes
+              en una sola línea visual. has-validation asegura que los bordes
               redondeados se apliquen correctamente cuando hay mensajes de error. */}
           <div className="mb-4">
             <label className="form-label fw-bold small text-muted">CORREO ELECTRÓNICO</label>
@@ -406,7 +406,7 @@ const Acceso = () => {
               </span>
               {/* register('email', reglas) conecta este input con RHF:
                   - El primer argumento es el nombre del campo en el formulario
-                  - El segundo es un objeto con las reglas de validacion
+                  - El segundo es un objeto con las reglas de validación
                   - El spread (...) expande las props que RHF necesita
                     (ref, onChange, onBlur, name) directamente en el input */}
               <input
@@ -423,7 +423,7 @@ const Acceso = () => {
                   }
                 })}
               />
-              {/* invalid-feedback de Bootstrap se muestra automaticamente
+              {/* invalid-feedback de Bootstrap se muestra automáticamente
                   cuando el input hermano tiene la clase is-invalid */}
               {errors.email && (
                 <div className="invalid-feedback">{errors.email.message}</div>
@@ -431,8 +431,8 @@ const Acceso = () => {
             </div>
           </div>
 
-          {/* -- CAMPO: CONTRASENA --
-              El type alterna entre 'text' y 'password' segun el estado
+          {/* -- CAMPO: CONTRASEÑA --
+              El type alterna entre 'text' y 'password' según el estado
               mostrarPassword. Esto es lo que permite ver/ocultar la clave. */}
           <div className="mb-4">
             <label className="form-label fw-bold small text-muted">CONTRASEÑA</label>
@@ -440,9 +440,9 @@ const Acceso = () => {
               <span className="input-group-text bg-light border-end-0 text-muted">
                 <Icons.Lock />
               </span>
-              {/* minLength: 8 valida que la contrasena tenga al menos
-                  8 caracteres. Esta validacion es solo de UX (frontend);
-                  el backend tambien valida por seguridad (validacion dual). */}
+              {/* minLength: 8 valida que la contraseña tenga al menos
+                  8 caracteres. Esta validación es solo de UX (frontend);
+                  el backend también valida por seguridad (validación dual). */}
               <input
                 type={mostrarPassword ? 'text' : 'password'}
                 className={`form-control border-start-0 border-end-0 bg-light ${errors.password ? 'is-invalid' : ''}`}
@@ -474,12 +474,12 @@ const Acceso = () => {
             </div>
           </div>
 
-          {/* -- BOTON DE ENVIO --
-              Renderizado condicional con ternarios encadenados (condicion ? A : B):
+          {/* -- BOTON DE ENVÍO --
+              Renderizado condicional con ternarios encadenados (condición ? A : B):
                 1. Si bloqueado → texto "CUENTA BLOQUEADA" (btn-danger = rojo)
                 2. Si loading → spinner animado + "Validando..."
                 3. Si ninguno → texto normal "INGRESAR AL SISTEMA"
-              disabled={loading || bloqueado} evita doble clic o envio con cuenta bloqueada.
+              disabled={loading || bloqueado} evita doble clic o envío con cuenta bloqueada.
               d-grid hace que el boton ocupe el 100% del ancho (display: grid). */}
           <div className="d-grid gap-2">
             <button
@@ -501,15 +501,15 @@ const Acceso = () => {
           </div>
         </form>
 
-        {/* -- PIE DE PAGINA -- */}
+        {/* -- PIE DE PÁGINA -- */}
         <div className="text-center mt-4">
           <small className="text-muted">Librería El Saber &copy; 2026</small>
         </div>
       </div>
 
-      {/* -- MODAL DE DOCUMENTACION --
+      {/* -- MODAL DE DOCUMENTACIÓN --
           Este modal se implementa manualmente con Bootstrap CSS (no el JS de Bootstrap).
-          La logica de mostrar/ocultar la controlamos con el estado mostrarDocs.
+          La lógica de mostrar/ocultar la controlamos con el estado mostrarDocs.
 
           Patron "cerrar al hacer clic en el fondo":
           e.target === e.currentTarget verifica que el clic fue en el overlay oscuro
@@ -517,7 +517,7 @@ const Acceso = () => {
           e.currentTarget es el elemento que tiene el evento (el overlay).
 
           Suspense envuelve los componentes lazy. Mientras se descargan,
-          muestra el fallback (spinner). Sin Suspense, React lanzaria error. */}
+          muestra el fallback (spinner). Sin Suspense, React lanzaría error. */}
       {mostrarDocs && (
         <div
           className="modal show d-block"
@@ -532,13 +532,13 @@ const Acceso = () => {
                 <button type="button" className="btn-close btn-close-white" onClick={() => setMostrarDocs(false)} />
               </div>
 
-              {/* Pestanas de navegacion renderizadas con .map() sobre un array
-                  de configuracion. Esto es mas limpio que escribir 4 <li> manuales
+              {/* Pestanas de navegación renderizadas con .map() sobre un array
+                  de configuracion. Esto es más limpio que escribir 4 <li> manuales
                   y facilita agregar o quitar pestanas en el futuro (principio DRY). */}
               <div className="modal-header p-0 border-0">
                 {/* flex-nowrap + overflow-auto: en pantallas pequenas las
                     pestanas se desplazan horizontalmente en lugar de
-                    apilarse y romper el diseno del encabezado. */}
+                    apilarse y romper el diseño del encabezado. */}
                 <ul className="nav nav-tabs w-100 border-0 flex-nowrap" style={{ overflowX: 'auto' }}>
                   {PESTANAS_DOCS.map(tab => (
                     <li className="nav-item" key={tab.key}>
@@ -546,7 +546,7 @@ const Acceso = () => {
                           dentro van dos controles independientes: el boton que
                           cambia de pestana y, para los manuales, el enlace de
                           descarga. Se separan porque un <a> no puede anidarse
-                          dentro de un <button> (HTML invalido). */}
+                          dentro de un <button> (HTML inválido). */}
                       <div
                         className={`nav-link d-flex align-items-center gap-2 ${tabActiva === tab.key ? 'active' : ''}`}
                         style={{ whiteSpace: 'nowrap' }}
@@ -581,7 +581,7 @@ const Acceso = () => {
 
               {/* Contenido de la pestana activa.
                   Solo se renderiza lo de la pestana seleccionada; el resto ni
-                  se monta en el DOM (short-circuit evaluation). Asi, la vista
+                  se monta en el DOM (short-circuit evaluation). Así, la vista
                   previa de un manual solo descarga su PDF cuando se abre esa
                   pestana, sin penalizar la carga inicial del login. */}
               <div className="modal-body p-0" style={{ overflowY: 'auto' }}>
@@ -601,7 +601,7 @@ const Acceso = () => {
                 {/* -- Pestanas de manuales: vista previa del PDF --
                     El <object> muestra el PDF con el visor propio del
                     navegador (permite leerlo, buscar dentro e imprimirlo).
-                    Si el navegador no puede mostrarlo (algunos moviles no
+                    Si el navegador no puede mostrarlo (algunos móviles no
                     tienen visor integrado), se despliega el contenido
                     alternativo con los enlaces para abrirlo o descargarlo. */}
                 {PESTANAS_DOCS.filter(t => t.pdf).map(tab => tabActiva === tab.key && (

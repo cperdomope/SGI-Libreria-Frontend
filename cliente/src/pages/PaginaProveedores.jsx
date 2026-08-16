@@ -21,7 +21,7 @@
 // =====================================================
 
 import { useState, useEffect } from 'react';
-// api: cliente HTTP con Axios (incluye token JWT automaticamente)
+// api: cliente HTTP con Axios (incluye token JWT automáticamente)
 import api from '../services/api';
 // useAuth: para verificar permisos RBAC del usuario
 import { useAuth } from '../context/AuthContext';
@@ -46,7 +46,7 @@ const IconoEliminar = () => (
   </svg>
 );
 
-// Cuantos proveedores mostrar por pagina en la tabla
+// Cuántos proveedores mostrar por página en la tabla
 const ELEMENTOS_POR_PAGINA = 5;
 
 // =====================================================
@@ -54,11 +54,11 @@ const ELEMENTOS_POR_PAGINA = 5;
 // =====================================================
 const PaginaProveedores = () => {
 
-  // ── Verificacion de permisos (RBAC) ──
+  // ── Verificación de permisos (RBAC) ──
   // tienePermiso() consulta la matriz de permisos del AuthContext
   // para saber si el usuario puede crear, editar o eliminar proveedores.
-  // IMPORTANTE: Sin esta verificacion, cualquier usuario podria ver
-  // los botones de accion, lo cual es un problema de seguridad en el frontend.
+  // IMPORTANTE: Sin esta verificación, cualquier usuario podría ver
+  // los botones de acción, lo cual es un problema de seguridad en el frontend.
   const { tienePermiso } = useAuth();
 
   // ── ESTADOS DEL COMPONENTE ──
@@ -68,7 +68,7 @@ const PaginaProveedores = () => {
   const [mostrarModal, setMostrarModal] = useState(false); // Visibilidad del modal
 
   // formDatos: datos del formulario (crear o editar)
-  // id=null → crear nuevo | id=numero → editar existente
+  // id=null → crear nuevo | id=número → editar existente
   const [formDatos, setFormDatos] = useState({
     id: null,
     nombre_empresa: '',
@@ -79,7 +79,7 @@ const PaginaProveedores = () => {
     direccion: ''
   });
 
-  // ── PAGINACION (del lado del cliente) ──
+  // ── PAGINACIÓN (del lado del cliente) ──
   const [paginaActual, setPaginaActual] = useState(1);
 
   // Calculamos qué proveedores mostrar en la página actual

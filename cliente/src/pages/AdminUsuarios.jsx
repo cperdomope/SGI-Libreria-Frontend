@@ -1,42 +1,42 @@
 // =====================================================
-// PAGINA: ADMINISTRACION DE USUARIOS (CRUD completo)
+// PÁGINA: ADMINISTRACION DE USUARIOS (CRUD completo)
 // =====================================================
-// Esta pagina permite al Administrador gestionar los usuarios del sistema.
+// Esta página permite al Administrador gestionar los usuarios del sistema.
 // Implementa las 4 operaciones CRUD (Create, Read, Update, Delete):
 //   - CREATE: formulario modal para crear nuevos usuarios con rol asignado
 //   - READ:   tabla con todos los usuarios registrados en el sistema
 //   - UPDATE: mismo modal reutilizado para editar datos existentes
 //   - DELETE: en lugar de eliminar, se usa "soft delete" (desactivar)
 //
-// Conexion con el sistema:
+// Conexión con el sistema:
 //   - Ruta: /admin/usuarios (protegida por RutaProtegidaPorRol, solo Admin)
 //   - API endpoints utilizados:
 //      GET    /api/usuarios           -> listar todos los usuarios
 //      POST   /api/usuarios           -> crear nuevo usuario
 //      PUT    /api/usuarios/:id       -> actualizar datos (sin contraseña)
 //      PATCH  /api/usuarios/:id/estado -> toggle activar/desactivar
-//   - Los usuarios creados aqui son los que hacen login en Acceso.jsx
-//   - El rol (Admin=1, Vendedor=2) define los permisos via AuthContext
+//   - Los usuarios creados aquí son los que hacen login en Acceso.jsx
+//   - El rol (Admin=1, Vendedor=2) define los permisos vía AuthContext
 //
 // Conceptos clave aplicados:
 //   - CRUD: patron fundamental en desarrollo de software. Casi toda
-//     aplicacion web necesita Crear, Leer, Actualizar y Eliminar datos.
+//     aplicación web necesita Crear, Leer, Actualizar y Eliminar datos.
 //   - Soft delete: en lugar de borrar registros de la BD (DELETE), se cambia
 //     un campo "estado" a inactivo. Esto preserva la integridad referencial
 //     y permite auditar historicamente quien fue usuario del sistema.
 //   - shouldUnregister (RHF): cuando un campo no se renderiza en el DOM,
-//     react-hook-form lo desregistra y no exige su validacion. Asi el mismo
+//     react-hook-form lo desregistra y no exige su validacion. Así el mismo
 //     formulario sirve para crear (con contraseña) y editar (sin contraseña).
 //   - Modal controlado por estado: el modal se muestra/oculta con un useState,
-//     no con el JavaScript de Bootstrap. Esto da mas control a React.
+//     no con el JavaScript de Bootstrap. Esto da más control a React.
 // =====================================================
 
-// useState: maneja multiples estados locales de este componente
+// useState: maneja múltiples estados locales de este componente
 // useEffect: ejecuta la carga inicial de usuarios al montar el componente
 import { useState, useEffect } from 'react';
 
 // react-hook-form: simplifica formularios complejos con validación.
-// Aqui usamos una funcionalidad avanzada: shouldUnregister, que permite
+// Aquí usamos una funcionalidad avanzada: shouldUnregister, que permite
 // que el mismo formulario sirva para crear Y editar usuarios, ocultando
 // el campo de contraseña cuando estamos en modo edición.
 import { useForm } from 'react-hook-form';
@@ -46,14 +46,14 @@ import { useForm } from 'react-hook-form';
 import api from '../services/api';
 
 // useAuth: hook del contexto global de autenticación.
-// Lo usamos para obtener el usuario actual y asi evitar que el admin
-// pueda desactivarse a si mismo (lo cual lo dejaria fuera del sistema).
+// Lo usamos para obtener el usuario actual y así evitar que el admin
+// pueda desactivarse a si mismo (lo cual lo dejaría fuera del sistema).
 import { useAuth } from '../context/AuthContext';
 
 // -- Icono SVG para el boton de editar --
 // Componente funcional puro: no tiene estado ni efectos, solo retorna JSX.
 // Se define fuera del componente principal porque su contenido NUNCA cambia,
-// asi React no lo recrea en cada render (optimización de rendimiento).
+// así React no lo recrea en cada render (optimización de rendimiento).
 const IconoEditar = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
@@ -81,24 +81,24 @@ const AdminUsuarios = () => {
   // Un solo modal sirve para crear Y editar. La variable "esEdicion" determina
   // el modo actual. Esto es el patron "modal reutilizable": en lugar de tener
   // dos modales (uno para crear y otro para editar), usamos uno solo y cambiamos
-  // su comportamiento segun el contexto. Reduce duplicación de codigo (DRY).
+  // su comportamiento según el contexto. Reduce duplicación de código (DRY).
   const [mostrarModal, setMostrarModal] = useState(false);
   const [esEdicion, setEsEdicion]       = useState(false);
   const [idEditando, setIdEditando]     = useState(null);
 
-  // Error especifico del servidor al guardar (ej: "email ya registrado")
+  // Error específico del servidor al guardar (ej: "email ya registrado")
   const [errorServidor, setErrorServidor] = useState('');
 
   // -- react-hook-form: inicialización con shouldUnregister --
-  // La opcion shouldUnregister: true es CLAVE en este componente.
+  // La opción shouldUnregister: true es CLAVE en este componente.
   // Por defecto, RHF mantiene los valores de todos los campos registrados
   // aunque se desmonen del DOM. Con shouldUnregister: true, cuando el campo
   // "password" desaparece (modo edición), RHF lo elimina de su registro
   // interno y NO lo incluye en la validación ni en los datos del submit.
   // Esto permite reutilizar el mismo formulario para crear (CON contraseña)
-  // y editar (SIN contraseña) sin logica adicional.
+  // y editar (SIN contraseña) sin lógica adicional.
   //
-  // reset(): funcion de RHF que establece o reinicia los valores del formulario.
+  // reset(): función de RHF que establece o reinicia los valores del formulario.
   // La usamos para precargar datos al abrir el modal en modo edición.
   const {
     register,
@@ -107,29 +107,29 @@ const AdminUsuarios = () => {
     formState: { errors }
   } = useForm({ shouldUnregister: true });
 
-  // -- Funcion: cargar lista de usuarios desde la API --
-  // Es async porque realiza una peticion HTTP (operacion asincrona).
-  // Se usa tanto en la carga inicial como despues de crear/editar/cambiar estado.
+  // -- Función: cargar lista de usuarios desde la API --
+  // Es async porque realiza una petición HTTP (operación asíncrona).
+  // Se usa tanto en la carga inicial como después de crear/editar/cambiar estado.
   const cargarUsuarios = async () => {
     try {
       setCargando(true);
       // GET /api/usuarios: el backend retorna { datos: [...usuarios] }
       const respuesta = await api.get('/usuarios');
-      // Operador || (OR logico): si respuesta.data.datos es null/undefined,
-      // usamos un array vacio como fallback para evitar errores en .map()
+      // Operador || (OR lógico): si respuesta.data.datos es null/undefined,
+      // usamos un array vacío como fallback para evitar errores en .map()
       setUsuarios(respuesta.data.datos || []);
       setError(null);
     } catch (err) {
       setError('Error al cargar los usuarios del sistema');
       // import.meta.env.DEV es una variable de Vite que es true solo en
-      // desarrollo. Asi el console.error NO aparece en producción (buena practica).
+      // desarrollo. Así el console.error NO aparece en producción (buena práctica).
       if (import.meta.env.DEV) console.error('[AdminUsuarios]', err);
     } finally {
       setCargando(false);
     }
   };
 
-  // useEffect con array de dependencias vacio [] se ejecuta UNA sola vez:
+  // useEffect con array de dependencias vacío [] se ejecuta UNA sola vez:
   // cuando el componente se monta en el DOM por primera vez.
   // Es el equivalente a componentDidMount() en componentes de clase.
   useEffect(() => {
@@ -146,7 +146,7 @@ const AdminUsuarios = () => {
     setIdEditando(null);
     setErrorServidor('');
     // reset() de RHF establece valores iniciales en todos los campos.
-    // rol_id: 2 (Vendedor) es el valor por defecto porque es el rol mas comun.
+    // rol_id: 2 (Vendedor) es el valor por defecto porque es el rol más comun.
     reset({ nombre_completo: '', email: '', password: '', rol_id: 2 });
     setMostrarModal(true);
   };
@@ -175,19 +175,19 @@ const AdminUsuarios = () => {
     reset();
   };
 
-  // -- Funcion: guardar usuario (crear o editar segun el modo) --
-  // handleSubmit() de RHF llama esta funcion SOLO si la validación pasa.
+  // -- Función: guardar usuario (crear o editar según el modo) --
+  // handleSubmit() de RHF llama esta función SOLO si la validación pasa.
   // Recibe un objeto "data" con los valores de los campos registrados.
-  // En modo creacion: { nombre_completo, email, password, rol_id }
-  // En modo edicion:  { nombre_completo, email, rol_id } (sin password)
+  // En modo creación: { nombre_completo, email, password, rol_id }
+  // En modo edición:  { nombre_completo, email, rol_id } (sin password)
   const guardarUsuario = async (data) => {
     setErrorServidor('');
     try {
       setGuardando(true);
 
       if (esEdicion) {
-        // PUT: metodo HTTP para actualización completa de un recurso.
-        // parseInt() convierte el string del <select> a numero entero,
+        // PUT: método HTTP para actualización completa de un recurso.
+        // parseInt() convierte el string del <select> a número entero,
         // ya que los valores de los <option> siempre son strings en HTML.
         await api.put(`/usuarios/${idEditando}`, {
           nombre_completo: data.nombre_completo,
@@ -195,8 +195,8 @@ const AdminUsuarios = () => {
           rol_id:          parseInt(data.rol_id)
         });
       } else {
-        // POST: metodo HTTP para crear un nuevo recurso.
-        // Aqui si enviamos password porque es un usuario nuevo.
+        // POST: método HTTP para crear un nuevo recurso.
+        // Aquí si enviamos password porque es un usuario nuevo.
         await api.post('/usuarios', {
           nombre_completo: data.nombre_completo,
           email:           data.email,
@@ -209,14 +209,14 @@ const AdminUsuarios = () => {
       cargarUsuarios();    // Recargamos la lista para reflejar los cambios
     } catch (err) {
       // Mostramos el error del servidor dentro del modal (no alert).
-      // Errores comunes: "El email ya esta registrado", "Datos invalidos", etc.
+      // Errores comunes: "El email ya está registrado", "Datos invalidos", etc.
       setErrorServidor(err.response?.data?.mensaje || 'Error al guardar el usuario');
     } finally {
       setGuardando(false);
     }
   };
 
-  // -- Funcion: activar o desactivar un usuario (soft delete) --
+  // -- Función: activar o desactivar un usuario (soft delete) --
   // En lugar de eliminar el registro de la BD (hard delete), cambiamos
   // el campo "estado" entre 1 (activo) y 0 (inactivo). Esto se conoce
   // como "soft delete" y tiene ventajas:
@@ -232,9 +232,9 @@ const AdminUsuarios = () => {
     if (!window.confirm(`¿Desea ${accion} al usuario "${usuario.nombre_completo}"?`)) return;
 
     try {
-      // PATCH: metodo HTTP para actualización PARCIAL de un recurso.
+      // PATCH: método HTTP para actualización PARCIAL de un recurso.
       // A diferencia de PUT (actualización completa), PATCH modifica
-      // solo un campo especifico (en este caso, el estado).
+      // solo un campo específico (en este caso, el estado).
       await api.patch(`/usuarios/${usuario.id}/estado`);
       cargarUsuarios();
     } catch (err) {
@@ -242,8 +242,8 @@ const AdminUsuarios = () => {
     }
   };
 
-  // -- Funcion utilitaria: formatear fecha para mostrar en la tabla --
-  // toLocaleDateString('es-CO') formatea la fecha segun la convención
+  // -- Función utilitaria: formatear fecha para mostrar en la tabla --
+  // toLocaleDateString('es-CO') formatea la fecha según la convención
   // colombiana (dd/mm/yyyy). Si la fecha es null, mostramos "Nunca".
   const formatearFecha = (fecha) =>
     fecha ? new Date(fecha).toLocaleDateString('es-CO') : 'Nunca';
@@ -253,9 +253,9 @@ const AdminUsuarios = () => {
   // =====================================================
 
   // -- Early return: patron de retorno anticipado --
-  // Si los datos aun estan cargando, retornamos SOLO el spinner.
-  // Esto evita renderizar una tabla vacia o con datos incompletos.
-  // Es una buena practica: manejar los estados excepcionales primero
+  // Si los datos aun están cargando, retornamos SOLO el spinner.
+  // Esto evita renderizar una tabla vacía o con datos incompletos.
+  // Es una buena práctica: manejar los estados excepcionales primero
   // y dejar el return principal para el caso normal (datos listos).
   if (cargando) {
     return (
@@ -275,8 +275,8 @@ const AdminUsuarios = () => {
         {/* -- ENCABEZADO: titulo + boton crear --
             flex-wrap + gap-2: en pantallas pequeñas, el boton baja
             debajo del titulo en lugar de desbordarse (responsive).
-            clamp(1rem, 3vw, 1.4rem): funcion CSS que hace el tamaño
-            de fuente responsivo, con un minimo de 1rem y maximo de 1.4rem. */}
+            clamp(1rem, 3vw, 1.4rem): función CSS que hace el tamaño
+            de fuente responsivo, con un mínimo de 1rem y máximo de 1.4rem. */}
         <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h4 className="mb-0" style={{ fontSize: 'clamp(1rem, 3vw, 1.4rem)' }}>Gestión de Usuarios</h4>
           <button className="btn btn-sm btn-light flex-shrink-0" onClick={abrirModalNuevo}>
@@ -298,7 +298,7 @@ const AdminUsuarios = () => {
                 <tr>
                   <th>Nombre</th>
                   {/* Clases responsive de Bootstrap para ocultar columnas:
-                      d-none: oculto por defecto (movil)
+                      d-none: oculto por defecto (móvil)
                       d-md-table-cell: visible a partir de 768px (tablet)
                       d-lg-table-cell: visible a partir de 992px (desktop)
                       Esto mantiene la tabla legible en todas las pantallas. */}
@@ -327,8 +327,8 @@ const AdminUsuarios = () => {
                     <tr key={usr.id}>
                       <td>
                         <div className="fw-semibold">{usr.nombre_completo}</div>
-                        {/* En movil, el email se muestra debajo del nombre
-                            (ya que la columna Email esta oculta con d-none) */}
+                        {/* En móvil, el email se muestra debajo del nombre
+                            (ya que la columna Email está oculta con d-none) */}
                         <small className="text-muted d-md-none">{usr.email}</small>
                         {/* Indicador "(Tu)" para que el admin identifique su propia cuenta.
                             Encadenamiento opcional (?.) por si usuarioActual es null. */}
@@ -338,7 +338,7 @@ const AdminUsuarios = () => {
                       </td>
                       <td className="text-muted d-none d-md-table-cell">{usr.email}</td>
                       {/* Badges: componentes visuales de Bootstrap para etiquetar.
-                          El color cambia segun el rol/estado con ternarios. */}
+                          El color cambia según el rol/estado con ternarios. */}
                       <td>
                         <span className={`badge ${usr.rol_id === 1 ? 'bg-danger' : 'bg-info'}`}>
                           {usr.rol_id === 1 ? 'Admin' : 'Vendedor'}
@@ -362,7 +362,7 @@ const AdminUsuarios = () => {
                           {/* El boton de desactivar NO aparece para el usuario actual.
                               Esto es una regla de negocio: el admin no puede
                               desactivarse a si mismo porque perdería acceso al sistema
-                              y nadie podria reactivarlo (se quedaría bloqueado). */}
+                              y nadie podría reactivarlo (se quedaría bloqueado). */}
                           {usr.id !== usuarioActual?.id && (
                             <button
                               className={`btn btn-sm ${usr.estado === 1 ? 'btn-outline-danger' : 'btn-outline-success'}`}
@@ -390,11 +390,11 @@ const AdminUsuarios = () => {
       {/* -- MODAL: Crear o Editar Usuario --
           Modal controlado por estado React (mostrarModal), no por Bootstrap JS.
           Ventaja: React controla completamente cuando se muestra/oculta,
-          lo que es mas predecible y evita conflictos con el Virtual DOM.
+          lo que es más predecible y evita conflictos con el Virtual DOM.
 
           "modal show d-block": combinación de clases que muestra el modal.
           Normalmente Bootstrap usa JS para agregar "show" y cambiar display,
-          pero aqui lo hacemos manualmente con clases CSS.
+          pero aquí lo hacemos manualmente con clases CSS.
 
           Patron "cerrar al clic en fondo":
           e.target === e.currentTarget verifica que se hizo clic en el
@@ -408,7 +408,7 @@ const AdminUsuarios = () => {
         >
           <div className="modal-dialog">
             <div className="modal-content">
-              {/* El titulo del modal cambia segun el modo (crear vs editar).
+              {/* El titulo del modal cambia según el modo (crear vs editar).
                   Esto refuerza visualmente en que operación estamos. */}
               <div className="modal-header bg-dark text-white">
                 <h5 className="modal-title">
@@ -456,8 +456,8 @@ const AdminUsuarios = () => {
                   </div>
 
                   {/* -- EMAIL --
-                      La regex /\S+@\S+\.\S+/ es una validación basica de email:
-                      \S+ = uno o mas caracteres que no sean espacio
+                      La regex /\S+@\S+\.\S+/ es una validación básica de email:
+                      \S+ = uno o más caracteres que no sean espacio
                       @ = arroba literal
                       \. = punto literal
                       Es suficiente para UX; la validación real la hace el backend. */}
@@ -485,7 +485,7 @@ const AdminUsuarios = () => {
                       Cuando esEdicion es true, el bloque {!esEdicion && ...} no
                       se renderiza, el <input> desaparece del DOM, y RHF lo
                       desregistra automáticamente. El resultado: al enviar el
-                      formulario de edicion, "password" no existe en los datos. */}
+                      formulario de edición, "password" no existe en los datos. */}
                   {!esEdicion && (
                     <div className="mb-3">
                       <label className="form-label fw-semibold">Contraseña *</label>

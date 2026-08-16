@@ -14,7 +14,7 @@
 //   - nombre_empresa: razón social (obligatorio)
 //   - nit: número de identificación tributaria
 //   - nombre_contacto: persona a quien llamar
-//   - email, telefono, direccion: datos de contacto
+//   - email, telefono, dirección: datos de contacto
 //
 // Relación: mdc_movimientos.proveedor_id → mdc_proveedores.id
 
@@ -24,31 +24,31 @@
 //  lo que permite analizar el historial de compras por proveedor."
 // =====================================================
 
-// Conexion al pool de base de datos MySQL
+// Conexión al pool de base de datos MySQL
 const db = require('../config/db');
 
-// Validacion de formato de correo compartida por todos los controladores
+// Validación de formato de correo compartida por todos los controladores
 const { esEmailValido } = require('../utils/validaciones');
 
 // ─────────────────────────────────────────────────────────
 // HELPER: Normalizar y validar campos opcionales del proveedor
 // ─────────────────────────────────────────────────────────
-// Extraemos esta logica en una funcion aparte porque se usa
+// Extraemos esta lógica en una función aparte porque se usa
 // tanto en crearProveedor como en actualizarProveedor.
-// Principio DRY (Don't Repeat Yourself): si la misma logica
+// Principio DRY (Don't Repeat Yourself): si la misma lógica
 // aparece en dos lugares, la centralizamos en una funcion.
-// Asi, si cambiamos una regla (ej: permitir telefonos de 7 digitos),
+// Así, si cambiamos una regla (ej: permitir telefonos de 7 digitos),
 // solo lo hacemos en UN lugar.
 //
-// Retorna: { valido: true, datos: {...} } si todo esta bien
-//          { valido: false, mensaje: '...' } si hay un error
+// Retorna: { válido: true, datos: {...} } si todo está bien
+//          { válido: false, mensaje: '...' } si hay un error
 function normalizarCamposProveedor({ nit, nombre_contacto, email, telefono, direccion }) {
 
   // NIT y nombre_contacto: solo trim (eliminar espacios sobrantes)
   const nitNorm = nit && nit.trim() !== '' ? nit.trim() : null;
   const contactoNorm = nombre_contacto && nombre_contacto.trim() !== '' ? nombre_contacto.trim() : null;
 
-  // Email: trim + lowercase + validacion de formato basico
+  // Email: trim + lowercase + validación de formato básico
   let emailNorm = null;
   if (email && email.trim() !== '') {
     emailNorm = email.trim().toLowerCase();
@@ -69,7 +69,7 @@ function normalizarCamposProveedor({ nit, nombre_contacto, email, telefono, dire
     }
   }
 
-  // Direccion: solo trim
+  // Dirección: solo trim
   const direccionNorm = direccion && direccion.trim() !== '' ? direccion.trim() : null;
 
   return {
@@ -128,7 +128,7 @@ exports.obtenerProveedores = async (req, res) => {
 exports.crearProveedor = async (req, res) => {
   const { nombre_empresa, nit, nombre_contacto, email, telefono, direccion } = req.body;
 
-  // El nombre de la empresa es el unico campo indispensable
+  // El nombre de la empresa es el único campo indispensable
   if (!nombre_empresa || nombre_empresa.trim() === '') {
     return res.status(400).json({
       exito:   false,
@@ -147,8 +147,8 @@ exports.crearProveedor = async (req, res) => {
 
   try {
     // Insertamos el proveedor. Los campos opcionales van como NULL si no se enviaron.
-    // NULL en la BD es preferible a texto vacio para campos opcionales,
-    // porque permite filtrar facilmente "proveedores sin email" con IS NULL.
+    // NULL en la BD es preferible a texto vacío para campos opcionales,
+    // porque permite filtrar fácilmente "proveedores sin email" con IS NULL.
     const [resultado] = await db.query(
       `INSERT INTO mdc_proveedores
        (nombre_empresa, nit, nombre_contacto, email, telefono, direccion)
@@ -200,7 +200,7 @@ exports.crearProveedor = async (req, res) => {
 // Permite corregir o completar los datos de un proveedor.
 // Solo el nombre de la empresa es obligatorio.
 exports.actualizarProveedor = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
   const { nombre_empresa, nit, nombre_contacto, email, telefono, direccion } = req.body;
 
@@ -283,7 +283,7 @@ exports.actualizarProveedor = async (req, res) => {
 //  entradas de inventario, preservando la trazabilidad
 //  del historial de compras."
 exports.eliminarProveedor = async (req, res) => {
-  // El middleware validarParametroId ya verifico que el ID sea un numero valido
+  // El middleware validarParametroId ya verificó que el ID sea un número válido
   const { id } = req.params;
 
   try {

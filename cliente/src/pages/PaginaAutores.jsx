@@ -48,7 +48,7 @@ const IconoEliminar = () => (
   </svg>
 );
 
-// Cuantos autores mostrar por pagina en la tabla
+// Cuántos autores mostrar por página en la tabla
 const ELEMENTOS_POR_PAGINA = 5;
 
 // =====================================================
@@ -56,7 +56,7 @@ const ELEMENTOS_POR_PAGINA = 5;
 // =====================================================
 const PaginaAutores = () => {
 
-  // ── Verificacion de permisos (RBAC) ──
+  // ── Verificación de permisos (RBAC) ──
   // tienePermiso() consulta la matriz de permisos del AuthContext
   // para saber si el usuario puede crear, editar o eliminar autores
   const { tienePermiso } = useAuth();
@@ -75,8 +75,8 @@ const PaginaAutores = () => {
   // Si id tiene valor → estamos editando un autor existente
   const [datosAutor, setDatosAutor] = useState({ id: null, nombre: '' });
 
-  // ── PAGINACION (del lado del cliente) ──
-  // Dividimos la lista de autores en paginas de 5 elementos
+  // ── PAGINACIÓN (del lado del cliente) ──
+  // Dividimos la lista de autores en páginas de 5 elementos
   const [paginaActual, setPaginaActual] = useState(1);
 
   // Calculamos qué autores mostrar en la página actual
@@ -145,7 +145,7 @@ const PaginaAutores = () => {
       }
       // Recargamos la lista para ver los cambios
       cargarAutores();
-      // Cerramos el modal programaticamente via el ref
+      // Cerramos el modal programáticamente vía el ref
       cerrarModalRef.current?.click();
     } catch (error) {
       // Mostramos el mensaje de error del backend (o uno genérico)

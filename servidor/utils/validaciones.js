@@ -16,7 +16,7 @@
  * cambio aplica en todo el sistema, sin riesgo de que una copia quede
  * con la regla antigua.
  *
- * @version 1.0.0
+ * @versión 1.0.0
  */
 
 // ─────────────────────────────────────────────────────────

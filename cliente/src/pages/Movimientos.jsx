@@ -50,8 +50,8 @@ import api from '../services/api';
 // ─────────────────────────────────────────────────────
 // UTILIDADES DE FORMATO
 // ─────────────────────────────────────────────────────
-// Estan FUERA del componente porque no dependen de ningun estado.
-// Asi se crean una sola vez al cargar el modulo, no en cada render.
+// Están FUERA del componente porque no dependen de ningun estado.
+// Así se crean una sola vez al cargar el módulo, no en cada render.
 
 // Fecha en formato colombiano corto: DD/MM HH:MM
 const formatearFecha = (fecha) =>
@@ -69,8 +69,8 @@ const formatearPrecio = (precio) =>
 // =====================================================
 // ESTADO INICIAL DEL FORMULARIO
 // =====================================================
-// Aqui definimos los valores por defecto del formulario.
-// Cuando se resetea el formulario despues de guardar,
+// Aquí definimos los valores por defecto del formulario.
+// Cuando se resetea el formulario después de guardar,
 // vuelve a estos valores.
 
 const FORM_INICIAL = {
@@ -199,7 +199,7 @@ const Movimientos = () => {
   // FUNCIÓN: Enviar formulario (registrar movimiento)
   // ─────────────────────────────────────────────────
   // Esta función se ejecuta al hacer clic en "Registrar Compra"
-  // o "Registrar Salida". Envía los datos al backend via POST.
+  // o "Registrar Salida". Envía los datos al backend vía POST.
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // Evita que el formulario recargue la página

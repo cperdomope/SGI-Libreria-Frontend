@@ -1,21 +1,21 @@
 // =====================================================
 // COMPONENTE: LayoutPrincipal
 // =====================================================
-// Este componente implementa el patron de diseno "Layout" (disposicion),
-// que define la estructura visual comun para TODAS las paginas privadas
-// del sistema. En lugar de repetir el navbar y el footer en cada pagina,
-// los definimos una sola vez aqui y envolvemos el contenido variable.
+// Este componente implementa el patron de diseño "Layout" (disposicion),
+// que define la estructura visual comun para TODAS las páginas privadas
+// del sistema. En lugar de repetir el navbar y el footer en cada página,
+// los definimos una sola vez aquí y envolvemos el contenido variable.
 //
 // Estructura visual que genera:
 //   +--------------------------------------+
 //   |         BarraNavegacion (navbar)     |  <- Fija arriba
 //   +--------------------------------------+
 //   |                                      |
-//   |     Contenido de la pagina           |  <- Cambia segun la ruta
+//   |     Contenido de la página           |  <- Cambia según la ruta
 //   |     (children)                       |
 //   |                                      |
 //   +--------------------------------------+
-//   |         Footer (pie de pagina)       |  <- Siempre al fondo
+//   |         Footer (pie de página)       |  <- Siempre al fondo
 //   +--------------------------------------+
 //
 // Como se usa en App.jsx:
@@ -26,11 +26,11 @@
 // Conceptos aplicados:
 //   - Props "children": propiedad especial de React que contiene
 //     todo lo que se coloque entre las etiquetas del componente.
-//   - Sticky Footer con Flexbox: tecnica CSS donde el footer siempre
+//   - Sticky Footer con Flexbox: técnica CSS donde el footer siempre
 //     queda al fondo de la pantalla, incluso si el contenido es corto.
 // =====================================================
 
-// BarraNavegacion: el menu de navegacion superior del sistema.
+// BarraNavegacion: el menu de navegación superior del sistema.
 // Se renderiza en la parte superior de todas las paginas.
 import BarraNavegacion from './BarraNavegacion';
 
@@ -38,7 +38,7 @@ import BarraNavegacion from './BarraNavegacion';
 // COMPONENTE FUNCIONAL: LayoutPrincipal
 // ─────────────────────────────────────────────────────
 // Recibe { children } como prop. "children" es una prop especial
-// de React que contiene automaticamente todo lo que se coloque
+// de React que contiene automáticamente todo lo que se coloque
 // DENTRO de las etiquetas del componente al usarlo. Por ejemplo:
 //
 //   <LayoutPrincipal>
@@ -47,7 +47,7 @@ import BarraNavegacion from './BarraNavegacion';
 //
 // Es como un "hueco" o "slot" donde se inserta contenido variable
 // dentro de una estructura fija. Este patron permite reutilizar
-// el layout sin duplicar codigo en cada pagina.
+// el layout sin duplicar código en cada pagina.
 
 const LayoutPrincipal = ({ children }) => {
   return (
@@ -55,21 +55,21 @@ const LayoutPrincipal = ({ children }) => {
     // Usamos Flexbox (d-flex flex-column) para organizar los tres
     // bloques verticalmente: navbar, contenido y footer.
     //
-    // "min-vh-100" = altura minima del 100% del viewport (pantalla).
+    // "min-vh-100" = altura mínima del 100% del viewport (pantalla).
     // Esto asegura que el contenedor siempre ocupe al menos toda
     // la pantalla, lo cual es clave para el "sticky footer".
     //
-    // STICKY FOOTER: Tecnica CSS para que el footer siempre aparezca
-    // al fondo de la pagina. Funciona asi:
+    // STICKY FOOTER: Técnica CSS para que el footer siempre aparezca
+    // al fondo de la pagina. Funciona así:
     //   1. El contenedor tiene min-height: 100vh (toda la pantalla)
     //   2. El <main> tiene flex-grow: 1 (ocupa todo el espacio libre)
-    //   3. El footer tiene mt-auto (margen superior automatico)
+    //   3. El footer tiene mt-auto (margen superior automático)
     // Resultado: si el contenido es corto, <main> se expande y
     // empuja el footer al fondo. Si el contenido es largo, el
-    // footer queda naturalmente despues del contenido.
+    // footer queda naturalmente después del contenido.
     <div className="d-flex flex-column min-vh-100">
 
-      {/* Barra de navegacion (menu superior) */}
+      {/* Barra de navegación (menu superior) */}
       <BarraNavegacion />
 
       {/* ── CONTENIDO PRINCIPAL ──
@@ -86,11 +86,11 @@ const LayoutPrincipal = ({ children }) => {
         {children}
       </main>
 
-      {/* ── FOOTER (PIE DE PAGINA) ──
+      {/* ── FOOTER (PIE DE PÁGINA) ──
           "bg-light": fondo gris claro de Bootstrap.
-          "mt-auto": margen superior automatico, complementa el
+          "mt-auto": margen superior automático, complementa el
           sticky footer empujandolo al fondo cuando hay poco contenido.
-          "border-top": linea divisoria superior.
+          "border-top": línea divisoria superior.
           "&copy;" es la entidad HTML para el simbolo de copyright. */}
       <footer className="bg-light text-center p-3 mt-auto border-top">
         <small className="text-muted">

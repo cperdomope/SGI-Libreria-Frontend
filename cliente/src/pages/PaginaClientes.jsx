@@ -51,7 +51,7 @@ const IconoEliminar = () => (
   </svg>
 );
 
-// Cuantos clientes mostrar por pagina en la tabla
+// Cuántos clientes mostrar por página en la tabla
 const ELEMENTOS_POR_PAGINA = 5;
 
 // =====================================================
@@ -59,7 +59,7 @@ const ELEMENTOS_POR_PAGINA = 5;
 // =====================================================
 const PaginaClientes = () => {
 
-  // ── Verificacion de permisos (RBAC) ──
+  // ── Verificación de permisos (RBAC) ──
   const { tienePermiso } = useAuth();
 
   // ── ESTADOS DEL COMPONENTE ──
@@ -80,10 +80,10 @@ const PaginaClientes = () => {
   });
 
   // ── BUSCADOR ──
-  // Permite buscar clientes por nombre o documento sin recargar la pagina
+  // Permite buscar clientes por nombre o documento sin recargar la página
   const [busqueda, setBusqueda] = useState('');
 
-  // ── PAGINACION (del lado del cliente) ──
+  // ── PAGINACIÓN (del lado del cliente) ──
   const [paginaActual, setPaginaActual] = useState(1);
 
   // ── FILTRADO CON useMemo ──
@@ -386,8 +386,8 @@ const PaginaClientes = () => {
       {/* Modal Personalizado (Usando clases Bootstrap sin JS externo) */}
       {/* ── Modal de crear/editar cliente ── */}
       {/* A diferencia de PaginaAutores (que usa data-bs-toggle de Bootstrap),
-          aqui controlamos el modal con estado React (mostrarModal).
-          Ambos enfoques son validos. Este da mas control sobre la logica. */}
+          aquí controlamos el modal con estado React (mostrarModal).
+          Ambos enfoques son validos. Este da más control sobre la logica. */}
       {mostrarModal && (
           <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" role="document">

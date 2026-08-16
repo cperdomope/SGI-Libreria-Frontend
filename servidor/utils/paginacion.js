@@ -9,7 +9,7 @@
  * en endpoints de API de forma consistente.
  *
  * @author Equipo de Desarrollo SGI
- * @version 1.0.0
+ * @versión 1.0.0
  */
 
 /**
@@ -38,7 +38,7 @@ const CONFIG_PAGINACION = {
  *
  * @example
  * const params = obtenerParametrosPaginacion(req.query);
- * // params = { usarPaginacion: true, pagina: 1, limite: 20, offset: 0 }
+ * // params = { usarPaginacion: true, página: 1, limite: 20, offset: 0 }
  */
 const obtenerParametrosPaginacion = (query) => {
   // Determinar si se solicitó paginación

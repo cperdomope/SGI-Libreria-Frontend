@@ -12,7 +12,7 @@
 //   - Identificar los mejores clientes (dashboard)
 //
 // Tabla principal: mdc_clientes
-// Campos: id, nombre_completo, documento (único), email, telefono, direccion
+// Campos: id, nombre_completo, documento (único), email, telefono, dirección
 //
 // El documento (cédula, pasaporte, etc.) es único en el sistema.
 // No puede haber dos clientes con el mismo documento.
@@ -39,7 +39,7 @@ const { esEmailValido } = require('../utils/validaciones');
 // =====================================================
 // Ruta: GET /api/clientes
 // Devuelve la lista de clientes ordenada alfabéticamente.
-// Soporta paginación opcional (si se envían pagina y limite).
+// Soporta paginación opcional (si se envían página y limite).
 const obtenerClientes = async (req, res) => {
   try {
     // aplicarPaginacion es una función utilitaria que detecta si se pide paginación
@@ -212,7 +212,7 @@ const crearCliente = async (req, res) => {
     }
 
     // Insertamos el nuevo cliente.
-    // Los campos opcionales (email, telefono, direccion) se guardan como NULL si no se enviaron.
+    // Los campos opcionales (email, telefono, dirección) se guardan como NULL si no se enviaron.
     // En MySQL, NULL significa "sin información", que es diferente a un texto vacío.
     const [resultado] = await db.query(
       `INSERT INTO mdc_clientes

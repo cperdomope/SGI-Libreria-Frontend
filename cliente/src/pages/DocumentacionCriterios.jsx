@@ -1,5 +1,5 @@
 // =====================================================
-// PAGINA: Criterios de Aceptación (Documentación SENA)
+// PÁGINA: Criterios de Aceptación (Documentación SENA)
 // =====================================================
 // En la metodología ágil (Scrum), cada Historia de Usuario tiene asociados
 // "criterios de aceptación": condiciones específicas y verificables que
@@ -24,7 +24,7 @@
 // Se define fuera del componente como constante porque son datos ESTÁTICOS
 // que nunca cambian durante la ejecución. Si estuvieran dentro del componente,
 // React los recrearía en memoria en cada render (innecesario).
-// Cada objeto tiene: id (HU-XX), titulo, modulo (para agrupar) y criterios (array de strings).
+// Cada objeto tiene: id (HU-XX), titulo, módulo (para agrupar) y criterios (array de strings).
 const criterios = [
   // ── AUTENTICACIÓN ──
   {
@@ -514,14 +514,14 @@ const DocumentacionCriterios = () => {
         </div>
       </div>
 
-      {/* Object.entries() convierte el objeto "modulos" en un array de pares
+      {/* Object.entries() convierte el objeto "módulos" en un array de pares
           [clave, valor], es decir: [['Autenticación', [...]], ['Dashboard', [...]], ...]
           Esto permite usar .map() para iterar, ya que .map() no funciona en objetos.
           Desestructuramos cada par como [modulo, lista] directamente en los parámetros. */}
       {Object.entries(modulos).map(([modulo, lista]) => (
         <div key={modulo} className="mb-5">
           <h4 className="fw-bold border-bottom pb-2 mb-3">
-            {/* Template literal: `bg-${expresion}` permite construir nombres
+            {/* Template literal: `bg-${expresión}` permite construir nombres
                 de clase CSS dinámicamente. Si colorModulo[modulo] es undefined,
                 el operador || usa 'secondary' como fallback (color por defecto). */}
             <span className={`badge bg-${colorModulo[modulo] || 'secondary'} me-2`}>{modulo}</span>

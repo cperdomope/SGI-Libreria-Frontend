@@ -31,8 +31,8 @@ const verificarToken = require('../middlewares/verificarToken');
 //   - soloAdministrador: solo permite acceso si rol_id es 1 (Admin)
 const { administradorOVendedor, soloAdministrador } = require('../middlewares/verificarRol');
 
-// Valida que el parametro :id sea un numero entero positivo
-// Valida que el parametro :id sea un numero entero positivo
+// Valida que el parámetro :id sea un número entero positivo
+// Valida que el parámetro :id sea un número entero positivo
 const { validarId } = require('../middlewares/validarParametroId');
 
 // ─────────────────────────────────────────────────────────
