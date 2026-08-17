@@ -5,19 +5,30 @@
  * ventas de libros. Incluye catálogo, carrito y facturación.
  *
  * FUNCIONALIDADES:
- * - Búsqueda de libros en tiempo real
+ * - Búsqueda de libros en tiempo real (por título o ISBN)
  * - Carrito de compras con control de stock
  * - Incremento/decremento de cantidades
- * - Cálculo automático de subtotales y total
+ * - Descuento por porcentaje sobre el subtotal
+ * - Selección de método de pago (Efectivo, Tarjeta, Transferencia, Mixto)
+ * - Cálculo automático de subtotal, descuento y total
  * - Selección de cliente para facturación
- * - Validaciones de stock y datos
+ * - Modal con la ficha completa del libro
  *
  * FLUJO DE VENTA:
  * 1. Seleccionar cliente
  * 2. Agregar libros al carrito
  * 3. Ajustar cantidades si es necesario
- * 4. Confirmar venta
- * 5. Se actualiza stock automáticamente
+ * 4. Elegir método de pago y descuento (ambos opcionales)
+ * 5. Confirmar venta
+ * 6. Se actualiza stock automáticamente
+ *
+ * IMPORTANTE — DÓNDE ESTÁ LA VALIDACIÓN DE VERDAD:
+ * Todo lo que se valida en esta página (stock, cantidades, total) es
+ * una ayuda para el vendedor, no una garantía: cualquiera puede saltarse
+ * el navegador y llamar a la API directamente. Las validaciones que
+ * realmente protegen el negocio están en servidor/controllers/
+ * ventaControlador.js, que vuelve a verificar el stock y recalcula el
+ * total con los precios guardados en la base de datos.
  */
 
 // En React 19 con Vite no es necesario importar React explicitamente.
@@ -32,6 +43,13 @@ const URL_PORTADAS = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api
 // =====================================================
 // ICONOS SVG (Feather Icons - MIT License)
 // =====================================================
+// Los definimos como componentes en vez de instalar una librería de
+// iconos: son cuatro trazos SVG y así el bundle no crece.
+//
+// NOTA: los iconos de esta sección son de Feather Icons. El icono de
+// libro que aparece más abajo, en el marcador de "Sin portada", es de
+// Bootstrap Icons (se reconoce por el viewBox "0 0 16 16" y por usar
+// fill en lugar de stroke). Ambas librerías son de licencia MIT.
 
 /**
  * Icono de lupa - Búsqueda de productos
@@ -194,19 +212,31 @@ const PaginaVentas = () => {
   // CÁLCULOS DEL CARRITO
   // ─────────────────────────────────────────────────
 
-  // Subtotal: suma de todos los items sin descuento
+  // Subtotal: suma de todos los items sin descuento.
+  // useMemo evita recalcular la suma en cada repintado del componente:
+  // solo se vuelve a ejecutar cuando el carrito cambia de verdad.
   const subtotal = useMemo(
     () => carrito.reduce((sum, item) => sum + calcularSubtotal(item.cantidad, item.precio), 0),
     [carrito]
   );
 
-  // Monto del descuento en pesos (porcentaje aplicado al subtotal)
+  // Monto del descuento EN PESOS (el porcentaje aplicado al subtotal).
+  //
+  // ¿Por qué Math.round?
+  // Al backend le enviamos este valor en pesos, no el porcentaje, y allá
+  // se comprueba que total ≈ subtotal - descuento con una tolerancia de $1
+  // (ver ventaControlador.js). Si dejáramos decimales sueltos —un 7% de
+  // $45.900 da 3213.0000000000005— la cifra que enviamos y la que el
+  // servidor recalcula podrían separarse. Redondeando aquí, ambos lados
+  // trabajan siempre con el mismo número entero de pesos.
   const montoDescuento = useMemo(
     () => Math.round(subtotal * (parsearNumero(descuentoPorcentaje) / 100)),
     [subtotal, descuentoPorcentaje]
   );
 
-  // Total final = subtotal - descuento
+  // Total final = subtotal - descuento.
+  // Este no lleva useMemo porque es una resta de dos valores ya calculados:
+  // memorizarla costaría más que hacerla.
   const total = subtotal - montoDescuento;
 
   // ─────────────────────────────────────────────────
@@ -215,13 +245,30 @@ const PaginaVentas = () => {
 
   /**
    * Agrega un libro al carrito o incrementa su cantidad.
-   * Valida stock disponible antes de agregar.
+   *
+   * Hace DOS comprobaciones de stock distintas:
+   *   1. Si el libro está agotado (stock 0), no entra al carrito.
+   *   2. Si ya está en el carrito, no deja pasar de las unidades disponibles.
    *
    * @param {Object} libro - Libro a agregar
    */
   const agregarAlCarrito = useCallback((libro) => {
     const precio = parsearNumero(libro.precio_venta);
     const stock = parsearNumero(libro.stock_actual);
+
+    // ── Guarda de libro agotado ──
+    // El botón "Sin stock" del catálogo ya viene deshabilitado, pero la
+    // portada también agrega al carrito y es un <div>: un <div> no admite
+    // el atributo disabled. Sin esta comprobación, un clic sobre la imagen
+    // metía al carrito un libro con 0 unidades y el problema solo salía a
+    // la luz al confirmar, cuando el backend rechazaba la venta entera.
+    //
+    // Poniendo la guarda aquí dentro —y no en cada botón— queda cubierta
+    // cualquier vía de entrada al carrito: la portada, el botón y el modal.
+    if (stock <= 0) {
+      alert(`"${libro.titulo}" no tiene unidades disponibles.`);
+      return;
+    }
 
     setCarrito(prevCarrito => {
       const indice = prevCarrito.findIndex(item => item.id === libro.id);
@@ -306,7 +353,16 @@ const PaginaVentas = () => {
 
   /**
    * Procesa y registra la venta en el backend.
-   * Valida datos, confirma con usuario y actualiza inventario.
+   *
+   * Orden de lo que hace:
+   *   1. Valida que haya cliente y productos
+   *   2. Pide confirmación al vendedor (una venta no se deshace sola:
+   *      anularla después es una operación reservada al administrador)
+   *   3. Arma el cuerpo de la petición y la envía a POST /api/ventas
+   *   4. Limpia el carrito y recarga el catálogo con el stock ya actualizado
+   *
+   * El botón queda bloqueado mientras dura la petición (estado "procesando")
+   * para que un doble clic no registre la misma venta dos veces.
    *
    * @async
    * @returns {Promise<void>}
@@ -331,7 +387,17 @@ const PaginaVentas = () => {
     setProcesando(true);
 
     try {
-      // Preparar datos para el backend
+      // ── Cuerpo de la petición ──
+      // El descuento viaja EN PESOS, no en porcentaje: el backend guarda
+      // pesos en la columna mdc_ventas.descuento y así no tiene que repetir
+      // el mismo cálculo (ni arriesgarse a redondearlo distinto).
+      //
+      // Sobre subtotal, total y precio_unitario: los enviamos porque
+      // describen lo que el vendedor está viendo en pantalla, pero el
+      // servidor no se fía de ellos. Vuelve a leer el precio de cada libro
+      // en la base de datos, rehace las cuentas y solo acepta la venta si
+      // coinciden. Si un precio cambió mientras el carrito estaba abierto,
+      // responde PRECIO_INVALIDO y el mensaje pide recargar la página.
       const datosVenta = {
         cliente_id: clienteId,
         subtotal: subtotal,
@@ -349,12 +415,16 @@ const PaginaVentas = () => {
 
       alert(`Venta registrada exitosamente. ID: ${respuesta.data.ventaId}`);
 
-      // Limpiar carrito, selección y descuento
+      // Limpiar carrito, selección y descuento para la siguiente venta.
+      // El método de pago no se reinicia a propósito: lo normal es que
+      // varias ventas seguidas se cobren igual.
       setCarrito([]);
       setClienteId('');
       setDescuentoPorcentaje(0);
 
-      // Recargar inventario para reflejar nuevo stock
+      // Recargamos el catálogo para que las tarjetas muestren el stock ya
+      // descontado. Sin esto, el vendedor seguiría viendo las unidades
+      // anteriores y podría intentar vender más de las que quedan.
       const resLibros = await api.get('/libros');
       setLibros(resLibros.data.datos || resLibros.data);
 
@@ -417,10 +487,15 @@ const PaginaVentas = () => {
                     <div key={libro.id} className="col-6 col-sm-4 col-md-3 mb-3">
                       <div className="card shadow-sm h-100 border-0" style={{ borderRadius: 12, overflow: 'hidden' }}>
 
-                        {/* Portada del libro */}
+                        {/* Portada del libro.
+                            Al hacer clic se agrega al carrito, igual que con el
+                            botón de abajo. El cursor cambia a "no permitido"
+                            cuando el libro está agotado, para que se note antes
+                            de hacer clic; si aun así lo hacen, agregarAlCarrito
+                            lo detiene y avisa. */}
                         <div
                           className="d-flex align-items-center justify-content-center bg-light position-relative"
-                          style={{ height: 180, cursor: 'pointer' }}
+                          style={{ height: 180, cursor: stock > 0 ? 'pointer' : 'not-allowed' }}
                           onClick={() => agregarAlCarrito(libro)}
                         >
                           {urlPortada ? (

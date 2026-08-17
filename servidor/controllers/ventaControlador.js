@@ -9,6 +9,8 @@
 //   1. Mueve dinero (registra ingresos)
 //   2. Modifica el inventario (descuenta stock)
 //   3. Usa TRANSACCIONES para que todo sea consistente
+//   4. No confía en los precios que llegan del navegador: los vuelve
+//      a leer de la base de datos antes de cobrar nada
 //
 // ¿Qué es una transacción?
 // Es como un contrato: o se ejecutan TODAS las operaciones
@@ -35,10 +37,29 @@ const METODOS_PAGO_VALIDOS = ['Efectivo', 'Tarjeta', 'Transferencia', 'Mixto'];
 const METODO_PAGO_DEFAULT = 'Efectivo';
 
 // =====================================================
-// FUNCIÓN AUXILIAR: VALIDAR STOCK DISPONIBLE
+// FUNCIÓN AUXILIAR: REDONDEAR A PESOS CON CENTAVOS
 // =====================================================
-// Antes de registrar una venta, verificamos que haya suficientes
-// unidades de cada libro en el inventario.
+// Las columnas de dinero de la base de datos son DECIMAL(10,2),
+// es decir, admiten como máximo dos decimales.
+//
+// ¿Para qué sirve esta función?
+// En JavaScript, multiplicar decimales produce arrastres de precisión
+// (el clásico 0.1 + 0.2 = 0.30000000000000004). Si guardáramos ese
+// número tal cual, MySQL lo redondearía por su cuenta y el total
+// almacenado podría no coincidir con la suma de los subtotales.
+// Redondeando aquí, el número que comparamos es exactamente el mismo
+// que el número que guardamos.
+const aPesos = (valor) => Math.round(valor * 100) / 100;
+
+// =====================================================
+// FUNCIÓN AUXILIAR: BLOQUEAR LIBROS, VALIDAR STOCK Y LEER PRECIOS
+// =====================================================
+// Esta función hace tres cosas de una sola pasada, porque las tres
+// necesitan exactamente la misma consulta sobre la misma fila:
+//
+//   1. BLOQUEA la fila de cada libro que se va a vender (FOR UPDATE)
+//   2. VERIFICA que haya suficientes unidades en el inventario
+//   3. DEVUELVE el precio real del catálogo para cada libro
 //
 // ¿Por qué hacemos esto DENTRO de la transacción?
 // Porque si dos vendedores intentan vender el último libro
@@ -46,17 +67,32 @@ const METODO_PAGO_DEFAULT = 'Efectivo';
 // y ambos venderlo, quedando el stock en -1 (imposible).
 // El "FOR UPDATE" bloquea la fila del libro para que el segundo
 // vendedor tenga que ESPERAR a que el primero termine.
+//
+// ¿Y por qué devolvemos también el precio?
+// Porque el precio que llega en la petición viene del navegador y no
+// es de fiar. El único precio válido es el que está guardado en
+// mdc_libros, y esta consulta ya tiene esa fila bloqueada: leerlo aquí
+// nos garantiza que nadie pueda cambiarlo mientras registramos la venta.
 
 // "Usamos FOR UPDATE para evitar condiciones de carrera.
 //  Si dos ventas ocurren al mismo tiempo para el mismo libro,
-//  MySQL las procesa en orden, garantizando consistencia del stock."
-const validarStockDisponible = async (connection, items) => {
+//  MySQL las procesa en orden, garantizando consistencia del stock.
+//  Y aprovechamos esa misma lectura bloqueada para tomar el precio
+//  oficial del catálogo, en lugar de confiar en el que envía el navegador."
+const validarStockYObtenerPrecios = async (connection, items) => {
+  // Diccionario libro_id → precio_venta real, que devolvemos al final.
+  // Usamos un Map (y no un objeto normal) porque está pensado justo para
+  // esto: asociar una clave a un valor y consultarla después con .get()
+  const precios = new Map();
+
   // Revisamos cada libro que se quiere vender
   for (const item of items) {
     // SELECT con FOR UPDATE: bloquea la fila hasta que termine la transacción.
-    // Ninguna otra transacción puede leer ni modificar esta fila en este momento.
+    // Ninguna otra transacción puede modificar esta fila en este momento.
+    // Pedimos precio_venta además del stock: es el dato con el que después
+    // recalcularemos el total en el PASO 2 de crearVenta.
     const [rows] = await connection.query(
-      'SELECT stock_actual, titulo FROM mdc_libros WHERE id = ? FOR UPDATE',
+      'SELECT stock_actual, precio_venta, titulo FROM mdc_libros WHERE id = ? FOR UPDATE',
       [item.libro_id]
     );
 
@@ -77,25 +113,49 @@ const validarStockDisponible = async (connection, items) => {
         mensaje: `Stock insuficiente para "${libro.titulo}". Disponible: ${libro.stock_actual}, Solicitado: ${item.cantidad}`
       };
     }
+
+    // Guardamos el precio y el título para usarlos más adelante.
+    // Number() es necesario porque MySQL devuelve las columnas DECIMAL
+    // como texto ("45000.00") para no perder precisión; sin convertirlo,
+    // una resta más adelante haría concatenación de cadenas en vez de resta.
+    precios.set(Number(item.libro_id), {
+      precio: Number(libro.precio_venta),
+      titulo: libro.titulo
+    });
   }
 
-  // Si llegamos aquí, todos los libros tienen stock suficiente
-  return { valido: true };
+  // Si llegamos aquí, todos los libros existen y tienen stock suficiente
+  return { valido: true, precios };
 };
 
 // =====================================================
 // CONTROLADOR 1: CREAR UNA NUEVA VENTA
 // =====================================================
 // Ruta: POST /api/ventas
-// Este proceso tiene 8 pasos que se ejecutan como una sola unidad atómica.
+//
+// El recorrido completo de una venta, en orden:
+//
+//   A) Validaciones de forma        → ¿vienen todos los campos y con sentido?
+//   B) Primera barrera del total    → ¿las cifras del navegador cuadran entre sí?
+//   C) Apertura de la transacción   → a partir de aquí, todo o nada
+//   D) PASO 1 · stock y precios     → bloqueamos las filas y leemos el catálogo
+//   E) PASO 2 · segunda barrera     → recalculamos con los precios reales
+//   F) PASO 3 · cabecera de venta   → INSERT en mdc_ventas
+//   G) PASO 4 · detalle + inventario + kardex, libro por libro
+//   H) COMMIT                       → recién aquí se guarda algo de verdad
+//
+// Los pasos D a H se ejecutan como una sola unidad atómica: si cualquiera
+// de ellos falla, el ROLLBACK deshace todos los anteriores.
 
-// "Al registrar una venta, el sistema valida los datos de entrada,
-//  verifica el stock disponible, calcula el total en el servidor
-//  (para evitar manipulaciones desde el frontend), registra la venta
-//  y sus detalles, y actualiza el inventario, todo dentro de una
-//  sola transacción para garantizar consistencia."
+// "Al registrar una venta, el sistema valida los datos de entrada, bloquea
+//  los libros implicados, verifica el stock y recalcula el total con los
+//  precios guardados en la base de datos —nunca con los que envía el
+//  navegador—, registra la venta y sus detalles, actualiza el inventario y
+//  deja la salida en el kardex, todo dentro de una sola transacción."
 exports.crearVenta = async (req, res, next) => {
-  // Extraemos todos los datos enviados por el formulario de venta del frontend
+  // Extraemos todos los datos enviados por el formulario de venta del frontend.
+  // subtotalEnviado se recibe por completitud del payload, pero no se usa:
+  // el subtotal bueno se calcula en el PASO 2 con los precios del catálogo.
   const { cliente_id, subtotal: subtotalEnviado, descuento: descuentoEnviado, total, items, metodo_pago } = req.body;
 
   // ─────────────────────────────────────────────────
@@ -170,17 +230,28 @@ exports.crearVenta = async (req, res, next) => {
   }
 
   // ─────────────────────────────────────────────────
-  // VALIDACIÓN DEL TOTAL - SEGURIDAD IMPORTANTE
+  // PRIMERA BARRERA: COHERENCIA DE LO QUE ENVÍA EL NAVEGADOR
   // ─────────────────────────────────────────────────
-  // El frontend envía el total calculado, pero NO confiamos en él.
-  // Un usuario malicioso podría modificar los datos en el navegador
-  // para cambiar el precio (ej: pagar $1 por un libro de $50.000).
-  // Por eso, recalculamos el total en el servidor y comparamos.
-  
-  // "Recalculamos el total en el backend como medida de seguridad.
-  //  Si el total enviado por el frontend no coincide con el calculado
-  //  en el servidor, la venta es rechazada. Esto incluye la validación
-  //  del descuento aplicado."
+  // Aquí comprobamos que las cifras que manda el frontend cuadren
+  // ENTRE SÍ: que la suma de los items, menos el descuento, dé
+  // exactamente el total que dice estar cobrando.
+  //
+  // ¿Para qué sirve esta barrera?
+  // Para rechazar temprano y barato el error más común (un total mal
+  // calculado o alterado a mano) sin llegar a pedir una conexión del
+  // pool ni abrir una transacción en la base de datos.
+  //
+  // MUY IMPORTANTE — lo que esta barrera NO puede hacer:
+  // seguimos usando los precios que envió el navegador, así que alguien
+  // que altere el precio Y el total a la vez pasaría por aquí sin que lo
+  // notemos (sus números serían coherentes, solo que falsos). Para eso
+  // existe la SEGUNDA barrera, ya dentro de la transacción (PASO 2),
+  // donde comparamos contra el precio real del catálogo.
+
+  // "La validación del total tiene dos niveles: uno rápido antes de la
+  //  transacción, que verifica que las cifras del frontend sean coherentes
+  //  entre sí, y uno definitivo dentro de la transacción, que recalcula
+  //  todo con los precios reales de la base de datos."
   const subtotalCalculado = items.reduce((suma, item) => {
     return suma + (item.cantidad * item.precio_unitario);
   }, 0); // Empezamos sumando desde 0
@@ -222,10 +293,13 @@ exports.crearVenta = async (req, res, next) => {
     await connection.beginTransaction();
 
     // ─────────────────────────────────────────────────
-    // PASO 1: Verificar stock disponible (con bloqueo de filas)
+    // PASO 1: Bloquear los libros, verificar stock y leer precios reales
     // Si no hay suficiente stock, cancelamos la transacción
     // ─────────────────────────────────────────────────
-    const validacionStock = await validarStockDisponible(connection, items);
+    // Esta llamada deja las filas de los libros bloqueadas hasta el COMMIT
+    // y nos devuelve, en validacionStock.precios, el precio oficial de cada
+    // uno tomado de la base de datos.
+    const validacionStock = await validarStockYObtenerPrecios(connection, items);
     if (!validacionStock.valido) {
       await connection.rollback(); // Cancelamos todo
       return res.status(400).json({
@@ -234,43 +308,126 @@ exports.crearVenta = async (req, res, next) => {
       });
     }
 
+    const preciosReales = validacionStock.precios;
+
     // ─────────────────────────────────────────────────
-    // PASO 2: Registrar la venta principal en mdc_ventas
+    // PASO 2: SEGUNDA BARRERA — VALIDAR CONTRA EL PRECIO DEL CATÁLOGO
+    // ─────────────────────────────────────────────────
+    // Esta es la validación que de verdad protege el dinero del negocio.
+    //
+    // El problema que resuelve: el navegador envía precio_unitario, y ese
+    // dato se puede alterar desde las herramientas de desarrollo o con un
+    // interceptor HTTP. Si nos limitáramos a comprobar que los items suman
+    // el total (primera barrera), alguien podría enviar un libro de $50.000
+    // con precio_unitario = 1 y total = 1: las cifras cuadrarían y la venta
+    // se registraría por un peso.
+    //
+    // La solución: ignorar el precio recibido y comparar contra el que está
+    // guardado en mdc_libros, sobre la fila que ya bloqueamos en el PASO 1.
+    //
+    // Esta misma comprobación cubre además un caso perfectamente legítimo:
+    // que el administrador haya cambiado el precio de un libro mientras el
+    // vendedor tenía el carrito abierto. Por eso el mensaje de error pide
+    // recargar, en lugar de acusar al usuario de manipular datos.
+
+    // "El precio nunca se toma de la petición: se lee de la base de datos
+    //  dentro de la misma transacción que bloquea el libro. Aunque alguien
+    //  altere el precio desde el navegador, la venta se registra con el
+    //  precio real del catálogo o se rechaza."
+    let subtotalReal = 0;
+
+    for (const item of items) {
+      // Recuperamos el precio oficial que leímos en el PASO 1.
+      // Number() en la clave porque el navegador puede enviar el id como
+      // texto ("5") y en el Map lo guardamos como número (5).
+      const datosLibro = preciosReales.get(Number(item.libro_id));
+
+      const precioReal    = datosLibro.precio;
+      const precioEnviado = Number(item.precio_unitario);
+
+      // Tolerancia de un centavo: es el margen mínimo para absorber la
+      // conversión de DECIMAL a número, no un permiso para desviarse.
+      if (Math.abs(precioReal - precioEnviado) > 0.01) {
+        await connection.rollback();
+        return res.status(400).json({
+          exito: false,
+          mensaje: `El precio de "${datosLibro.titulo}" no corresponde al catálogo. ` +
+                   `Precio actual: $${precioReal}. Recarga la página e intenta de nuevo.`,
+          codigo: 'PRECIO_INVALIDO'
+        });
+      }
+
+      // Vamos acumulando el subtotal con el precio de la base de datos
+      subtotalReal += item.cantidad * precioReal;
+    }
+
+    subtotalReal = aPesos(subtotalReal);
+
+    // El descuento tampoco puede superar el subtotal REAL.
+    // Ya lo validamos antes contra el subtotal del navegador; aquí lo
+    // repetimos contra la cifra buena, que es la única que cuenta.
+    if (descuento > subtotalReal) {
+      await connection.rollback();
+      return res.status(400).json({
+        exito: false,
+        mensaje: 'El descuento no puede ser mayor al subtotal de la venta',
+        codigo: 'DESCUENTO_INVALIDO'
+      });
+    }
+
+    // Este es el total que realmente se va a cobrar y a guardar.
+    // A partir de aquí, la variable "total" que envió el navegador ya no
+    // se usa para nada: solo sirvió para comprobar que ambos lados
+    // estaban de acuerdo.
+    const totalReal = aPesos(subtotalReal - descuento);
+
+    // ─────────────────────────────────────────────────
+    // PASO 3: Registrar la venta principal en mdc_ventas
     // Esta tabla guarda la "cabecera" de la venta:
     // quién compró, cuánto pagó, cuándo fue, cómo pagó.
     // ─────────────────────────────────────────────────
+    // Guardamos totalReal (calculado aquí) y no el total recibido:
+    // si alguna vez ambos se separaran, la base de datos debe quedarse
+    // con la cifra que el servidor puede justificar.
     const [ventaResult] = await connection.query(
       `INSERT INTO mdc_ventas (cliente_id, usuario_id, descuento, total_venta, metodo_pago, fecha_venta)
        VALUES (?, ?, ?, ?, ?, NOW())`,
-      [cliente_id, req.usuario.id, descuento, total, metodoPago]
+      [cliente_id, req.usuario.id, descuento, totalReal, metodoPago]
     );
 
     // MySQL nos devuelve el ID autogenerado para la venta recién creada
     const ventaId = ventaResult.insertId;
 
     // ─────────────────────────────────────────────────
-    // PASO 3: Por cada producto vendido, registrar el detalle
+    // PASO 4: Por cada producto vendido, registrar el detalle
     // y descontar del inventario
     // ─────────────────────────────────────────────────
     for (const item of items) {
+      // Volvemos a tomar el precio oficial del catálogo, el mismo que
+      // validamos en el PASO 2. La factura debe guardar este valor y no
+      // el de la petición: es el precio que el negocio puede respaldar.
+      const precioReal = preciosReales.get(Number(item.libro_id)).precio;
+
       // Calculamos el subtotal de ESTA línea.
-      // Ojo con el nombre: la variable subtotalCalculado de más arriba es
+      // Ojo con el nombre: la variable subtotalReal de más arriba es
       // el subtotal de TODA la venta. Aquí usamos subtotalItem para que no
       // se confundan al leer el código ni se oculte una con la otra.
-      const subtotalItem = item.cantidad * item.precio_unitario;
+      const subtotalItem = aPesos(item.cantidad * precioReal);
 
-      // Insertamos una fila en mdc_detalle_ventas por cada libro vendido
-      // Esta tabla guarda qué se vendió en cada venta
+      // Insertamos una fila en mdc_detalle_ventas por cada libro vendido.
+      // Esta tabla guarda qué se vendió en cada venta y a qué precio se
+      // vendió: si mañana sube el precio del libro, la factura antigua
+      // sigue mostrando lo que se cobró aquel día.
       await connection.query(
         `INSERT INTO mdc_detalle_ventas (venta_id, libro_id, cantidad, precio_unitario, subtotal)
          VALUES (?, ?, ?, ?, ?)`,
-        [ventaId, item.libro_id, item.cantidad, item.precio_unitario, subtotalItem]
+        [ventaId, item.libro_id, item.cantidad, precioReal, subtotalItem]
       );
 
       // ─────────────────────────────────────────────────
       // Leemos el stock ANTES de descontarlo, para el kardex
       // ─────────────────────────────────────────────────
-      // validarStockDisponible ya bloqueó esta fila con FOR UPDATE al inicio
+      // validarStockYObtenerPrecios ya bloqueó esta fila con FOR UPDATE al inicio
       // de la transacción, así que este valor es definitivo: ninguna otra
       // transacción pudo modificarlo entre aquella validación y esta lectura.
       // Lo necesitamos porque el kardex guarda stock_anterior y stock_nuevo,
@@ -623,7 +780,7 @@ exports.anularVenta = async (req, res, next) => {
       // Sin él, una venta concurrente del mismo libro podría modificar el
       // stock entre esta lectura y el UPDATE de abajo, y el kardex quedaría
       // registrando un stock_anterior que ya no era cierto.
-      // Es el mismo mecanismo que usa validarStockDisponible en crearVenta.
+      // Es el mismo mecanismo que usa validarStockYObtenerPrecios en crearVenta.
       const [libroActual] = await connection.query(
         'SELECT stock_actual FROM mdc_libros WHERE id = ? FOR UPDATE',
         [item.libro_id]

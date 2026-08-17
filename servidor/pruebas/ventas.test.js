@@ -5,12 +5,20 @@
 //
 // Cobertura:
 //   - Seguridad: sin token en GET y POST (401)
-//   - Validación: sin cliente_id, carrito vacío, total manipulado
+//   - Validación: sin cliente_id, carrito vacío
+//   - Anti-fraude nivel 1: total manipulado (TOTAL_INVALIDO)
+//   - Anti-fraude nivel 2: precio manipulado (PRECIO_INVALIDO)
 //
-// La prueba del total manipulado es especialmente importante:
-// verifica que el backend recalcule el total desde los items
-// y rechace si no coincide con lo que envío el frontend.
-// Esto previene que un atacante modifique el total en la peticion.
+// Las dos últimas son las importantes, y prueban barreras distintas:
+//
+//   Nivel 1 — el atacante cambia solo el total. Sus cifras dejan de
+//   cuadrar entre sí y el backend lo detecta antes de la transacción.
+//
+//   Nivel 2 — el atacante cambia el precio Y el total a la vez, de modo
+//   que sí cuadran entre sí. La primera barrera no puede verlo; solo se
+//   descubre comparando contra el precio guardado en mdc_libros.
+//   Sin esta segunda prueba, la primera daría una falsa sensación de
+//   seguridad: pasar el nivel 1 no impide vender un libro por $1.
 
 // "Las ventas son el módulo más crítico del sistema porque
 //  afectan directamente el dinero y el inventario.
@@ -102,5 +110,48 @@ describe('Módulo de Ventas', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.codigo).toBe('TOTAL_INVALIDO');
+  });
+
+  // ANTI-FRAUDE NIVEL 2: aquí el atacante es más cuidadoso y falsea el
+  // precio unitario Y el total a la vez, así que sus cifras son coherentes
+  // entre sí (1 unidad x $1 = $1). La validación previa a la transacción
+  // no tiene forma de detectarlo: para el servidor son números que suman.
+  //
+  // Quien lo detecta es el PASO 2 de crearVenta, que lee precio_venta de
+  // mdc_libros sobre la fila ya bloqueada y compara. Responde
+  // 'PRECIO_INVALIDO' y la venta nunca llega a registrarse.
+  test('Debe rechazar venta con el precio unitario manipulado', async () => {
+
+    // Buscamos un libro real del catálogo con stock disponible, para
+    // asegurarnos de que el rechazo venga de la validación de precio
+    // y no de una falta de inventario.
+    const resLibros = await request(app)
+      .get('/api/libros')
+      .set('Authorization', `Bearer ${tokenAdmin}`);
+
+    const libro = resLibros.body.datos?.find(
+      (l) => Number(l.stock_actual) >= 1 && Number(l.precio_venta) > 1
+    );
+
+    // Si la base de prueba no tiene datos suficientes lo decimos claro,
+    // en vez de dejar que la prueba falle con un error confuso.
+    if (!libro) {
+      throw new Error(
+        '[pruebas] No hay un libro con stock >= 1 y precio > 1.\n' +
+        '  Solucion: recarga base_datos/sgi_libreria_completo.sql.'
+      );
+    }
+
+    const res = await request(app)
+      .post('/api/ventas')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+      .send({
+        cliente_id: 1,
+        total: 1,
+        items: [{ libro_id: libro.id, cantidad: 1, precio_unitario: 1 }]
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.codigo).toBe('PRECIO_INVALIDO');
   });
 });
