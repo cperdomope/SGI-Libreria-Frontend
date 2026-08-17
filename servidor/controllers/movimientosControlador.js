@@ -11,11 +11,23 @@
 //   - ¿Cuándo se hizo un ajuste? ¿Quién lo autorizó?
 //   - ¿Por qué el stock cambió si no fue por una venta?
 //
-// Tipos de movimiento:
-//   - ENTRADA: llega mercancía al inventario
-//     (compra a proveedor, devolución de cliente, ajuste positivo)
-//   - SALIDA: sale mercancía del inventario
-//     (venta directa, pérdida, daño, ajuste negativo)
+// Tipos de movimiento que este módulo permite registrar:
+//
+//   - ENTRADA: llega mercancía comprada a un proveedor.
+//     El proveedor y el costo de compra son obligatorios, porque una
+//     entrada sin esos datos no se podría auditar después: nadie sabría
+//     a quién se le compró el libro ni a qué precio.
+//
+//   - SALIDA: sale mercancía por un motivo que NO es una venta.
+//     Por ejemplo: un ejemplar dañado en bodega, una pérdida, o un
+//     ajuste negativo después de un conteo físico.
+//
+// ¿Y las devoluciones de cliente o los ajustes positivos?
+// Por ahora no se pueden registrar aquí, precisamente porque toda
+// ENTRADA exige proveedor y costo. Es una limitación conocida del
+// alcance actual: la alternativa sería permitir entradas sin origen,
+// y eso abriría un hueco en la trazabilidad, que es justo lo que el
+// kardex existe para evitar.
 //
 // NOTA: Las salidas por VENTAS las registra automáticamente
 // el ventaControlador.js. Este módulo es para movimientos manuales.
@@ -117,7 +129,12 @@ exports.registrarMovimiento = async (req, res, next) => {
   let costoCompraFinal = null;
 
   if (tipo_movimiento === TIPOS_MOVIMIENTO.ENTRADA) {
-    if (!proveedor_id || proveedor_id === '') {
+    // Con !proveedor_id basta: cubre undefined, null y la cadena vacía
+    // que envía un <select> cuando no se ha elegido nada.
+    // Aquí sí podemos usar el valor "falsy" como criterio porque no
+    // existe un proveedor con id 0. Con costo_compra, en cambio, el 0
+    // sí es un valor legítimo — por eso justo abajo se valida distinto.
+    if (!proveedor_id) {
       return res.status(400).json({
         exito:   false,
         mensaje: 'El proveedor es obligatorio para registrar una entrada de inventario'
@@ -277,10 +294,23 @@ exports.registrarMovimiento = async (req, res, next) => {
     // ─────────────────────────────────────────────────
     // PASO 3: ACTUALIZAR EL STOCK DEL LIBRO
     // ─────────────────────────────────────────────────
-    // Usamos el operador dinámico (+/-) para sumar o restar
-    // La operación aritmética se hace en MySQL para evitar race conditions
+    // Usamos el operador dinámico (+/-) para sumar o restar.
+    // La operación aritmética se hace en MySQL y no en JavaScript: así es
+    // el motor quien la resuelve sobre el valor real de la fila bloqueada.
     const operador = tipo_movimiento === TIPOS_MOVIMIENTO.ENTRADA ? '+' : '-';
 
+    // ¿Y esa variable metida dentro del texto del SQL no es inyección?
+    // No, y vale la pena entender por qué, porque en el resto del archivo
+    // insistimos en lo contrario. La regla real no es "nunca interpolar",
+    // es "nunca interpolar algo que venga del usuario".
+    //
+    // Aquí `operador` no viene de la petición: lo produce el ternario de
+    // la línea de arriba, que solo puede devolver '+' o '-'. El usuario
+    // no puede influir en su contenido, únicamente en cuál de los dos
+    // valores se elige, y ambos son seguros.
+    //
+    // La cantidad y el id, que sí llegan del cliente, viajan como
+    // marcadores ? — que es donde de verdad importa.
     await connection.query(
       `UPDATE mdc_libros SET stock_actual = stock_actual ${operador} ? WHERE id = ?`,
       [cantidad, libro_id]
@@ -293,12 +323,12 @@ exports.registrarMovimiento = async (req, res, next) => {
       console.log(`[Movimiento] ${tipo_movimiento} de ${cantidad} unidades para libro #${libro_id}`);
     }
 
-    // Calculamos el stock final para informar al usuario en la respuesta
-    const nuevoStock = tipo_movimiento === TIPOS_MOVIMIENTO.ENTRADA
-      ? libro.stock_actual + cantidad
-      : libro.stock_actual - cantidad;
-
-    // Respondemos con un resumen del movimiento realizado
+    // Respondemos con un resumen del movimiento realizado.
+    //
+    // Reutilizamos stockAnterior y stockNuevo, que ya calculamos en el
+    // PASO 1 y que son exactamente los valores que acabamos de guardar
+    // en el kardex. Volver a calcularlos aquí sería repetir la misma
+    // operación y arriesgarse a que un día las dos versiones se separen.
     res.status(201).json({
       exito:   true,
       mensaje: 'Movimiento registrado exitosamente',
@@ -306,10 +336,14 @@ exports.registrarMovimiento = async (req, res, next) => {
         tipo:            tipo_movimiento,
         cantidad:        cantidad,
         libro:           libro.titulo,
-        stock_anterior:  libro.stock_actual,
-        stock_actual:    nuevoStock,
-        // En la respuesta informamos quién ejecutó el movimiento (auditoría)
-        auditado_por:    req.usuario.nombre_completo || `Usuario #${req.usuario.id}`
+        stock_anterior:  stockAnterior,
+        stock_actual:    stockNuevo,
+        // Informamos quién ejecutó el movimiento (auditoría).
+        // El nombre sale del token JWT, donde se guarda bajo la clave
+        // "nombre" (ver authControlador.js, donde se firma el token).
+        // Si por lo que sea no viniera, mostramos el id para que la
+        // respuesta nunca quede sin identificar al responsable.
+        auditado_por:    req.usuario.nombre || `Usuario #${req.usuario.id}`
       }
     });
 
@@ -382,6 +416,10 @@ exports.obtenerMovimientos = async (req, res, next) => {
     // El WHERE se construye con un marcador ? y el valor viaja aparte
     // en el arreglo de parámetros: nunca concatenamos entrada del usuario
     // dentro del SQL, que es lo que abriría la puerta a inyección.
+    //
+    // (En registrarMovimiento sí se interpola una variable en el UPDATE,
+    //  pero es el operador '+' o '-' que decide el propio servidor, no un
+    //  dato del cliente. Allá está explicado en detalle.)
     const params     = [];
     let whereClause  = '';
 
