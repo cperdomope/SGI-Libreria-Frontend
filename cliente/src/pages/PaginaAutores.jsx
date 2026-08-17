@@ -24,7 +24,7 @@
 //
 // =====================================================
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 // api: cliente HTTP con Axios (ya incluye el token JWT en cada petición)
 import api from '../services/api';
 // useAuth: para verificar los permisos del usuario (RBAC)
@@ -75,16 +75,29 @@ const PaginaAutores = () => {
   // Si id tiene valor → estamos editando un autor existente
   const [datosAutor, setDatosAutor] = useState({ id: null, nombre: '' });
 
+  // ── BUSCADOR ──
+  // Permite filtrar autores por nombre sin recargar la página
+  const [busqueda, setBusqueda] = useState('');
+
   // ── PAGINACIÓN (del lado del cliente) ──
   // Dividimos la lista de autores en páginas de 5 elementos
   const [paginaActual, setPaginaActual] = useState(1);
 
+  // ── FILTRADO CON useMemo ──
+  // useMemo memoriza el resultado para no recalcular el filtro
+  // en cada render (mismo patrón que PaginaClientes).
+  const autoresFiltrados = useMemo(() => {
+    if (!busqueda.trim()) return autores;
+    const termino = busqueda.toLowerCase().trim();
+    return autores.filter((a) => a.nombre?.toLowerCase().includes(termino));
+  }, [autores, busqueda]);
+
   // Calculamos qué autores mostrar en la página actual
-  // Ejemplo: página 2 con 5 por página → muestra autores[5] a autores[9]
+  // (se aplica SOBRE los resultados filtrados, no sobre todos)
   const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
   const indiceFin = indiceInicio + ELEMENTOS_POR_PAGINA;
-  const autoresPaginados = autores.slice(indiceInicio, indiceFin);
-  const totalPaginas = Math.ceil(autores.length / ELEMENTOS_POR_PAGINA);
+  const autoresPaginados = autoresFiltrados.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(autoresFiltrados.length / ELEMENTOS_POR_PAGINA);
 
   // ─────────────────────────────────────────────────────
   // FUNCIÓN: Cargar autores desde la API
@@ -186,6 +199,25 @@ const PaginaAutores = () => {
         )}
       </div>
 
+      {/* ── Buscador ── */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por nombre de autor..."
+          value={busqueda}
+          onChange={(e) => {
+            setBusqueda(e.target.value);
+            setPaginaActual(1);  // Al filtrar volvemos siempre a la página 1
+          }}
+        />
+        {busqueda && (
+          <small className="text-muted">
+            {autoresFiltrados.length} autor(es) encontrado(s) para "{busqueda}"
+          </small>
+        )}
+      </div>
+
       {/* ── Tabla de autores o spinner de carga ── */}
       {cargando ? (
         <div className="text-center"><div className="spinner-border text-primary"></div></div>
@@ -200,8 +232,16 @@ const PaginaAutores = () => {
               </tr>
             </thead>
             <tbody>
-              {/* Recorremos solo los autores de la página actual */}
-              {autoresPaginados.map((autor) => (
+              {/* Si no hay resultados avisamos, en vez de dejar la tabla vacía */}
+              {autoresFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-4 text-muted">
+                    {busqueda ? `No se encontraron autores para "${busqueda}"` : 'No hay autores registrados.'}
+                  </td>
+                </tr>
+              ) : (
+              /* Recorremos solo los autores de la página actual */
+              autoresPaginados.map((autor) => (
                 <tr key={autor.id}>
                   <td>{autor.id}</td>
                   <td className="fw-bold">{autor.nombre}</td>
@@ -234,7 +274,7 @@ const PaginaAutores = () => {
                     )}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

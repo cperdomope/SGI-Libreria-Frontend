@@ -20,7 +20,7 @@
 //
 // =====================================================
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 // api: cliente HTTP con Axios (incluye token JWT automáticamente)
 import api from '../services/api';
 // useAuth: para verificar los permisos del usuario (RBAC)
@@ -63,14 +63,28 @@ const PaginaCategorias = () => {
   // id=null → crear nueva | id=número → editar existente
   const [datosCategoria, setDatosCategoria] = useState({ id: null, nombre: '' });
 
+  // ── BUSCADOR ──
+  // Permite filtrar categorías por nombre sin recargar la página
+  const [busqueda, setBusqueda] = useState('');
+
   // ── PAGINACIÓN (lado del cliente) ──
   const [paginaActual, setPaginaActual] = useState(1);
 
+  // ── FILTRADO CON useMemo ──
+  // useMemo memoriza el resultado para no recalcular el filtro
+  // en cada render (mismo patrón que PaginaClientes).
+  const categoriasFiltradas = useMemo(() => {
+    if (!busqueda.trim()) return categorias;
+    const termino = busqueda.toLowerCase().trim();
+    return categorias.filter((c) => c.nombre?.toLowerCase().includes(termino));
+  }, [categorias, busqueda]);
+
   // Calculamos qué categorías mostrar en la página actual
+  // (se aplica SOBRE los resultados filtrados, no sobre todas)
   const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
   const indiceFin = indiceInicio + ELEMENTOS_POR_PAGINA;
-  const categoriasPaginadas = categorias.slice(indiceInicio, indiceFin);
-  const totalPaginas = Math.ceil(categorias.length / ELEMENTOS_POR_PAGINA);
+  const categoriasPaginadas = categoriasFiltradas.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(categoriasFiltradas.length / ELEMENTOS_POR_PAGINA);
 
   // ─────────────────────────────────────────────────────
   // FUNCIÓN: Cargar categorías desde la API
@@ -160,6 +174,25 @@ const PaginaCategorias = () => {
         )}
       </div>
 
+      {/* ── Buscador ── */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por nombre de categoría..."
+          value={busqueda}
+          onChange={(e) => {
+            setBusqueda(e.target.value);
+            setPaginaActual(1);  // Al filtrar volvemos siempre a la página 1
+          }}
+        />
+        {busqueda && (
+          <small className="text-muted">
+            {categoriasFiltradas.length} categoría(s) encontrada(s) para "{busqueda}"
+          </small>
+        )}
+      </div>
+
       {/* ── Tabla de categorías o spinner ── */}
       {cargando ? (
         <div className="text-center"><div className="spinner-border text-primary"></div></div>
@@ -174,7 +207,15 @@ const PaginaCategorias = () => {
               </tr>
             </thead>
             <tbody>
-              {categoriasPaginadas.map((categoria) => (
+              {/* Si no hay resultados avisamos, en vez de dejar la tabla vacía */}
+              {categoriasFiltradas.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-4 text-muted">
+                    {busqueda ? `No se encontraron categorías para "${busqueda}"` : 'No hay categorías registradas.'}
+                  </td>
+                </tr>
+              ) : (
+              categoriasPaginadas.map((categoria) => (
                 <tr key={categoria.id}>
                   <td>{categoria.id}</td>
                   <td className="fw-bold">{categoria.nombre}</td>
@@ -206,7 +247,7 @@ const PaginaCategorias = () => {
                     )}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

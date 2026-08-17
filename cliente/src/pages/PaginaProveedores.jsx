@@ -20,7 +20,7 @@
 //
 // =====================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 // api: cliente HTTP con Axios (incluye token JWT automáticamente)
 import api from '../services/api';
 // useAuth: para verificar permisos RBAC del usuario
@@ -79,14 +79,32 @@ const PaginaProveedores = () => {
     direccion: ''
   });
 
+  // ── BUSCADOR ──
+  // Permite filtrar proveedores por empresa, NIT o contacto
+  const [busqueda, setBusqueda] = useState('');
+
   // ── PAGINACIÓN (del lado del cliente) ──
   const [paginaActual, setPaginaActual] = useState(1);
 
+  // ── FILTRADO CON useMemo ──
+  // useMemo memoriza el resultado para no recalcular el filtro
+  // en cada render (mismo patrón que PaginaClientes).
+  const proveedoresFiltrados = useMemo(() => {
+    if (!busqueda.trim()) return proveedores;
+    const termino = busqueda.toLowerCase().trim();
+    return proveedores.filter((p) =>
+      p.nombre_empresa?.toLowerCase().includes(termino) ||
+      p.nit?.toLowerCase().includes(termino) ||
+      p.nombre_contacto?.toLowerCase().includes(termino)
+    );
+  }, [proveedores, busqueda]);
+
   // Calculamos qué proveedores mostrar en la página actual
+  // (se aplica SOBRE los resultados filtrados, no sobre todos)
   const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
   const indiceFin = indiceInicio + ELEMENTOS_POR_PAGINA;
-  const proveedoresPaginados = proveedores.slice(indiceInicio, indiceFin);
-  const totalPaginas = Math.ceil(proveedores.length / ELEMENTOS_POR_PAGINA);
+  const proveedoresPaginados = proveedoresFiltrados.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(proveedoresFiltrados.length / ELEMENTOS_POR_PAGINA);
 
   // Se ejecuta al montar el componente (primera carga)
   useEffect(() => {
@@ -266,6 +284,25 @@ const PaginaProveedores = () => {
             </div>
           )}
 
+          {/* ── Buscador ── */}
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por empresa, NIT o contacto..."
+              value={busqueda}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setPaginaActual(1);  // Al filtrar volvemos siempre a la página 1
+              }}
+            />
+            {busqueda && (
+              <small className="text-muted">
+                {proveedoresFiltrados.length} proveedor(es) encontrado(s) para "{busqueda}"
+              </small>
+            )}
+          </div>
+
           <style>{`
             .tabla-proveedores.table-hover tbody tr:hover td {
               background-color: #c3f0ca !important;
@@ -290,10 +327,10 @@ const PaginaProveedores = () => {
                 </tr>
               </thead>
               <tbody>
-                {proveedores.length === 0 ? (
+                {proveedoresFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="text-center text-muted py-4">
-                      No hay proveedores registrados
+                      {busqueda ? `No se encontraron proveedores para "${busqueda}"` : 'No hay proveedores registrados'}
                     </td>
                   </tr>
                 ) : (
