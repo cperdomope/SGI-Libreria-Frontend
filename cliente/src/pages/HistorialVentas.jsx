@@ -111,6 +111,11 @@ const HistorialVentas = () => {
   const [cargando, setCargando]   = useState(true);
   const [error, setError]         = useState(null);
 
+  // Solo la PRIMERA carga muestra el spinner de pantalla completa.
+  // Las recargas posteriores (buscador, fechas, paginación) mantienen
+  // la pantalla montada para no quitarle el foco al campo de búsqueda.
+  const [cargaInicial, setCargaInicial] = useState(true);
+
   // ── ESTADOS DEL MODAL DE DETALLE ────────────────────
   const [mostrarModal, setMostrarModal]       = useState(false);
   const [detalleVenta, setDetalleVenta]       = useState(null);  // { venta, items }
@@ -163,6 +168,7 @@ const HistorialVentas = () => {
       if (import.meta.env.DEV) console.error('[HistorialVentas]', err);
     } finally {
       setCargando(false);
+      setCargaInicial(false);  // A partir de aquí ya no se reemplaza la pantalla
     }
   }, [buscar, fechaInicio, fechaFin]);
 
@@ -417,7 +423,10 @@ const HistorialVentas = () => {
   // RENDER
   // ─────────────────────────────────────────────────────
 
-  if (cargando) {
+  // IMPORTANTE: este return anticipado solo se ejecuta en la carga inicial.
+  // Si dependiera de `cargando`, cada tecla del buscador desmontaría el input
+  // y el usuario perdería el foco mientras escribe.
+  if (cargaInicial) {
     return (
       <div className="container mt-4 text-center">
         <div className="spinner-border text-primary" role="status">
@@ -495,8 +504,14 @@ const HistorialVentas = () => {
           {/* totalRegistros viene del servidor y refleja el total real,
               no solo los elementos de la página actual */}
           <p className="text-muted small mb-2">
-            {totalRegistros} {totalRegistros === 1 ? 'venta encontrada' : 'ventas encontradas'}
-            {hayFiltrosActivos && ' (filtrada)'}
+            {cargando ? (
+              'Buscando...'
+            ) : (
+              <>
+                {totalRegistros} {totalRegistros === 1 ? 'venta encontrada' : 'ventas encontradas'}
+                {hayFiltrosActivos && ' (filtrada)'}
+              </>
+            )}
           </p>
 
           {/* ── TABLA DE VENTAS ── */}
