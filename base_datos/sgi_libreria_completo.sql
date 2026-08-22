@@ -1,104 +1,104 @@
 -- =====================================================
--- SCRIPT COMPLETO - BASE DE DATOS SGI LIBRERIA
+-- SCRIPT COMPLETO - BASE DE DATOS SGI LIBRERÍA
 -- =====================================================
--- Sistema de Gestion de Inventario - Libreria El Saber
--- Proyecto SENA - Tecnologo en Analisis y Desarrollo de Software
+-- Sistema de Gestión de Inventario - Librería El Saber
+-- Proyecto SENA - Tecnólogo en Análisis y Desarrollo de Software
 --
--- VERSION: 4.0.0
+-- VERSIÓN: 4.0.0
 -- FECHA: Marzo 2026
 --
 -- PREFIJO DE TABLAS: mdc_
 -- (Usamos un prefijo para evitar conflictos de nombres con otras
 -- bases de datos en servidores de hosting compartido. De esta forma,
--- nuestras tablas se identifican facilmente como parte del proyecto.)
+-- nuestras tablas se identifican fácilmente como parte del proyecto.)
 --
 -- MOTOR: InnoDB
 -- (Elegimos InnoDB porque es el motor de almacenamiento de MySQL que
--- soporta transacciones ACID y claves foraneas (Foreign Keys).
+-- soporta transacciones ACID y claves foráneas (Foreign Keys).
 -- Las transacciones nos permiten agrupar varias operaciones SQL en una
 -- sola unidad: si una falla, todas se revierten, protegiendo la
 -- integridad de los datos. Esto es fundamental en un sistema de ventas
--- donde se modifica stock y se registran movimientos simultaneamente.)
+-- donde se modifica stock y se registran movimientos simultáneamente.)
 --
 -- CHARSET: utf8mb4
 -- (Usamos utf8mb4 en lugar de utf8 porque utf8mb4 soporta el conjunto
--- completo de caracteres Unicode, incluyendo tildes, enes, emojis y
--- simbolos especiales. utf8 de MySQL solo soporta hasta 3 bytes por
--- caracter, lo que excluye algunos caracteres. utf8mb4 usa hasta 4
--- bytes y es el estandar recomendado actualmente.)
+-- completo de caracteres Unicode, incluyendo tildes, eñes, emojis y
+-- símbolos especiales. utf8 de MySQL solo soporta hasta 3 bytes por
+-- carácter, lo que excluye algunos caracteres. utf8mb4 usa hasta 4
+-- bytes y es el estándar recomendado actualmente.)
 --
 -- COLLATE: utf8mb4_unicode_ci
--- (El collation define como MySQL compara y ordena texto.
+-- (El collation define cómo MySQL compara y ordena texto.
 -- 'unicode_ci' significa que las comparaciones no distinguen entre
--- mayusculas y minusculas (Case Insensitive), asi que buscar
--- 'garcia' encontrara 'Garcia' y 'GARCIA'. Esto es ideal para
--- busquedas de nombres, titulos y correos electronicos.)
+-- mayúsculas y minúsculas (Case Insensitive), así que buscar
+-- 'garcía' encontrará 'García' y 'GARCÍA'. Esto es ideal para
+-- búsquedas de nombres, títulos y correos electrónicos.)
 
 
--- INSTRUCCIONES DE INSTALACION:
+-- INSTRUCCIONES DE INSTALACIÓN:
 --
 -- 1. Abrir MySQL Workbench, HeidiSQL o terminal MySQL
 --
 -- 2. Ejecutar este script completo:
 --    mysql -u root -p < sgi_libreria_completo.sql
 --
--- 3. Listo. Los usuarios de ejemplo ya quedan con sus contrasenas
---    cifradas con bcrypt, por lo que se puede iniciar sesion de una vez:
+-- 3. Listo. Los usuarios de ejemplo ya quedan con sus contraseñas
+--    cifradas con bcrypt, por lo que se puede iniciar sesión de una vez:
 --    - Administrador: ldarlys@sena.edu.co   / Luzd12345
 --    - Vendedor:      michelle@sena.edu.co  / vendedor123
 --    - Administrador: cip@sena.edu.co       / cip123
 --
---    (Si desea cambiar alguna contrasena, vea la SECCION 7.2 al final
---     del script, donde se explica como generar un hash nuevo.)
+--    (Si desea cambiar alguna contraseña, vea la SECCIÓN 7.2 al final
+--     del script, donde se explica cómo generar un hash nuevo.)
 
 
 -- =====================================================
--- SECCION 1: PREPARACION DEL ENTORNO
+-- SECCIÓN 1: PREPARACIÓN DEL ENTORNO
 -- =====================================================
 -- Antes de crear cualquier tabla, debemos preparar el entorno de MySQL.
--- Esto incluye configurar el charset de la conexion, crear la base de
+-- Esto incluye configurar el charset de la conexión, crear la base de
 -- datos y seleccionarla como la base de datos activa.
 
--- SET NAMES establece el charset que usara el cliente MySQL para enviar
+-- SET NAMES establece el charset que usará el cliente MySQL para enviar
 -- y recibir datos. Con esto nos aseguramos de que los caracteres
--- especiales (tildes, enes) se transmitan correctamente entre el
+-- especiales (tildes, eñes) se transmitan correctamente entre el
 -- cliente y el servidor de base de datos.
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
--- DROP DATABASE IF EXISTS elimina la base de datos si ya existia.
--- Esto permite ejecutar el script varias veces sin errores (instalacion
+-- DROP DATABASE IF EXISTS elimina la base de datos si ya existía.
+-- Esto permite ejecutar el script varias veces sin errores (instalación
 -- limpia). IMPORTANTE: esto borra TODOS los datos existentes, por lo
 -- que solo debe usarse en desarrollo o al instalar por primera vez.
 DROP DATABASE IF EXISTS inventario_libreria;
 
--- CREATE DATABASE crea una nueva base de datos vacia. Le asignamos
--- el charset utf8mb4 y el collation unicode_ci como configuracion
+-- CREATE DATABASE crea una nueva base de datos vacía. Le asignamos
+-- el charset utf8mb4 y el collation unicode_ci como configuración
 -- predeterminada, de modo que todas las tablas que creemos dentro
--- hereden automaticamente esta configuracion.
+-- hereden automáticamente esta configuración.
 CREATE DATABASE inventario_libreria
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
--- USE selecciona la base de datos activa. A partir de aqui, todas
--- las sentencias CREATE TABLE, INSERT, etc., se ejecutaran dentro
+-- USE selecciona la base de datos activa. A partir de aquí, todas
+-- las sentencias CREATE TABLE, INSERT, etc., se ejecutarán dentro
 -- de 'inventario_libreria'.
 USE inventario_libreria;
 
--- FOREIGN_KEY_CHECKS controla si MySQL verifica las claves foraneas
+-- FOREIGN_KEY_CHECKS controla si MySQL verifica las claves foráneas
 -- al ejecutar sentencias. Lo desactivamos temporalmente (valor 0)
 -- porque vamos a crear todas las tablas de una vez y algunas tienen
--- referencias cruzadas entre si. Si no lo desactivaramos, MySQL
--- daria error al intentar crear una FK hacia una tabla que aun no
--- existe. Lo reactivamos al final de la creacion de tablas.
+-- referencias cruzadas entre sí. Si no lo desactiváramos, MySQL
+-- daría error al intentar crear una FK hacia una tabla que aún no
+-- existe. Lo reactivamos al final de la creación de tablas.
 SET FOREIGN_KEY_CHECKS = 0;
 
 
 -- =====================================================
--- SECCION 2: TABLAS DEL SISTEMA DE SEGURIDAD
+-- SECCIÓN 2: TABLAS DEL SISTEMA DE SEGURIDAD
 -- =====================================================
--- Estas tablas manejan la autenticacion (quien eres) y la autorizacion
--- (que puedes hacer). Implementamos un sistema RBAC (Role-Based Access
+-- Estas tablas manejan la autenticación (quién eres) y la autorización
+-- (qué puedes hacer). Implementamos un sistema RBAC (Role-Based Access
 -- Control), que significa Control de Acceso Basado en Roles. En RBAC,
 -- los permisos se asignan a roles (Administrador, Vendedor) y luego
 -- cada usuario se asocia a un rol, en lugar de asignar permisos
@@ -108,10 +108,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Esta tabla almacena los roles disponibles en el sistema.
 -- Actualmente manejamos dos: Administrador (acceso total) y
 -- Vendedor (acceso limitado a ventas e inventario).
--- INT AUTO_INCREMENT PRIMARY KEY: crea un identificador numerico unico
--- que se incrementa automaticamente con cada nuevo registro.
--- VARCHAR(50): tipo de dato para texto con longitud maxima de 50 caracteres.
--- NOT NULL: indica que el campo es obligatorio, no puede quedar vacio.
+-- INT AUTO_INCREMENT PRIMARY KEY: crea un identificador numérico único
+-- que se incrementa automáticamente con cada nuevo registro.
+-- VARCHAR(50): tipo de dato para texto con longitud máxima de 50 caracteres.
+-- NOT NULL: indica que el campo es obligatorio, no puede quedar vacío.
 -- UNIQUE: garantiza que no se puedan repetir nombres de rol.
 CREATE TABLE mdc_roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -120,75 +120,75 @@ CREATE TABLE mdc_roles (
 
 -- 2.2 Tabla de Usuarios
 -- Almacena las credenciales y datos de cada usuario que puede
--- iniciar sesion en el sistema. La contrasena se guarda como hash
+-- iniciar sesión en el sistema. La contraseña se guarda como hash
 -- bcrypt (nunca en texto plano) por razones de seguridad.
--- TINYINT(1): tipo de dato pequeno que usamos como booleano
+-- TINYINT(1): tipo de dato pequeño que usamos como booleano
 -- (1 = verdadero/activo, 0 = falso/inactivo).
 -- TIMESTAMP: almacena fecha y hora. DEFAULT CURRENT_TIMESTAMP
--- asigna automaticamente la fecha/hora actual al crear un registro.
--- FOREIGN KEY: crea una relacion entre esta tabla y mdc_roles.
+-- asigna automáticamente la fecha/hora actual al crear un registro.
+-- FOREIGN KEY: crea una relación entre esta tabla y mdc_roles.
 -- El campo rol_id de esta tabla debe contener un valor que exista
 -- en la columna id de mdc_roles. ON UPDATE CASCADE significa que
--- si el id del rol cambia, se actualiza automaticamente aqui.
+-- si el id del rol cambia, se actualiza automáticamente aquí.
 CREATE TABLE mdc_usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre_completo VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL COMMENT 'Hash bcrypt de la contrasena',
+    password_hash VARCHAR(255) NOT NULL COMMENT 'Hash bcrypt de la contraseña',
     rol_id INT NOT NULL,
     estado TINYINT(1) DEFAULT 1 COMMENT '1=Activo, 0=Inactivo',
     ultimo_acceso TIMESTAMP NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rol_id) REFERENCES mdc_roles(id) ON UPDATE CASCADE
-) ENGINE=InnoDB COMMENT='Usuarios del sistema con autenticacion JWT';
+) ENGINE=InnoDB COMMENT='Usuarios del sistema con autenticación JWT';
 
 
 -- =====================================================
--- SECCION 3: TABLAS DEL CATALOGO
+-- SECCIÓN 3: TABLAS DEL CATÁLOGO
 -- =====================================================
--- Estas tablas almacenan la informacion del catalogo de productos
--- de la libreria: los autores, las categorias y los libros.
--- Separamos autores y categorias en tablas independientes para
--- aplicar el principio de normalizacion de bases de datos.
--- La normalizacion evita la repeticion de datos: en lugar de escribir
--- "Gabriel Garcia Marquez" en cada libro, guardamos el nombre una
--- sola vez en mdc_autores y lo referenciamos con un id numerico.
+-- Estas tablas almacenan la información del catálogo de productos
+-- de la librería: los autores, las categorías y los libros.
+-- Separamos autores y categorías en tablas independientes para
+-- aplicar el principio de normalización de bases de datos.
+-- La normalización evita la repetición de datos: en lugar de escribir
+-- "Gabriel García Márquez" en cada libro, guardamos el nombre una
+-- sola vez en mdc_autores y lo referenciamos con un id numérico.
 
 -- 3.1 Tabla de Autores
--- Catalogo de autores de libros. Cada autor se registra una sola
--- vez y puede estar asociado a multiples libros (relacion 1:N).
+-- Catálogo de autores de libros. Cada autor se registra una sola
+-- vez y puede estar asociado a múltiples libros (relación 1:N).
 CREATE TABLE mdc_autores (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB COMMENT='Catalogo de autores de libros';
+) ENGINE=InnoDB COMMENT='Catálogo de autores de libros';
 
--- 3.2 Tabla de Categorias
--- Clasificacion de libros por genero o tema (Novela, Programacion,
+-- 3.2 Tabla de Categorías
+-- Clasificación de libros por género o tema (Novela, Programación,
 -- Historia, etc.). Al igual que autores, se normaliza en su propia
 -- tabla para evitar inconsistencias (por ejemplo, que un libro diga
--- "Programacion" y otro "programacion" con minuscula).
--- UNIQUE en 'nombre' impide que se registren categorias duplicadas.
+-- "Programación" y otro "programación" con minúscula).
+-- UNIQUE en 'nombre' impide que se registren categorías duplicadas.
 CREATE TABLE mdc_categorias (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB COMMENT='Categorias para clasificar libros';
+) ENGINE=InnoDB COMMENT='Categorías para clasificar libros';
 
 -- 3.3 Tabla de Libros (Inventario Principal)
--- Esta es la tabla central del sistema. Almacena toda la informacion
--- de cada libro: datos bibliograficos, precio, stock y relaciones
--- con autor y categoria.
--- ISBN: es el codigo internacional estandar para identificar libros.
--- DECIMAL(10,2): tipo numerico para valores monetarios. 10 digitos
+-- Esta es la tabla central del sistema. Almacena toda la información
+-- de cada libro: datos bibliográficos, precio, stock y relaciones
+-- con autor y categoría.
+-- ISBN: es el código internacional estándar para identificar libros.
+-- DECIMAL(10,2): tipo numérico para valores monetarios. 10 dígitos
 -- en total, 2 de ellos decimales. Ejemplo: 85000.00 (pesos COP).
 -- Usamos DECIMAL en lugar de FLOAT porque FLOAT puede tener errores
--- de precision con decimales, algo inaceptable en valores de dinero.
+-- de precisión con decimales, algo inaceptable en valores de dinero.
 -- stock_minimo: define el umbral de alerta. Cuando stock_actual cae
 -- por debajo de este valor, el sistema muestra una alerta visual.
--- ON DELETE SET NULL: si se elimina un autor o categoria, el campo
+-- ON DELETE SET NULL: si se elimina un autor o categoría, el campo
 -- correspondiente en el libro se pone en NULL en lugar de eliminar
--- el libro. Asi no perdemos datos de inventario por borrar un autor.
+-- el libro. Así no perdemos datos de inventario por borrar un autor.
 CREATE TABLE mdc_libros (
     id INT AUTO_INCREMENT PRIMARY KEY,
     isbn VARCHAR(20) UNIQUE COMMENT 'ISBN-13 del libro',
@@ -207,18 +207,18 @@ CREATE TABLE mdc_libros (
 
 
 -- =====================================================
--- SECCION 4: TABLAS DE OPERACIONES
+-- SECCIÓN 4: TABLAS DE OPERACIONES
 -- =====================================================
 -- Estas tablas registran las operaciones diarias del negocio:
 -- datos de clientes, proveedores y movimientos de inventario.
--- El orden de creacion importa: mdc_clientes y mdc_proveedores
+-- El orden de creación importa: mdc_clientes y mdc_proveedores
 -- se crean ANTES de mdc_movimientos y mdc_ventas porque estas
--- ultimas tienen claves foraneas que los referencian.
+-- últimas tienen claves foráneas que los referencian.
 
 -- 4.1 Tabla de Clientes
--- Registro de clientes para facturacion y seguimiento de compras.
--- El campo 'documento' almacena la cedula de ciudadania (CC) o
--- NIT para personas juridicas. Se marca como UNIQUE para evitar
+-- Registro de clientes para facturación y seguimiento de compras.
+-- El campo 'documento' almacena la cédula de ciudadanía (CC) o
+-- NIT para personas jurídicas. Se marca como UNIQUE para evitar
 -- registrar el mismo cliente dos veces.
 CREATE TABLE mdc_clientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -228,12 +228,12 @@ CREATE TABLE mdc_clientes (
     email VARCHAR(100),
     direccion VARCHAR(200),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB COMMENT='Clientes de la libreria';
+) ENGINE=InnoDB COMMENT='Clientes de la librería';
 
 -- 4.2 Tabla de Proveedores
--- Empresas o distribuidoras que suministran libros a la libreria.
--- Almacenamos la informacion de contacto para gestionar pedidos
--- y mantener la relacion comercial.
+-- Empresas o distribuidoras que suministran libros a la librería.
+-- Almacenamos la información de contacto para gestionar pedidos
+-- y mantener la relación comercial.
 CREATE TABLE mdc_proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre_empresa VARCHAR(100) NOT NULL,
@@ -249,13 +249,13 @@ CREATE TABLE mdc_proveedores (
 -- El Kardex es un registro contable que documenta cada entrada y
 -- salida de productos del inventario. Cada vez que llegan libros
 -- de un proveedor (ENTRADA) o se venden libros (SALIDA), se crea
--- un registro aqui. Esto permite auditar el historial completo de
+-- un registro aquí. Esto permite auditar el historial completo de
 -- movimientos de cada libro.
--- ENUM: tipo de dato que solo permite valores especificos, en este
+-- ENUM: tipo de dato que solo permite valores específicos, en este
 -- caso 'ENTRADA' o 'SALIDA'. Si se intenta insertar otro valor,
--- MySQL rechaza la operacion, garantizando la integridad de datos.
+-- MySQL rechaza la operación, garantizando la integridad de datos.
 -- stock_anterior y stock_nuevo: guardan una "foto" del stock antes
--- y despues del movimiento, facilitando la auditoria y permitiendo
+-- y después del movimiento, facilitando la auditoría y permitiendo
 -- reconstruir el historial de inventario.
 -- ON DELETE RESTRICT: impide eliminar un libro o usuario que tenga
 -- movimientos registrados. Esto protege la trazabilidad del inventario.
@@ -269,10 +269,10 @@ CREATE TABLE mdc_movimientos (
     cantidad INT NOT NULL,
     fecha_movimiento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     observaciones TEXT,
-    proveedor_id INT NULL COMMENT 'Proveedor que suministro los libros (solo para ENTRADA)',
+    proveedor_id INT NULL COMMENT 'Proveedor que suministró los libros (solo para ENTRADA)',
     costo_compra DECIMAL(10, 2) NULL COMMENT 'Precio unitario de compra al proveedor',
     stock_anterior INT COMMENT 'Stock antes del movimiento',
-    stock_nuevo INT COMMENT 'Stock despues del movimiento',
+    stock_nuevo INT COMMENT 'Stock después del movimiento',
     FOREIGN KEY (libro_id) REFERENCES mdc_libros(id) ON DELETE RESTRICT,
     FOREIGN KEY (usuario_id) REFERENCES mdc_usuarios(id) ON DELETE RESTRICT,
     FOREIGN KEY (proveedor_id) REFERENCES mdc_proveedores(id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -280,16 +280,16 @@ CREATE TABLE mdc_movimientos (
 
 
 -- =====================================================
--- SECCION 5: TABLAS DE VENTAS
+-- SECCIÓN 5: TABLAS DE VENTAS
 -- =====================================================
 -- Las ventas se manejan con un modelo de cabecera-detalle, un
--- patron muy comun en bases de datos de facturacion:
--- - La CABECERA (mdc_ventas) almacena la informacion general de la
---   venta: quien compro, quien vendio, fecha, total y metodo de pago.
+-- patrón muy común en bases de datos de facturación:
+-- - La CABECERA (mdc_ventas) almacena la información general de la
+--   venta: quién compró, quién vendió, fecha, total y método de pago.
 -- - El DETALLE (mdc_detalle_ventas) almacena cada libro incluido
 --   en esa venta con su cantidad y precio.
--- Esta separacion permite que una venta tenga multiples libros
--- (relacion 1:N entre cabecera y detalle).
+-- Esta separación permite que una venta tenga múltiples libros
+-- (relación 1:N entre cabecera y detalle).
 
 -- 5.1 Tabla de Ventas (Cabecera de Factura)
 -- Cada registro representa una venta/factura completa.
@@ -297,14 +297,14 @@ CREATE TABLE mdc_movimientos (
 -- cuando se anula una venta, se cambia el estado a 'Anulada' y se
 -- revierte el stock de los libros vendidos.
 -- ON DELETE RESTRICT en cliente_id: impide eliminar un cliente que
--- tenga ventas asociadas, protegiendo el historial de facturacion.
+-- tenga ventas asociadas, protegiendo el historial de facturación.
 -- ON DELETE SET NULL en usuario_id: si se elimina el vendedor, la
 -- venta se conserva pero sin referencia al vendedor. Esto es menos
 -- estricto porque la venta ya fue realizada.
 CREATE TABLE mdc_ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NOT NULL,
-    usuario_id INT COMMENT 'Vendedor que realizo la venta',
+    usuario_id INT COMMENT 'Vendedor que realizó la venta',
     fecha_venta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_venta DECIMAL(10, 2) NOT NULL,
     descuento DECIMAL(10, 2) DEFAULT 0,
@@ -315,15 +315,15 @@ CREATE TABLE mdc_ventas (
 ) ENGINE=InnoDB COMMENT='Cabecera de facturas de venta';
 
 -- 5.2 Tabla de Detalle de Ventas (Items de Factura)
--- Cada registro representa una linea/item dentro de una factura.
+-- Cada registro representa una línea/item dentro de una factura.
 -- Guardamos el precio_unitario al momento de la venta porque el
 -- precio del libro puede cambiar en el futuro, pero la factura
--- debe reflejar el precio que se cobro en ese momento.
+-- debe reflejar el precio que se cobró en ese momento.
 -- subtotal = cantidad * precio_unitario (se calcula en el backend
--- pero se almacena para consultas rapidas).
+-- pero se almacena para consultas rápidas).
 -- ON DELETE CASCADE en venta_id: si se elimina una venta, se
--- eliminan automaticamente todos sus items de detalle. Esto
--- mantiene la consistencia: no queremos detalles huerfanos
+-- eliminan automáticamente todos sus items de detalle. Esto
+-- mantiene la consistencia: no queremos detalles huérfanos
 -- sin su venta padre.
 -- ON DELETE RESTRICT en libro_id: impide eliminar un libro que
 -- aparece en alguna factura, preservando el historial de ventas.
@@ -338,195 +338,195 @@ CREATE TABLE mdc_detalle_ventas (
     FOREIGN KEY (libro_id) REFERENCES mdc_libros(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB COMMENT='Detalle de items por venta';
 
--- Reactivamos la verificacion de claves foraneas ahora que todas
+-- Reactivamos la verificación de claves foráneas ahora que todas
 -- las tablas ya fueron creadas correctamente.
 SET FOREIGN_KEY_CHECKS = 1;
 
 
 -- =====================================================
--- SECCION 6: INDICES DE RENDIMIENTO
+-- SECCIÓN 6: ÍNDICES DE RENDIMIENTO
 -- =====================================================
--- Un indice es una estructura de datos que MySQL crea internamente
--- para acelerar las busquedas en una tabla, similar al indice de
--- un libro que te permite encontrar un tema sin leer todas las paginas.
--- Sin indice, MySQL debe recorrer TODA la tabla (Full Table Scan)
+-- Un índice es una estructura de datos que MySQL crea internamente
+-- para acelerar las búsquedas en una tabla, similar al índice de
+-- un libro que te permite encontrar un tema sin leer todas las páginas.
+-- Sin índice, MySQL debe recorrer TODA la tabla (Full Table Scan)
 -- para encontrar un registro, lo cual es muy lento con miles de filas.
 --
--- NOTA IMPORTANTE: InnoDB ya crea indices automaticamente para:
+-- NOTA IMPORTANTE: InnoDB ya crea índices automáticamente para:
 -- - PRIMARY KEY (clave primaria)
--- - FOREIGN KEY (claves foraneas)
+-- - FOREIGN KEY (claves foráneas)
 -- - UNIQUE (restricciones de unicidad)
 --
--- Los indices adicionales que creamos aqui cubren columnas que se
--- usan frecuentemente en clausulas WHERE, ORDER BY y JOIN pero
--- que no tienen indice automatico. Esto mejora significativamente
--- el rendimiento de las consultas mas comunes del sistema.
+-- Los índices adicionales que creamos aquí cubren columnas que se
+-- usan frecuentemente en cláusulas WHERE, ORDER BY y JOIN pero
+-- que no tienen índice automático. Esto mejora significativamente
+-- el rendimiento de las consultas más comunes del sistema.
 --
--- NOTA: Algunos de los indices a continuacion coinciden con columnas
--- que ya tienen UNIQUE o FOREIGN KEY (y por tanto ya tienen indice
--- automatico). En esos casos el indice explicito es redundante pero
+-- NOTA: Algunos de los índices a continuación coinciden con columnas
+-- que ya tienen UNIQUE o FOREIGN KEY (y por tanto ya tienen índice
+-- automático). En esos casos el índice explícito es redundante pero
 -- no causa errores; MySQL simplemente lo ignora si ya existe uno
 -- equivalente. Los mantenemos documentados por claridad.
 
--- mdc_ventas: estos indices aceleran las consultas del dashboard
+-- mdc_ventas: estos índices aceleran las consultas del dashboard
 -- y el historial de ventas, que filtran por fecha, cliente y estado.
 CREATE INDEX idx_ventas_fecha       ON mdc_ventas (fecha_venta);
 CREATE INDEX idx_ventas_cliente     ON mdc_ventas (cliente_id);
 CREATE INDEX idx_ventas_estado      ON mdc_ventas (estado);
 
 -- mdc_detalle_ventas: acelera los JOINs entre ventas y sus detalles,
--- y las consultas de "productos mas vendidos" que agrupan por libro.
+-- y las consultas de "productos más vendidos" que agrupan por libro.
 CREATE INDEX idx_detalle_venta      ON mdc_detalle_ventas (venta_id);
 CREATE INDEX idx_detalle_libro      ON mdc_detalle_ventas (libro_id);
 
--- mdc_libros: el indice compuesto (stock_actual, stock_minimo)
+-- mdc_libros: el índice compuesto (stock_actual, stock_minimo)
 -- optimiza la consulta de alertas de stock bajo que compara ambos
--- campos. El indice de titulo acelera las busquedas por nombre.
+-- campos. El índice de título acelera las búsquedas por nombre.
 CREATE INDEX idx_libros_stock       ON mdc_libros (stock_actual, stock_minimo);
 CREATE INDEX idx_libros_titulo      ON mdc_libros (titulo);
 
 -- mdc_movimientos: optimiza las consultas del Kardex que filtran
--- movimientos por libro especifico, rango de fechas o proveedor.
+-- movimientos por libro específico, rango de fechas o proveedor.
 CREATE INDEX idx_mov_libro          ON mdc_movimientos (libro_id);
 CREATE INDEX idx_mov_fecha          ON mdc_movimientos (fecha_movimiento);
 CREATE INDEX idx_mov_proveedor      ON mdc_movimientos (proveedor_id);
 
--- mdc_clientes: acelera la busqueda de clientes por nombre
--- (barra de busqueda en el frontend).
+-- mdc_clientes: acelera la búsqueda de clientes por nombre
+-- (barra de búsqueda en el frontend).
 CREATE INDEX idx_clientes_nombre    ON mdc_clientes (nombre_completo);
 
 
 -- =====================================================
--- SECCION 7: DATOS SEMILLA (SEEDERS)
+-- SECCIÓN 7: DATOS SEMILLA (SEEDERS)
 -- =====================================================
 -- Los "seeders" o datos semilla son registros iniciales que se
 -- insertan en la base de datos para que el sistema sea funcional
--- desde la primera ejecucion. Sin estos datos, no habria roles
--- para asignar, ni usuarios para iniciar sesion, ni libros para
--- gestionar. En un entorno de produccion real, solo los roles y
--- el usuario administrador serian datos semilla; el resto se
--- agregaria desde la interfaz del sistema.
+-- desde la primera ejecución. Sin estos datos, no habría roles
+-- para asignar, ni usuarios para iniciar sesión, ni libros para
+-- gestionar. En un entorno de producción real, solo los roles y
+-- el usuario administrador serían datos semilla; el resto se
+-- agregaría desde la interfaz del sistema.
 
 -- 7.1 Roles del Sistema
 -- Insertamos los dos roles base del sistema RBAC.
--- El id se asigna automaticamente: 1=Administrador, 2=Vendedor.
--- Estos ids se usan como referencia en el codigo del backend para
--- verificar permisos en los middlewares de autorizacion.
+-- El id se asigna automáticamente: 1=Administrador, 2=Vendedor.
+-- Estos ids se usan como referencia en el código del backend para
+-- verificar permisos en los middlewares de autorización.
 INSERT INTO mdc_roles (nombre) VALUES
     ('Administrador'),
     ('Vendedor');
 
 -- 7.2 Usuarios del Sistema
--- Nunca almacenamos contrasenas en texto plano. Lo que se guarda es un
--- hash bcrypt: un algoritmo disenado especificamente para contrasenas,
--- que es lento a proposito (para dificultar ataques de fuerza bruta) y
--- agrega un "salt" aleatorio a cada hash, de modo que dos contrasenas
+-- Nunca almacenamos contraseñas en texto plano. Lo que se guarda es un
+-- hash bcrypt: un algoritmo diseñado específicamente para contraseñas,
+-- que es lento a propósito (para dificultar ataques de fuerza bruta) y
+-- agrega un "salt" aleatorio a cada hash, de modo que dos contraseñas
 -- iguales producen hashes distintos. El proceso es irreversible: al
--- iniciar sesion, el sistema no descifra el hash, sino que vuelve a
+-- iniciar sesión, el sistema no descifra el hash, sino que vuelve a
 -- aplicar el algoritmo a lo ingresado y compara los resultados.
 --
--- Los hashes de esta seccion corresponden a las contrasenas de ejemplo
--- del proyecto y ya estan listos para usar:
+-- Los hashes de esta sección corresponden a las contraseñas de ejemplo
+-- del proyecto y ya están listos para usar:
 --   ldarlys@sena.edu.co  -> Luzd12345    (Administrador)
 --   michelle@sena.edu.co -> vendedor123  (Vendedor)
 --   cip@sena.edu.co      -> cip123       (Administrador)
 --
--- COMO CAMBIAR UNA CONTRASENA:
+-- CÓMO CAMBIAR UNA CONTRASEÑA:
 --   1. Generar el hash nuevo (desde la carpeta servidor/):
 --      node -e "console.log(require('bcryptjs').hashSync('MiClaveNueva', 10))"
 --   2. Actualizarlo en la base de datos:
 --      UPDATE mdc_usuarios SET password_hash = '<hash_generado>'
 --       WHERE email = 'correo@ejemplo.com';
---   Tambien puede cambiarse desde la propia aplicacion, en el menu de
---   usuario -> "Cambiar Contrasena".
+--   También puede cambiarse desde la propia aplicación, en el menú de
+--   usuario -> "Cambiar Contraseña".
 INSERT INTO mdc_usuarios (nombre_completo, email, password_hash, rol_id, estado) VALUES
     ('Luz Darlys',          'ldarlys@sena.edu.co',  '$2b$10$45fO1kPRYAJuLJxxZeHVr.r9mrKbsuSJcNEsk/dT3anbdf/KFohUm', 1, 1),
-    ('Michelle Martinez',   'michelle@sena.edu.co', '$2b$10$cTW.JbPZ.0Gdu4EAaWOpfu/xh5f27m4SQTjq5wwxmoN5Rc6X/0p3u', 2, 1),
-    ('Carlos Ivan Perdomo', 'cip@sena.edu.co',      '$2b$10$ESgSWoorbgeIVNuhuXL0xuZsgoIJQIqVmahpu3hYQphOfVoe0XtNe', 1, 1);
+    ('Michelle Martínez',   'michelle@sena.edu.co', '$2b$10$cTW.JbPZ.0Gdu4EAaWOpfu/xh5f27m4SQTjq5wwxmoN5Rc6X/0p3u', 2, 1),
+    ('Carlos Iván Perdomo', 'cip@sena.edu.co',      '$2b$10$ESgSWoorbgeIVNuhuXL0xuZsgoIJQIqVmahpu3hYQphOfVoe0XtNe', 1, 1);
 
--- 7.3 Categorias de Libros
--- Categorias predefinidas para clasificar el inventario.
--- Se pueden agregar mas desde la interfaz del administrador.
+-- 7.3 Categorías de Libros
+-- Categorías predefinidas para clasificar el inventario.
+-- Se pueden agregar más desde la interfaz del administrador.
 INSERT INTO mdc_categorias (nombre) VALUES
     ('Novela Literaria'),
-    ('Programacion / Tecnologia'),
+    ('Programación / Tecnología'),
     ('Historia'),
-    ('Poesia'),
-    ('Economia y Finanzas'),
-    ('Cocina / Gastronomia'),
+    ('Poesía'),
+    ('Economía y Finanzas'),
+    ('Cocina / Gastronomía'),
     ('Desarrollo Personal');
 
 -- 7.4 Autores de Ejemplo
 -- Autores colombianos representativos y algunos adicionales.
--- El id se asigna automaticamente y se referencia desde mdc_libros.
+-- El id se asigna automáticamente y se referencia desde mdc_libros.
 INSERT INTO mdc_autores (nombre) VALUES
-    ('Gabriel Garcia Marquez'),
+    ('Gabriel García Márquez'),
     ('Robert C. Martin'),
-    ('Alvaro Mutis'),
+    ('Álvaro Mutis'),
     ('Laura Restrepo'),
     ('William Ospina'),
-    ('Manuel Echaverria'),
-    ('Jose Eustacio Rivera'),
+    ('Manuel Echaverría'),
+    ('José Eustasio Rivera'),
     ('Rafael Pombo');
 
--- 7.5 Libros de Ejemplo (Catalogo Inicial)
--- Insertamos un catalogo inicial de libros para demostracion.
+-- 7.5 Libros de Ejemplo (Catálogo Inicial)
+-- Insertamos un catálogo inicial de libros para demostración.
 -- Los campos autor_id y categoria_id hacen referencia a los
--- registros insertados anteriormente (por su id numerico).
--- El precio esta en pesos colombianos (COP).
+-- registros insertados anteriormente (por su id numérico).
+-- El precio está en pesos colombianos (COP).
 INSERT INTO mdc_libros (isbn, titulo, descripcion, precio_venta, stock_actual, stock_minimo, autor_id, categoria_id) VALUES
-    ('978-1', 'Cien Anos de Soledad', 'El libro CIEN ANOS DE SOLEDAD es la obra cumbre del realismo magico: una saga familiar que recorre siete generaciones de los Buendia en el mitico pueblo de Macondo. Entre guerras, amores imposibles y prodigios sobrenaturales, Garcia Marquez teje un universo donde la soledad y el destino se entrelazan con la historia de toda Latinoamerica.', 50000, 15, 5, 1, 1),
-    ('978-2', 'El Amor en los Tiempos del Colera', 'El libro EL AMOR EN LOS TIEMPOS DEL COLERA se impone como una lectura imprescindible dentro de la literatura colombiana: una novela que promete una experiencia sensorial y emocional, donde el tiempo y el amor se entrelazan en un paisaje caribeno que transforma lo cotidiano en mito. Una historia de pasion que sobrevive mas de medio siglo de espera.', 30000, 2, 5, 1, 1),
-    ('978-3', 'El Coronel No Tiene Quien Le Escriba', 'El libro EL CORONEL NO TIENE QUIEN LE ESCRIBA es una novela breve y contundente que retrata la dignidad humana frente a la adversidad. Un coronel retirado espera una pension que nunca llega, mientras la pobreza y la esperanza se debaten en cada pagina. Garcia Marquez logra con prosa austera una de las obras mas emotivas de la literatura universal.', 60000, 25, 5, 1, 1),
-    ('978-4', 'La Bandera de la Patria', 'El libro LA BANDERA DE LA PATRIA es una obra que explora los cimientos de la identidad colombiana a traves de sus simbolos mas profundos. Con una narrativa que combina historia y reflexion, invita al lector a redescubrir el sentido de pertenencia y orgullo nacional en un recorrido por las raices culturales que nos definen como nacion.', 88000, 12, 5, 5, 1),
-    ('978-5', 'El Arte de Programar', 'El libro EL ARTE DE PROGRAMAR es una guia esencial para todo aquel que desee dominar el desarrollo de software. Desde los fundamentos logicos hasta las mejores practicas profesionales, este texto transforma conceptos complejos en conocimiento accesible, convirtiendo al lector en un programador mas eficiente, creativo y preparado para los retos tecnologicos actuales.', 85000, 37, 5, 2, 2),
-    ('978-6', 'El Amor Al Limite', 'El libro EL AMOR AL LIMITE es una historia apasionante que lleva las emociones al extremo. Entre decisiones imposibles y encuentros que desafian el destino, esta novela explora hasta donde puede llegar el corazon humano cuando el amor se convierte en la fuerza mas poderosa y a la vez mas vulnerable de la existencia.', 30000, 47, 5, 4, 1),
-    ('978-7', 'La Voragine', 'El libro LA VORAGINE es un clasico indiscutible de la literatura colombiana que sumerge al lector en la inmensidad de la selva amazonica. A traves de la travesia de Arturo Cova, Jose Eustasio Rivera denuncia la explotacion cauchera mientras construye una narrativa salvaje y poetica donde la naturaleza devora todo a su paso.', 70000, 29, 5, 7, 1),
-    ('978-8', 'La Pobre Viejecita', 'El libro LA POBRE VIEJECITA es un clasico entranable de la literatura infantil colombiana escrito por Rafael Pombo. Con humor e ironia, narra la historia de una anciana que lo tenia todo pero vivia quejandose, ensenando a los mas pequenos sobre la gratitud y el valor de lo que se tiene. Una lectura divertida y llena de sabiduria.', 45000, 29, 5, 8, 1);
+    ('978-1', 'Cien Años de Soledad', 'El libro CIEN AÑOS DE SOLEDAD es la obra cumbre del realismo mágico: una saga familiar que recorre siete generaciones de los Buendía en el mítico pueblo de Macondo. Entre guerras, amores imposibles y prodigios sobrenaturales, García Márquez teje un universo donde la soledad y el destino se entrelazan con la historia de toda Latinoamérica.', 50000, 15, 5, 1, 1),
+    ('978-2', 'El Amor en los Tiempos del Cólera', 'El libro EL AMOR EN LOS TIEMPOS DEL CÓLERA se impone como una lectura imprescindible dentro de la literatura colombiana: una novela que promete una experiencia sensorial y emocional, donde el tiempo y el amor se entrelazan en un paisaje caribeño que transforma lo cotidiano en mito. Una historia de pasión que sobrevive más de medio siglo de espera.', 30000, 2, 5, 1, 1),
+    ('978-3', 'El Coronel No Tiene Quien Le Escriba', 'El libro EL CORONEL NO TIENE QUIEN LE ESCRIBA es una novela breve y contundente que retrata la dignidad humana frente a la adversidad. Un coronel retirado espera una pensión que nunca llega, mientras la pobreza y la esperanza se debaten en cada página. García Márquez logra con prosa austera una de las obras más emotivas de la literatura universal.', 60000, 25, 5, 1, 1),
+    ('978-4', 'La Bandera de la Patria', 'El libro LA BANDERA DE LA PATRIA es una obra que explora los cimientos de la identidad colombiana a través de sus símbolos más profundos. Con una narrativa que combina historia y reflexión, invita al lector a redescubrir el sentido de pertenencia y orgullo nacional en un recorrido por las raíces culturales que nos definen como nación.', 88000, 12, 5, 5, 1),
+    ('978-5', 'El Arte de Programar', 'El libro EL ARTE DE PROGRAMAR es una guía esencial para todo aquel que desee dominar el desarrollo de software. Desde los fundamentos lógicos hasta las mejores prácticas profesionales, este texto transforma conceptos complejos en conocimiento accesible, convirtiendo al lector en un programador más eficiente, creativo y preparado para los retos tecnológicos actuales.', 85000, 37, 5, 2, 2),
+    ('978-6', 'El Amor Al Límite', 'El libro EL AMOR AL LÍMITE es una historia apasionante que lleva las emociones al extremo. Entre decisiones imposibles y encuentros que desafían el destino, esta novela explora hasta donde puede llegar el corazón humano cuando el amor se convierte en la fuerza más poderosa y a la vez más vulnerable de la existencia.', 30000, 47, 5, 4, 1),
+    ('978-7', 'La Vorágine', 'El libro LA VORÁGINE es un clásico indiscutible de la literatura colombiana que sumerge al lector en la inmensidad de la selva amazónica. A través de la travesía de Arturo Cova, José Eustasio Rivera denuncia la explotación cauchera mientras construye una narrativa salvaje y poética donde la naturaleza devora todo a su paso.', 70000, 29, 5, 7, 1),
+    ('978-8', 'La Pobre Viejecita', 'El libro LA POBRE VIEJECITA es un clásico entrañable de la literatura infantil colombiana escrito por Rafael Pombo. Con humor e ironía, narra la historia de una anciana que lo tenía todo pero vivía quejándose, enseñando a los más pequeños sobre la gratitud y el valor de lo que se tiene. Una lectura divertida y llena de sabiduría.', 45000, 29, 5, 8, 1);
 
 -- 7.6 Clientes de Ejemplo
--- Clientes de prueba para demostracion. Incluimos tanto personas
--- naturales (con cedula de ciudadania) como personas juridicas
--- (con NIT), ya que la libreria puede vender a ambos tipos.
+-- Clientes de prueba para demostración. Incluimos tanto personas
+-- naturales (con cédula de ciudadanía) como personas jurídicas
+-- (con NIT), ya que la librería puede vender a ambos tipos.
 INSERT INTO mdc_clientes (documento, nombre_completo, telefono, email, direccion) VALUES
-    ('1020304050', 'Maria Gonzalez Perez',    '3101234567', 'maria.gonzalez@email.com',   'Calle 10 #20-30, Bogota'),
-    ('1020304051', 'Carlos Rodriguez Lopez',  '3109876543', 'carlos.rodriguez@email.com', 'Carrera 15 #25-40, Medellin'),
-    ('1020304052', 'Ana Martinez Silva',      '3205551234', 'ana.martinez@email.com',     'Avenida 7 #12-18, Cali'),
-    ('1020304053', 'Luis Hernandez Garcia',   '3156667788', 'luis.hernandez@email.com',   'Calle 45 #30-22, Barranquilla'),
-    ('1020304054', 'Sofia Ramirez Torres',    '3001112233', 'sofia.ramirez@email.com',    'Carrera 8 #15-60, Cartagena'),
-    ('900111222-1','Empresa ABC S.A.S.',      '6017778899', 'compras@empresaabc.com',     'Zona Industrial, Bogota'),
-    ('899999999-4','Universidad Nacional',    '6013165000', 'biblioteca@unal.edu.co',     'Ciudad Universitaria, Bogota');
+    ('1020304050', 'María González Pérez',    '3101234567', 'maria.gonzalez@email.com',   'Calle 10 #20-30, Bogotá'),
+    ('1020304051', 'Carlos Rodríguez López',  '3109876543', 'carlos.rodriguez@email.com', 'Carrera 15 #25-40, Medellín'),
+    ('1020304052', 'Ana Martínez Silva',      '3205551234', 'ana.martinez@email.com',     'Avenida 7 #12-18, Cali'),
+    ('1020304053', 'Luis Hernández García',   '3156667788', 'luis.hernandez@email.com',   'Calle 45 #30-22, Barranquilla'),
+    ('1020304054', 'Sofía Ramírez Torres',    '3001112233', 'sofia.ramirez@email.com',    'Carrera 8 #15-60, Cartagena'),
+    ('900111222-1','Empresa ABC S.A.S.',      '6017778899', 'compras@empresaabc.com',     'Zona Industrial, Bogotá'),
+    ('899999999-4','Universidad Nacional',    '6013165000', 'biblioteca@unal.edu.co',     'Ciudad Universitaria, Bogotá');
 
 -- 7.7 Proveedores de Ejemplo
 -- Distribuidoras y editoriales que suministran libros.
--- El NIT incluye el digito de verificacion (ej: 900123456-1).
+-- El NIT incluye el dígito de verificación (ej: 900123456-1).
 INSERT INTO mdc_proveedores (nombre_empresa, nit, nombre_contacto, telefono, email, direccion) VALUES
-    ('Distribuidora de Libros S.A.',  '900123456-1', 'Juan Perez Gomez',    '6015551234', 'ventas@distlibros.com',            'Calle 50 #30-20, Bogota'),
-    ('Editorial Nacional Ltda.',      '900789012-3', 'Laura Gomez Ruiz',    '6015559876', 'contacto@editnacional.com',        'Carrera 80 #45-10, Bogota'),
-    ('Importadora Lecturas S.A.S.',   '900456789-5', 'Pedro Sanchez Diaz',  '6014443322', 'pedidos@implecturas.com',          'Avenida 68 #22-15, Bogota'),
-    ('Penguin Random House',          '800555666-7', 'Andrea Lopez',        '6012223344', 'ventas.co@penguinrandomhouse.com', 'Calle 93 #12-45, Bogota');
+    ('Distribuidora de Libros S.A.',  '900123456-1', 'Juan Pérez Gómez',    '6015551234', 'ventas@distlibros.com',            'Calle 50 #30-20, Bogotá'),
+    ('Editorial Nacional Ltda.',      '900789012-3', 'Laura Gómez Ruiz',    '6015559876', 'contacto@editnacional.com',        'Carrera 80 #45-10, Bogotá'),
+    ('Importadora Lecturas S.A.S.',   '900456789-5', 'Pedro Sánchez Díaz',  '6014443322', 'pedidos@implecturas.com',          'Avenida 68 #22-15, Bogotá'),
+    ('Penguin Random House',          '800555666-7', 'Andrea López',        '6012223344', 'ventas.co@penguinrandomhouse.com', 'Calle 93 #12-45, Bogotá');
 
 
 -- =====================================================
--- SECCION 8: VISTAS UTILES
+-- SECCIÓN 8: VISTAS ÚTILES
 -- =====================================================
 -- Una VISTA (VIEW) es una consulta SQL guardada con un nombre.
 -- Funciona como una "tabla virtual": no almacena datos propios,
 -- sino que ejecuta su consulta cada vez que se accede a ella.
--- Las vistas son utiles para:
+-- Las vistas son útiles para:
 -- 1. Simplificar consultas complejas (se escriben una vez y se
 --    reutilizan con un simple SELECT * FROM nombre_vista).
--- 2. Encapsular logica de negocio en la base de datos.
+-- 2. Encapsular lógica de negocio en la base de datos.
 -- 3. Restringir el acceso a ciertas columnas o filas.
 
 -- Vista: Libros con stock bajo
 -- Muestra solo los libros cuyo stock_actual es menor o igual al
 -- stock_minimo definido. Esta vista alimenta las alertas del
--- dashboard para que el administrador sepa que libros necesitan
+-- dashboard para que el administrador sepa qué libros necesitan
 -- reabastecimiento.
 -- LEFT JOIN: une las tablas incluso si el libro no tiene autor o
--- categoria asignada (en ese caso esos campos aparecen como NULL).
--- A diferencia de INNER JOIN que excluiria esos registros.
+-- categoría asignada (en ese caso esos campos aparecen como NULL).
+-- A diferencia de INNER JOIN que excluiría esos registros.
 CREATE OR REPLACE VIEW v_libros_stock_bajo AS
 SELECT
     l.id,
@@ -543,14 +543,14 @@ LEFT JOIN mdc_categorias c ON l.categoria_id = c.id
 WHERE l.stock_actual <= l.stock_minimo
 ORDER BY l.stock_actual ASC;
 
--- Vista: Resumen de ventas del dia
--- Calcula estadisticas rapidas de las ventas de hoy: cantidad total,
+-- Vista: Resumen de ventas del día
+-- Calcula estadísticas rápidas de las ventas de hoy: cantidad total,
 -- ingresos y promedio por venta. Se usa en el dashboard principal.
--- COALESCE: funcion que devuelve el primer valor no NULL de sus
+-- COALESCE: función que devuelve el primer valor no NULL de sus
 -- argumentos. Si no hay ventas hoy, SUM y AVG devuelven NULL, pero
 -- con COALESCE mostramos 0 en su lugar. Esto evita errores en el
 -- frontend al intentar mostrar un valor NULL.
--- CURDATE(): funcion de MySQL que retorna la fecha actual (sin hora).
+-- CURDATE(): función de MySQL que retorna la fecha actual (sin hora).
 -- DATE(): extrae solo la parte de fecha de un TIMESTAMP.
 CREATE OR REPLACE VIEW v_ventas_hoy AS
 SELECT
@@ -561,14 +561,14 @@ FROM mdc_ventas
 WHERE DATE(fecha_venta) = CURDATE()
     AND estado = 'Completada';
 
--- Vista: Catalogo completo de libros con estado de stock
--- Muestra todos los libros con su informacion completa y un campo
+-- Vista: Catálogo completo de libros con estado de stock
+-- Muestra todos los libros con su información completa y un campo
 -- calculado 'estado_stock' que clasifica visualmente cada libro.
 -- CASE WHEN: es la estructura condicional de SQL, equivalente a
--- un if-else en programacion. Evaluamos las condiciones en orden:
--- primero si el stock es 0 (Agotado), luego si esta por debajo
--- del minimo (Stock Bajo), y si ninguna se cumple (ELSE), el
--- libro esta Disponible.
+-- un if-else en programación. Evaluamos las condiciones en orden:
+-- primero si el stock es 0 (Agotado), luego si está por debajo
+-- del mínimo (Stock Bajo), y si ninguna se cumple (ELSE), el
+-- libro está Disponible.
 CREATE OR REPLACE VIEW v_catalogo_libros AS
 SELECT
     l.id,
@@ -592,27 +592,27 @@ ORDER BY l.titulo;
 
 
 -- =====================================================
--- SECCION 9: VERIFICACION DE INSTALACION
+-- SECCIÓN 9: VERIFICACIÓN DE INSTALACIÓN
 -- =====================================================
 -- Estas consultas se ejecutan al final del script para confirmar
--- que todo se creo correctamente. Muestran un resumen de las
+-- que todo se creó correctamente. Muestran un resumen de las
 -- tablas creadas, sus registros y las vistas disponibles.
 -- information_schema es una base de datos especial de MySQL que
--- contiene metadatos (informacion sobre la estructura) de todas
+-- contiene metadatos (información sobre la estructura) de todas
 -- las bases de datos del servidor.
 
 SELECT '=============================================' AS '';
 SELECT '  BASE DE DATOS CREADA EXITOSAMENTE'         AS 'ESTADO';
 SELECT '=============================================' AS '';
 
--- Consultamos information_schema.TABLES para obtener informacion
+-- Consultamos information_schema.TABLES para obtener información
 -- sobre cada tabla: nombre, cantidad aproximada de registros y
--- tamano en KB. TABLE_ROWS es una estimacion de InnoDB, no un
--- conteo exacto, pero es suficiente para verificar la instalacion.
+-- tamaño en KB. TABLE_ROWS es una estimación de InnoDB, no un
+-- conteo exacto, pero es suficiente para verificar la instalación.
 SELECT
     TABLE_NAME  AS 'Tabla',
     TABLE_ROWS  AS 'Registros (aprox)',
-    ROUND(DATA_LENGTH / 1024, 2) AS 'Tamano (KB)'
+    ROUND(DATA_LENGTH / 1024, 2) AS 'Tamaño (KB)'
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = 'inventario_libreria'
 ORDER BY TABLE_NAME;
@@ -626,12 +626,12 @@ WHERE TABLE_SCHEMA = 'inventario_libreria';
 
 
 -- =====================================================
--- PASOS SIGUIENTES (despues de ejecutar este script)
+-- PASOS SIGUIENTES (después de ejecutar este script)
 -- =====================================================
 --
--- La base de datos ya quedo lista y con datos de ejemplo. Para poner
--- el sistema en marcha (el detalle completo esta en el Manual de
--- Instalacion y en el README del proyecto):
+-- La base de datos ya quedó lista y con datos de ejemplo. Para poner
+-- el sistema en marcha (el detalle completo está en el Manual de
+-- Instalación y en el README del proyecto):
 --
 -- 1. Configurar el backend:
 --      cd servidor
@@ -645,15 +645,15 @@ WHERE TABLE_SCHEMA = 'inventario_libreria';
 --      npm install
 --      npm run dev               -> http://localhost:5173
 --
--- 3. Iniciar sesion en http://localhost:5173 con cualquiera de los
---    usuarios de ejemplo (sus contrasenas ya estan cifradas en la
---    SECCION 7.2 de este script):
+-- 3. Iniciar sesión en http://localhost:5173 con cualquiera de los
+--    usuarios de ejemplo (sus contraseñas ya están cifradas en la
+--    SECCIÓN 7.2 de este script):
 --      ldarlys@sena.edu.co  / Luzd12345    (Administrador)
 --      michelle@sena.edu.co / vendedor123  (Vendedor)
 --      cip@sena.edu.co      / cip123       (Administrador)
 --
 -- NOTA: el stock de los libros inicia en el valor sembrado y a partir
--- de ahi solo cambia por movimientos de inventario, ventas y
+-- de ahí solo cambia por movimientos de inventario, ventas y
 -- anulaciones, para conservar la trazabilidad del Kardex.
 --
 -- =====================================================
